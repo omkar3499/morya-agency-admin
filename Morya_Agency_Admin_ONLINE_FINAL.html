@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Morya Agency — Final Admin Panel</title>
+<!-- ONLINE ADMIN BUILD: update this HTML online; APK can remain unchanged when configured to load this URL. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#111827}
+header{background:#111827;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:10}.top{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;gap:10px;align-items:center}.logo{background:#fff;color:#111827;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px}.brand b{font-size:18px}.brand small{display:block;color:#cbd5e1}
+main{max-width:1200px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 3px 15px #0000000a}
+.login{max-width:440px;margin:60px auto}.login h1{margin:0 0 6px}
+label{display:block;font-weight:700;margin-top:10px}input,select,textarea{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;margin-top:5px;font-size:15px;background:#fff}
+textarea{min-height:80px;resize:vertical}button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:#111827;color:#fff}.green{background:#16a34a;color:#fff}.red{background:#dc2626;color:#fff}.light{background:#eef2f7;color:#111827}.logout{background:#fff;color:#111827}
+.hidden{display:none}.muted,.small{color:#667085}.small{font-size:13px}.msg{padding:11px;border-radius:10px;margin-top:10px;background:#fee2e2;color:#991b1b;white-space:pre-wrap}.ok{background:#dcfce7;color:#166534}
+.hero{background:linear-gradient(135deg,#111827,#334155);color:#fff;border-radius:20px;padding:22px}.hero h1{margin:0 0 5px}.hero p{margin:0;color:#cbd5e1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.stat{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px}.stat small{color:#667085}.stat strong{display:block;font-size:27px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.item{border:1px solid #e5e7eb;border-radius:14px;padding:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.badge{display:inline-block;background:#eef2f7;border-radius:99px;padding:5px 9px;font-size:12px;font-weight:700}
+.thumb{width:100%;max-width:150px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;background:#f3f4f6}.admedia{width:100%;max-width:240px;max-height:150px;border-radius:10px;object-fit:cover;background:#111}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tabs button.active{background:#111827;color:#fff}
+.order{border:1px solid #e5e7eb;border-radius:14px;padding:15px;margin:10px 0}.ordertop{display:flex;justify-content:space-between;gap:10px}
+hr{border:0;border-top:1px solid #eee;margin:18px 0}
+
+.wizard{border:1px solid #e5e7eb}.wizard-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.steps{display:flex;justify-content:space-between;gap:4px;margin:20px 0 26px;position:relative}.steps:before{content:"";position:absolute;left:7%;right:7%;top:18px;height:3px;background:#dbe2ea;z-index:0}.step{position:relative;z-index:1;flex:1;text-align:center;color:#667085}.step span{width:36px;height:36px;border-radius:50%;background:#e5e7eb;display:grid;place-items:center;margin:auto;font-weight:800}.step small{display:block;font-size:11px;margin-top:5px;line-height:1.1}.step.active{color:#1677ff}.step.active span{background:#1677ff;color:#fff}.step.done span{background:#16a34a;color:#fff}.wizard-step{min-height:300px}.mobile-field{display:block}.profit-box{background:#dcfce7;color:#166534;border-radius:12px;padding:13px;margin:12px 0}.upload-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}.main-preview,.upload-box{min-height:230px;border:2px dashed #d5dce5;border-radius:14px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px}.main-preview img{max-width:100%;height:210px;object-fit:contain;border-radius:10px}.main-preview .camera,.upload-box span{font-size:42px}.upload-box{cursor:pointer}.upload-box small{color:#667085;margin-top:5px}.image-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.image-thumb{width:80px;height:80px;border:1px solid #ddd;border-radius:10px;overflow:hidden;position:relative;background:#fff}.image-thumb img{width:100%;height:100%;object-fit:contain}.image-thumb button{position:absolute;top:2px;right:2px;width:22px;height:22px;padding:0;border-radius:50%;background:#dc2626;color:#fff}.info-box{background:#eaf4ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:12px;padding:12px;margin-bottom:12px}.handset-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin:12px 0}.handset-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.status-pill{background:#dcfce7;color:#166534;border-radius:99px;padding:5px 9px;font-size:12px;font-weight:800}.delete-handset{background:#fee2e2;color:#dc2626;padding:7px 10px}.checkline{display:flex;align-items:center;gap:8px}.checkline input{width:auto;margin:0}.review-box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:15px}.review-image{width:120px;height:120px;object-fit:contain;border:1px solid #eee;border-radius:10px;background:#fafafa}.review-row{display:flex;gap:14px;align-items:flex-start}.review-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.review-table th,.review-table td{border:1px solid #e5e7eb;padding:7px;text-align:left}.products-head{display:flex;justify-content:space-between;align-items:center;margin-top:20px}.product-card{display:grid;grid-template-columns:90px 1fr;gap:12px}.product-card img{width:90px;height:90px;object-fit:contain;border:1px solid #eee;border-radius:10px;background:#fafafa}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}.ordertop{flex-direction:column}.upload-grid{grid-template-columns:1fr}.steps{gap:0}.step small{font-size:9px}.wizard{padding:12px}.wizard-step{min-height:330px}}
+
+
+.field-mobile{display:block}.field-nonmobile{display:none}
+</style>
+</head>
+<body>
+<header>
+<div class="top">
+  <div class="brand"><div class="logo">📱</div><div><b>Morya Agency</b><small>Final Admin Panel</small></div></div>
+  <button id="logoutBtn" class="logout hidden">Logout</button>
+</div>
+</header>
+
+<main>
+<section id="loginBox" class="card login">
+<h1>🔐 Admin Login</h1>
+<p class="muted">Morya Agency management dashboard</p>
+<form id="loginForm">
+<label>Email</label><input id="email" type="email" autocomplete="username" required>
+<label>Password</label><input id="password" type="password" autocomplete="current-password" required>
+<button id="loginBtn" class="primary" type="submit" style="width:100%;margin-top:16px">Login to Dashboard</button>
+</form><div id="loginMsg"></div>
+</section>
+
+<section id="dashboard" class="hidden">
+<div class="hero"><h1>Welcome to Morya Agency 👋</h1><p>Products, stock, orders, private costing आणि advertisements manage करा.</p></div>
+
+<div class="stats">
+<div class="stat"><small>🛒 Orders</small><strong id="orderCount">0</strong></div>
+<div class="stat"><small>📦 Products</small><strong id="productCount">0</strong></div>
+<div class="stat"><small>⚠️ Low Stock</small><strong id="lowStock">0</strong></div>
+<div class="stat"><small>💰 Order Value</small><strong id="orderValue">₹0</strong></div>
+</div>
+
+<div class="tabs">
+<button class="light active" data-tab="productsTab">📦 Products</button>
+<button class="light" data-tab="ordersTab">🛒 Orders</button>
+<button class="light" data-tab="adsTab">📢 Advertisements</button>
+</div>
+
+<section id="productsTab" class="tab card">
+<h2>📦 Products</h2>
+<p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
+
+<div class="wizard card" style="background:#fafafa">
+  <div class="wizard-head">
+    <div><h3 id="formTitle" style="margin:0">➕ Add Product</h3><div id="stepTitle" class="small">Step 1 of 5</div></div>
+    <button class="light" onclick="clearProductForm()">✕ Clear</button>
+  </div>
+  <div class="steps">
+    <div class="step active" data-step="1"><span>1</span><small>Basic<br>Details</small></div>
+    <div class="step" data-step="2"><span>2</span><small>Price &<br>Stock</small></div>
+    <div class="step" data-step="3"><span>3</span><small>Images</small></div>
+    <div class="step" data-step="4"><span>4</span><small>Handset<br>Details</small></div>
+    <div class="step" data-step="5"><span>5</span><small>Review</small></div>
+  </div>
+
+  <input type="hidden" id="productId">
+
+  <div class="wizard-step" data-panel="1">
+    <h3>Step 1: Basic Details</h3>
+    <div class="row">
+      <div><label>Product Name *</label><input id="pName" placeholder="उदा. Motorola A10e"></div>
+      <div><label>Category *</label><select id="pCategory">
+        <option value="mobiles">📱 Mobile Phones</option>
+        <option value="mobile_parts">🔧 Mobile Parts</option>
+        <option value="mobile_accessories">📦 Mobile Accessories</option>
+        <option value="mobile_back_skin">📱 Mobile Back Skin</option>
+        <option value="mobile_cover">📱 Mobile Cover</option>
+        <option value="custom_printing" selected>🎨 Customize Products</option>
+      </select></div>
+    </div>
+    <div class="row">
+      <div><label>Brand</label><input id="pBrand" placeholder="उदा. Motorola / Samsung"></div>
+      <div id="modelWrap" class="mobile-field"><label>Model *</label><input id="pModel" placeholder="उदा. A10e"></div>
+    </div>
+    <div id="ramWrap" class="mobile-field"><label>RAM / Storage</label><input id="pRam" placeholder="उदा. 8GB / 128GB"></div>
+    <label>Description</label><textarea id="pDescription" placeholder="Product details"></textarea>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="2">
+    <h3>Step 2: Price & Stock</h3>
+    <div class="row">
+      <div><label>Purchase Price ₹ <span class="small">(Admin only)</span></label><input id="pPurchase" type="number" min="0"></div>
+      <div><label>Sale Price ₹ *</label><input id="pPrice" type="number" min="0"></div>
+    </div>
+    <div class="profit-box">🧮 <b>Profit: ₹<span id="profitPreview">0</span></b></div>
+    <div class="row">
+      <div><label>Stock Quantity *</label><input id="pStock" type="number" min="0" value="1"><div class="small">Mobile Phone मध्ये इतके actual handsets आहेत.</div></div>
+      <div><label>Warranty</label><input id="pWarranty" placeholder="उदा. 6 Months / 1 Year"></div>
+    </div>
+    <label>Available</label><select id="pAvailable"><option value="true">Yes</option><option value="false">No</option></select>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="3">
+    <h3>Step 3: Product Images</h3>
+    <div class="upload-grid">
+      <div class="main-preview" id="mainImagePreview"><div class="camera">📷</div><b>Product Image Preview</b><span class="small">Upload केल्यावर image इथे दिसेल</span></div>
+      <label class="upload-box"><input id="pImageFiles" type="file" accept="image/*" multiple hidden><span>📷</span><b>Add Images</b><small>Phone Gallery मधून निवडा</small></label>
+    </div>
+    <div id="imageThumbs" class="image-thumbs"></div>
+    <input type="hidden" id="pImage">
+    <div class="small">Maximum 4 images. पहिली image customer product card साठी main image म्हणून save होईल.</div>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="4">
+    <h3 id="detailsHeading">Step 4: Category Details</h3>
+    <div id="mobileHandsets" class="hidden">
+      <div class="info-box">ℹ️ Stock <b id="handsetCountText">1</b> आहे. कृपया प्रत्येक handset ची वेगळी माहिती भरा.</div>
+      <div id="handsetList"></div>
+    </div>
+    <div id="nonMobileDetails">
+      <div id="compatibleWrap"><label>Compatible Model <span class="small">(Parts / Accessories where applicable)</span></label><input id="pCompatible" placeholder="उदा. Vivo Y16"></div>
+      <label class="checkline"><input id="pCustom" type="checkbox"> Customer photo customization available</label>
+    </div>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="5">
+    <h3>Step 5: Review & Add Product</h3>
+    <div id="reviewBox" class="review-box"></div>
+  </div>
+
+  <div class="wizard-nav">
+    <button id="backBtn" class="light" onclick="prevProductStep()">← Back</button>
+    <button id="nextBtn" class="primary" onclick="nextProductStep()">Next →</button>
+    <button id="saveBtn" class="green hidden" onclick="saveProduct()">✅ Add Product</button>
+  </div>
+  <div id="productMsg"></div>
+</div>
+
+<div class="products-head"><h3>Product List</h3><button class="light" onclick="loadProducts()">↻ Refresh</button></div>
+<div id="products">Loading...</div>
+</section>
+
+<section id="ordersTab" class="tab card hidden">
+<h2>🛒 Customer Orders</h2>
+<button class="primary" onclick="loadOrders()">Refresh Orders</button>
+<div id="orders">Loading...</div>
+</section>
+
+<section id="adsTab" class="tab card hidden">
+<h2>📢 Advertisements</h2>
+<p class="small">Image किंवा video upload करून customer page वर advertisement दाखवता येईल.</p>
+<div class="card" style="background:#fafafa">
+<h3 id="adFormTitle">➕ Add Advertisement</h3>
+<input type="hidden" id="adId">
+<label>Business Name</label><input id="adBusiness" placeholder="Business name">
+<label>Description</label><input id="adDescription" placeholder="Short offer/details">
+<div class="row">
+<div><label>WhatsApp</label><input id="adWhatsapp" placeholder="917262822323"></div>
+<div><label>Media Type</label><select id="adType"><option value="image">Image</option><option value="video">Video</option></select></div>
+</div>
+<label>Upload Image / Video</label><input id="adFile" type="file" accept="image/*,video/*">
+<label>OR Media URL</label><input id="adUrl" placeholder="https://...">
+<div class="row">
+<div><label>Sort Order</label><input id="adSort" type="number" value="1"></div>
+<div><label>Active</label><select id="adActive"><option value="true">ON</option><option value="false">OFF</option></select></div>
+</div>
+<div class="row">
+<div><label>Start</label><input id="adStart" type="datetime-local"></div>
+<div><label>End</label><input id="adEnd" type="datetime-local"></div>
+</div>
+<div class="actions"><button class="green" onclick="saveAd()">💾 Save Advertisement</button><button class="light" onclick="clearAdForm()">Clear</button></div>
+<div id="adMsg"></div>
+</div>
+<div id="ads">Loading...</div>
+</section>
+</section>
+</main>
+
+<script>
+const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
+const SUPABASE_KEY="sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));
+ b.classList.add('active'); $(b.dataset.tab).classList.remove('hidden');
+ if(b.dataset.tab==='productsTab')loadProducts();
+ if(b.dataset.tab==='ordersTab')loadOrders();
+ if(b.dataset.tab==='adsTab')loadAds();
+});
+
+let productStep=1;
+let selectedImageFiles=[];
+let handsetDraft=[];
+
+updateCategoryFields();setProductStep(1);renderImagePreview();
+
+$('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault(); $('loginMsg').className='msg ok'; $('loginMsg').textContent='⏳ Login checking...';
+ const r=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+ if(r.error){$('loginMsg').className='msg';$('loginMsg').textContent='❌ '+r.error.message;return}
+ showDashboard();
+});
+$('logoutBtn').onclick=async()=>{await db.auth.signOut();location.reload()};
+
+async function showDashboard(){
+ $('loginBox').classList.add('hidden');$('dashboard').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');
+ await Promise.all([loadProducts(),loadOrders(),loadAds()]);
+}
+
+function calculateProfit(){
+ const sale=Number($('pPrice').value||0), purchase=Number($('pPurchase').value||0);
+ const profit=sale-purchase;
+ $('profitPreview').textContent=profit.toFixed(0);
+}
+$('pPrice').addEventListener('input',calculateProfit);
+$('pPurchase').addEventListener('input',calculateProfit);
+$('pStock').addEventListener('input',()=>{if(productStep===4)buildHandsets();});
+$('pCategory').addEventListener('change',updateCategoryFields);
+$('pImageFiles').addEventListener('change',e=>{selectedImageFiles=[...e.target.files].slice(0,4);renderImagePreview();});
+
+function isMobileProduct(){return $('pCategory').value==='mobiles'}
+function updateCategoryFields(){
+ const mobile=isMobileProduct();
+ $('modelWrap').style.display=mobile?'block':'none';
+ $('ramWrap').style.display=mobile?'block':'none';
+ $('mobileHandsets').classList.toggle('hidden',!mobile);
+ $('nonMobileDetails').classList.toggle('hidden',mobile);
+ if(productStep===4)buildHandsets();
+}
+
+function setProductStep(n){
+ productStep=Math.max(1,Math.min(5,n));
+ document.querySelectorAll('.wizard-step').forEach(p=>p.classList.toggle('hidden',Number(p.dataset.panel)!==productStep));
+ document.querySelectorAll('.step').forEach(el=>{const n=Number(el.dataset.step);el.classList.toggle('active',n===productStep);el.classList.toggle('done',n<productStep)});
+ $('stepTitle').textContent='Step '+productStep+' of 5';
+ $('backBtn').classList.toggle('hidden',productStep===1);
+ $('nextBtn').classList.toggle('hidden',productStep===5);
+ $('saveBtn').classList.toggle('hidden',productStep!==5);
+ if(productStep===4)buildHandsets();
+ if(productStep===5)buildReview();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function validateProductStep(){
+ if(productStep===1){if(!$('pName').value.trim()){alert('Product Name required.');return false} if(isMobileProduct()&&!$('pModel').value.trim()){alert('Mobile Model required.');return false}}
+ if(productStep===2){if(Number($('pPrice').value||0)<=0){alert('Sale Price required.');return false} if(Number($('pStock').value||0)<0){alert('Stock invalid.');return false}}
+ if(productStep===4&&isMobileProduct()){
+   const n=Number($('pStock').value||0); if(n<1){alert('Mobile Stock कमीत कमी 1 असावा.');return false}
+   const rows=[...document.querySelectorAll('.handset-card')];
+   if(rows.length!==n){buildHandsets()}
+   for(let i=0;i<n;i++){
+     const c=rows[i];
+     const color=c.querySelector('.hs-color')?.value.trim();
+     const i1=c.querySelector('.hs-imei1')?.value.trim();
+     const i2=c.querySelector('.hs-imei2')?.value.trim();
+     if(!color||!i1||!i2){alert('प्रत्येक handset साठी Color, IMEI 1 आणि IMEI 2 भरा.');return false}
+   }
+ }
+ return true;
+}
+function nextProductStep(){if(!validateProductStep())return;setProductStep(productStep+1)}
+function prevProductStep(){setProductStep(productStep-1)}
+
+function renderImagePreview(){
+ const main=$('mainImagePreview'), thumbs=$('imageThumbs');thumbs.innerHTML='';
+ if(!selectedImageFiles.length){main.innerHTML='<div class="camera">📷</div><b>Product Image Preview</b><span class="small">Upload केल्यावर image इथे दिसेल</span>';return}
+ const urls=selectedImageFiles.map(f=>URL.createObjectURL(f));
+ main.innerHTML=`<img src="${urls[0]}" alt="preview"><b>${esc(selectedImageFiles[0].name)}</b>`;
+ urls.forEach((u,i)=>{const d=document.createElement('div');d.className='image-thumb';d.innerHTML=`<img src="${u}"><button type="button" onclick="removeSelectedImage(${i})">×</button>`;thumbs.appendChild(d)})
+}
+function removeSelectedImage(i){selectedImageFiles.splice(i,1);renderImagePreview()}
+
+function buildHandsets(){
+ if(!isMobileProduct())return;
+ const count=Math.max(1,Number($('pStock').value||1));
+ $('handsetCountText').textContent=count;
+ const old=[...document.querySelectorAll('.handset-card')].map(c=>({color:c.querySelector('.hs-color')?.value||'',i1:c.querySelector('.hs-imei1')?.value||'',i2:c.querySelector('.hs-imei2')?.value||'',serial:c.querySelector('.hs-serial')?.value||''}));
+ const list=$('handsetList');list.innerHTML='';
+ for(let i=0;i<count;i++){
+   const x=old[i]||handsetDraft[i]||{};
+   const card=document.createElement('div');card.className='handset-card';
+   card.innerHTML=`<div class="handset-top"><b>Handset ${i+1}</b><span class="status-pill">Available</span></div>
+   <div class="row"><div><label>Color *</label><input class="hs-color" value="${esc(x.color||'')}" placeholder="Red / Yellow"></div><div><label>IMEI 1 *</label><input class="hs-imei1" inputmode="numeric" value="${esc(x.i1||'')}" placeholder="15 digit IMEI"></div></div>
+   <div class="row"><div><label>IMEI 2 *</label><input class="hs-imei2" inputmode="numeric" value="${esc(x.i2||'')}" placeholder="15 digit IMEI"></div><div><label>Serial No.</label><input class="hs-serial" value="${esc(x.serial||'')}" placeholder="Serial number"></div></div>`;
+   list.appendChild(card);
+ }
+}
+function collectHandsets(){return [...document.querySelectorAll('.handset-card')].map((c,i)=>({handset_no:i+1,color:c.querySelector('.hs-color').value.trim(),imei_1:c.querySelector('.hs-imei1').value.trim(),imei_2:c.querySelector('.hs-imei2').value.trim(),serial_no:c.querySelector('.hs-serial').value.trim(),status:'Available'}))}
+
+function buildReview(){
+ const mobile=isMobileProduct(), imgs=selectedImageFiles.length?URL.createObjectURL(selectedImageFiles[0]):$('pImage').value;
+ const hs=mobile?collectHandsets():[];
+ $('reviewBox').innerHTML=`<div class="review-row">${imgs?`<img class="review-image" src="${esc(imgs)}">`:''}<div><h3 style="margin:0">${esc($('pName').value||'Product')}</h3><div class="small">${esc($('pBrand').value)} ${mobile?'• '+esc($('pModel').value):''}</div><p>Sale Price: <b>₹${Number($('pPrice').value||0).toFixed(0)}</b><br>Stock: <b>${Number($('pStock').value||0)}</b><br>Warranty: ${esc($('pWarranty').value||'-')}</p></div></div>
+ <hr><p><b>Purchase Price:</b> ₹${Number($('pPurchase').value||0).toFixed(0)} &nbsp; <b>Profit:</b> ₹${Number($('pPrice').value||0)-Number($('pPurchase').value||0)}</p>
+ ${mobile?`<h4>Handset Details</h4><table class="review-table"><tr><th>#</th><th>Color</th><th>IMEI 1</th><th>IMEI 2</th><th>Serial</th></tr>${hs.map(x=>`<tr><td>${x.handset_no}</td><td>${esc(x.color)}</td><td>${esc(x.imei_1)}</td><td>${esc(x.imei_2)}</td><td>${esc(x.serial_no||'-')}</td></tr>`).join('')}</table>`:''}`;
+}
+
+async function uploadProductImages(productId){
+ if(!selectedImageFiles.length)return $('pImage').value.trim()||null;
+ let mainUrl=null;
+ for(let i=0;i<selectedImageFiles.length;i++){
+   const file=selectedImageFiles[i];const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const path=`products/${productId}/${crypto.randomUUID()}.${ext}`;
+   const up=await db.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type});
+   if(up.error)throw new Error('Image upload failed: '+up.error.message);
+   const pub=db.storage.from('product-images').getPublicUrl(path);if(i===0)mainUrl=pub.data.publicUrl;
+ }
+ return mainUrl;
+}
+
+function clearProductForm(){
+ ['productId','pName','pBrand','pModel','pRam','pCompatible','pWarranty','pPrice','pStock','pImage','pDescription','pPurchase'].forEach(id=>$(id).value='');
+ $('pCategory').value='custom_printing';$('pAvailable').value='true';$('pCustom').checked=false;$('productMsg').textContent='';$('formTitle').textContent='➕ Add Product';selectedImageFiles=[];handsetDraft=[];renderImagePreview();setProductStep(1);updateCategoryFields();calculateProfit();
+}
+
+async function saveProduct(){
+ if(!validateProductStep()||productStep!==5)return;
+ const id=$('productId').value.trim()||null;
+ const product={name:$('pName').value.trim(),description:$('pDescription').value.trim(),price:Number($('pPrice').value||0),stock:Number($('pStock').value||0),image_url:$('pImage').value.trim()||null,available:$('pAvailable').value==='true',category:$('pCategory').value,brand:$('pBrand').value.trim()||null,model:isMobileProduct()?$('pModel').value.trim():null,ram_storage:isMobileProduct()?($('pRam').value.trim()||null):null,compatible_model:isMobileProduct()?null:($('pCompatible').value.trim()||null),warranty:$('pWarranty').value.trim()||null,is_customizable:isMobileProduct()?false:$('pCustom').checked};
+ if(!product.name){alert('Product name required.');return}
+ $('saveBtn').disabled=true;$('productMsg').className='msg ok';$('productMsg').textContent='⏳ Product saving...';
+ let r=id?await db.from('products').update(product).eq('id',id).select('id').single():await db.from('products').insert(product).select('id').single();
+ if(r.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='❌ '+r.error.message;return}
+ const pid=id||r.data.id;
+ try{const img=await uploadProductImages(pid);if(img){const u=await db.from('products').update({image_url:img}).eq('id',pid);if(u.error)throw new Error(u.error.message);}}
+ catch(e){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but '+e.message;return}
+ const priv={product_id:pid,purchase_price:Number($('pPurchase').value||0),profit:Number($('pPrice').value||0)-Number($('pPurchase').value||0),imei_1:null,imei_2:null,serial_no:null,updated_at:new Date().toISOString()};
+ const q=await db.from('product_private').upsert(priv,{onConflict:'product_id'});
+ if(q.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but private data error: '+q.error.message;return}
+ if(isMobileProduct()){
+   const del=await db.from('product_handsets').delete().eq('product_id',pid);if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='❌ Handset cleanup failed: '+del.error.message;return}
+   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,status:'Available'}));
+   const ins=await db.from('product_handsets').insert(rows);if(ins.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but handset details error: '+ins.error.message;return}
+ }
+ $('productMsg').className='msg ok';$('productMsg').textContent='✅ Product saved successfully.';$('saveBtn').disabled=false;clearProductForm();await loadProducts();
+}
+
+async function loadProducts(){
+ const [pr,priv]=await Promise.all([
+   db.from('products').select('id,name,description,price,stock,image_url,available,category,brand,model,ram_storage,compatible_model,warranty,is_customizable').order('created_at',{ascending:false}),
+   db.from('product_private').select('product_id,purchase_price,profit')
+ ]);
+ if(pr.error){$('products').innerHTML='<div class="msg">❌ '+esc(pr.error.message)+'</div>';return}
+ const pm=new Map((priv.data||[]).map(x=>[x.product_id,x]));
+ $('productCount').textContent=pr.data.length;$('lowStock').textContent=pr.data.filter(x=>Number(x.stock)<=5).length;
+ $('products').innerHTML=pr.data.length?'<div class="grid">'+pr.data.map(p=>{const x=pm.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name)}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">No products found.</p>';
+}
+async function editProduct(p){
+ const privR=await db.from('product_private').select('purchase_price').eq('product_id',p.id).maybeSingle();
+ $('productId').value=p.id;$('formTitle').textContent='✏️ Edit Product';$('pName').value=p.name||'';$('pDescription').value=p.description||'';$('pPrice').value=p.price||0;$('pStock').value=p.stock||0;$('pImage').value=p.image_url||'';$('pAvailable').value=String(p.available);$('pCategory').value=p.category||'custom_printing';$('pBrand').value=p.brand||'';$('pModel').value=p.model||'';$('pRam').value=p.ram_storage||'';$('pCompatible').value=p.compatible_model||'';$('pWarranty').value=p.warranty||'';$('pCustom').checked=!!p.is_customizable;$('pPurchase').value=privR.data?.purchase_price??'';
+ selectedImageFiles=[];renderImagePreview();updateCategoryFields();
+ if(isMobileProduct()){const h=await db.from('product_handsets').select('handset_no,color,imei_1,imei_2,serial_no,status').eq('product_id',p.id).order('handset_no');handsetDraft=h.data||[];}
+ setProductStep(1);calculateProfit();
+}
+async function toggleProduct(id,v){const r=await db.from('products').update({available:v}).eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadProducts()}
+async function deleteProduct(id){if(!confirm('हा product delete करायचा का?'))return;const h=await db.from('product_handsets').delete().eq('product_id',id);const r=await db.from('products').delete().eq('id',id);if(r.error)alert('❌ Delete failed: '+r.error.message);else loadProducts()}
+
+async function loadOrders(){
+ const r=await db.from('orders').select('id,customer_name,customer_mobile,customer_address,address,instructions,photo_path,customer_photo_url,total_amount,status,created_at').order('created_at',{ascending:false}).limit(100);
+ if(r.error){$('orders').innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return}
+ $('orderCount').textContent=r.data.length;$('orderValue').textContent='₹'+r.data.reduce((a,o)=>a+Number(o.total_amount||0),0).toFixed(0);
+ $('orders').innerHTML=r.data.length?r.data.map(o=>`<div class="order"><div class="ordertop"><div><b>Order #${esc(o.id)}</b><div class="small">${new Date(o.created_at).toLocaleString()}</div></div><span class="badge">${esc(o.status||'New')}</span></div><p><b>${esc(o.customer_name)}</b> • ${esc(o.customer_mobile)}<br>📍 ${esc(o.address||o.customer_address||'-')}</p><p>💰 <b>₹${Number(o.total_amount||0).toFixed(0)}</b><br>📝 ${esc(o.instructions||'-')}</p><label>Status</label><select id="status_${o.id}">${['New','Printing','Ready','Delivered'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select><div class="actions"><button class="green" onclick="saveStatus('${o.id}')">Update Status</button>${o.photo_path?`<button class="light" onclick="downloadPhoto('${esc(o.photo_path)}')">⬇️ Download Original Photo</button>`:''}</div></div>`).join(''):'<p class="muted">No orders found.</p>';
+}
+async function saveStatus(id){const r=await db.from('orders').update({status:$('status_'+id).value}).eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadOrders()}
+async function downloadPhoto(path){
+ const r=await db.storage.from('customer-photos').createSignedUrl(path,300);
+ if(r.error){alert('❌ '+r.error.message);return}
+ const a=document.createElement('a');a.href=r.data.signedUrl;a.target='_blank';a.download=path.split('/').pop()||'original-photo';a.click();
+}
+
+function clearAdForm(){['adId','adBusiness','adDescription','adWhatsapp','adUrl','adSort','adStart','adEnd'].forEach(id=>$(id).value='');$('adType').value='image';$('adActive').value='true';$('adFile').value='';$('adFormTitle').textContent='➕ Add Advertisement';$('adMsg').textContent=''}
+async function saveAd(){
+ const business=$('adBusiness').value.trim();if(!business){$('adMsg').className='msg';$('adMsg').textContent='Business name required.';return}
+ let mediaUrl=$('adUrl').value.trim();const file=$('adFile').files[0];let type=$('adType').value;
+ if(file){
+   type=file.type.startsWith('video/')?'video':'image';
+   const ext=(file.name.split('.').pop()||'bin').toLowerCase(), path='ads/'+crypto.randomUUID()+'.'+ext;
+   const up=await db.storage.from('ad-media').upload(path,file,{upsert:false,contentType:file.type});
+   if(up.error){$('adMsg').className='msg';$('adMsg').textContent='❌ Upload failed: '+up.error.message;return}
+   const pub=db.storage.from('ad-media').getPublicUrl(path);mediaUrl=pub.data.publicUrl;
+ }
+ if(!mediaUrl){$('adMsg').className='msg';$('adMsg').textContent='Image/video upload किंवा media URL द्या.';return}
+ const row={business_name:business,description:$('adDescription').value.trim()||null,whatsapp:$('adWhatsapp').value.trim()||null,media_type:type,media_url:mediaUrl,active:$('adActive').value==='true',sort_order:Number($('adSort').value||1),start_at:$('adStart').value?new Date($('adStart').value).toISOString():null,end_at:$('adEnd').value?new Date($('adEnd').value).toISOString():null};
+ const id=$('adId').value.trim();const r=id?await db.from('advertisements').update(row).eq('id',id):await db.from('advertisements').insert(row);
+ if(r.error){$('adMsg').className='msg';$('adMsg').textContent='❌ '+r.error.message;return}
+ $('adMsg').className='msg ok';$('adMsg').textContent='✅ Advertisement saved.';clearAdForm();loadAds();
+}
+async function loadAds(){
+ const r=await db.from('advertisements').select('*').order('sort_order').order('created_at',{ascending:false});
+ if(r.error){$('ads').innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return}
+ $('ads').innerHTML=r.data.length?'<div class="grid">'+r.data.map(a=>`<div class="item"><b>${esc(a.business_name)}</b><div class="small">${esc(a.description||'')} • ${a.active?'ON':'OFF'}</div>${a.media_type==='video'?`<video class="admedia" controls src="${esc(a.media_url)}"></video>`:`<img class="admedia" src="${esc(a.media_url)}">`}<p class="small">WhatsApp: ${esc(a.whatsapp||'-')}<br>Order: ${a.sort_order}</p><div class="actions"><button class="light" onclick='editAd(${JSON.stringify(a).replace(/'/g,"&#039;")})'>Edit</button><button class="red" onclick="deleteAd('${a.id}')">Delete</button></div></div>`).join('')+'</div>':'<p class="muted">No advertisements yet.</p>';
+}
+function editAd(a){$('adId').value=a.id;$('adFormTitle').textContent='✏️ Edit Advertisement';$('adBusiness').value=a.business_name||'';$('adDescription').value=a.description||'';$('adWhatsapp').value=a.whatsapp||'';$('adType').value=a.media_type||'image';$('adUrl').value=a.media_url||'';$('adSort').value=a.sort_order||1;$('adActive').value=String(a.active);$('adStart').value=a.start_at?new Date(a.start_at).toISOString().slice(0,16):'';$('adEnd').value=a.end_at?new Date(a.end_at).toISOString().slice(0,16):'';window.scrollTo({top:0,behavior:'smooth'})}
+async function deleteAd(id){if(!confirm('हा advertisement delete करायचा का?'))return;const r=await db.from('advertisements').delete().eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadAds()}
+
+(async()=>{const r=await db.auth.getSession();if(r.data.session)showDashboard()})();
+</script>
+</body>
+</html>
