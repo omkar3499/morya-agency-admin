@@ -139,6 +139,23 @@ grant execute on function public.morya_create_order_atomic(text,text,text,text,j
 
 commit;
 
+
+-- SAFER REVISION NOTES / REQUIRED PRE-CHECKS
+-- Do not enable this function for customers until all checks below pass in a staging project.
+-- This version is not yet the production checkout: reward redemption is deliberately absent.
+--
+-- Stock safety note:
+-- The existing order_items INSERT trigger decreases stock. This RPC relies on that trigger,
+-- so a failed item insert should roll back the order and all stock changes in the same transaction.
+-- Confirm the trigger rejects insufficient stock; a trigger that permits negative stock is unsafe.
+--
+-- IMPORTANT: prices are read from products.price. Cart items must carry product_id UUIDs that
+-- match products.id. If custom products in the HTML use local/demo IDs, checkout will reject them
+-- until the product IDs are mapped correctly.
+--
+-- Before production, also add a stable p_request_id UUID and persist it with orders (unique
+-- constraint) so retrying a slow checkout cannot create duplicate orders.
+
 -- BEFORE production:
 -- 1. Confirm actual columns, constraints, RLS, and orders required fields in staging.
 -- 2. Verify products.price is the correct authoritative price and whether custom-print products have catalog UUIDs.
