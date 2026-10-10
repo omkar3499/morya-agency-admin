@@ -85,11 +85,15 @@ begin
   -- Idempotent retry: return existing order; never redeem a second time.
   select * into v_existing from public.orders where checkout_request_id=p_request_id;
   if found then
-    return query select true,v_existing.id,
-      greatest(coalesce(v_existing.total_amount,0) - case when p_delivery='home' then 80 else 0 end,0)::numeric,
-      v_points,
-      case when p_delivery='home' then 80::numeric else 0::numeric end,
-      coalesce(v_existing.total_amount,0)::numeric,
+    select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0)::numeric(12,2)
+      into v_subtotal
+    from public.order_items oi where oi.order_id=v_existing.id;
+    select coalesce(-sum(l.points),0)::integer into v_points
+    from public.reward_points_ledger l
+    where l.idempotency_key='checkout-redeem:'||p_request_id::text;
+    v_delivery_fee := case when coalesce(v_existing.instructions,'') like '%Delivery: home%' then 80 else 0 end;
+    return query select true,v_existing.id,v_subtotal,coalesce(v_points,0),
+      v_delivery_fee,coalesce(v_existing.total_amount,0)::numeric,
       'This checkout request was already processed.'::text;
     return;
   end if;
@@ -166,8 +170,16 @@ exception when unique_violation then
   -- Unique request ID prevents duplicate orders if two retries race.
   select * into v_existing from public.orders where checkout_request_id=p_request_id;
   if found then
-    return query select true,v_existing.id,0::numeric,v_points,0::numeric,
-      coalesce(v_existing.total_amount,0)::numeric,'This checkout request was already processed.'::text;
+    select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0)::numeric(12,2)
+      into v_subtotal
+    from public.order_items oi where oi.order_id=v_existing.id;
+    select coalesce(-sum(l.points),0)::integer into v_points
+    from public.reward_points_ledger l
+    where l.idempotency_key='checkout-redeem:'||p_request_id::text;
+    v_delivery_fee := case when coalesce(v_existing.instructions,'') like '%Delivery: home%' then 80 else 0 end;
+    return query select true,v_existing.id,v_subtotal,coalesce(v_points,0),
+      v_delivery_fee,coalesce(v_existing.total_amount,0)::numeric,
+      'This checkout request was already processed.'::text;
     return;
   end if;
   raise;
