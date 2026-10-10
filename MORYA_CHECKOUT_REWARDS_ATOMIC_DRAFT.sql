@@ -39,6 +39,7 @@ declare
   v_model_or_size text;
   v_quantity integer;
   v_unit_price numeric(12,2);
+  v_stock integer;
   v_subtotal numeric(12,2) := 0;
   v_delivery_fee numeric(12,2) := 0;
   v_total numeric(12,2);
@@ -76,6 +77,261 @@ begin
   end if;
   if jsonb_typeof(p_items)<>'array' or jsonb_array_length(p_items)<1 then
     return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Cart is empty.'::text;
+    return;
+  end if;
+
+  -- Validate every cart row before casting UUID/quantity, then lock catalog rows.
+  if exists (
+    select 1 from jsonb_array_elements(p_items) e(value)
+    where coalesce(e.value->>'product_id','') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
+
+  -- Idempotent retry: return existing order; never redeem a second time.
+  select * into v_existing from public.orders where checkout_request_id=p_request_id;
+  if found then
+    select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0)::numeric(12,2)
+      into v_subtotal
+    from public.order_items oi where oi.order_id=v_existing.id;
+    select coalesce(-sum(l.points),0)::integer into v_points
+    from public.reward_points_ledger l
+    where l.idempotency_key='checkout-redeem:'||p_request_id::text;
+    v_delivery_fee := case when coalesce(v_existing.instructions,'') like '%Delivery: home%' then 80 else 0 end;
+    return query select true,v_existing.id,v_subtotal,coalesce(v_points,0),
+      v_delivery_fee,coalesce(v_existing.total_amount,0)::numeric,
+      'This checkout request was already processed.'::text;
+    return;
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    begin
+      v_product_id := (v_item->>'product_id')::uuid;
+      v_quantity := (v_item->>'quantity')::integer;
+    exception when others then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Cart item has an invalid product ID or quantity.'::text;
+      return;
+    end;
+    if v_quantity is null or v_quantity<1 or v_quantity>100 then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Invalid item quantity.'::text;
+      return;
+    end if;
+    select p.name,p.price,p.stock into v_product_name,v_unit_price,v_stock
+      from public.products p where p.id=v_product_id for update;
+    if not found then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Product not found in catalog.'::text;
+      return;
+    end if;
+    if v_unit_price is null or v_unit_price<=0 then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Product price must be greater than zero.'::text;
+      return;
+    end if;
+    if v_stock is not null and v_stock < v_quantity then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Insufficient stock for '||v_product_name||'.'::text;
+      return;
+    end if;
+    v_subtotal := v_subtotal + v_unit_price*v_quantity;
+  end loop;
+
+  if v_points>floor(v_subtotal)::integer then
+    return query select false,null::uuid,v_subtotal,0,0::numeric,v_subtotal,'Redeemed points cannot exceed item subtotal.'::text;
+    return;
+  end if;
+
+  select coalesce(sum(points),0)::bigint into v_balance
+    from public.reward_points_ledger where customer_mobile=v_mobile;
+  if v_points>v_balance then
+    return query select false,null::uuid,v_subtotal,0,0::numeric,v_subtotal,'Insufficient reward points.'::text;
+    return;
+  end if;
+
+  v_delivery_fee := case when p_delivery='home' then 80 else 0 end;
+  v_total := greatest(v_subtotal-v_points,0)+v_delivery_fee;
+
+  insert into public.orders
+    (checkout_request_id,customer_name,customer_mobile,customer_address,total_amount,status,
+     payment_method,payment_status,instructions)
+  values
+    (p_request_id,left(trim(p_customer_name),200),v_mobile,left(trim(p_customer_address),1000),
+     v_total,'Order Received','Cash on Delivery','pending','Delivery: '||p_delivery)
+  returning id into v_order_id;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::integer;
+    v_model_or_size := left(coalesce(v_item->>'model_or_size',''),250);
+    select p.name,p.price into v_product_name,v_unit_price from public.products p where p.id=v_product_id;
+    insert into public.order_items(order_id,product_id,product_name,model_or_size,quantity,price,unit_price)
+    values(v_order_id,v_product_id,left(v_product_name,250),v_model_or_size,v_quantity,v_unit_price,v_unit_price);
+  end loop;
+
+  if v_points>0 then
+    insert into public.reward_points_ledger
+      (customer_mobile,customer_name,order_id,entry_type,points,amount_inr,note,idempotency_key)
+    values
+      (v_mobile,left(trim(p_customer_name),200),v_order_id,'redeemed',-v_points,v_points,
+       'Reward points redeemed during atomic checkout','checkout-redeem:'||p_request_id::text);
+  end if;
+
+  return query select true,v_order_id,v_subtotal,v_points,v_delivery_fee,v_total,'Order and reward redemption saved atomically.'::text;
+exception when unique_violation then
+  -- Unique request ID prevents duplicate orders if two retries race.
+  select * into v_existing from public.orders where checkout_request_id=p_request_id;
+  if found then
+    select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0)::numeric(12,2)
+      into v_subtotal
+    from public.order_items oi where oi.order_id=v_existing.id;
+    select coalesce(-sum(l.points),0)::integer into v_points
+    from public.reward_points_ledger l
+    where l.idempotency_key='checkout-redeem:'||p_request_id::text;
+    v_delivery_fee := case when coalesce(v_existing.instructions,'') like '%Delivery: home%' then 80 else 0 end;
+    return query select true,v_existing.id,v_subtotal,coalesce(v_points,0),
+      v_delivery_fee,coalesce(v_existing.total_amount,0)::numeric,
+      'This checkout request was already processed.'::text;
+    return;
+  end if;
+  raise;
+end;
+$$;
+
+revoke all on function public.morya_checkout_with_rewards(uuid,text,text,text,text,jsonb,integer) from public,anon;
+grant execute on function public.morya_checkout_with_rewards(uuid,text,text,text,text,jsonb,integer) to authenticated;
+
+commit;
+
+-- PRE-PRODUCTION GATES:
+-- 1. Confirm orders column names/required fields and reward ledger migration are applied in staging.
+-- 2. Verify all customer cart product IDs map to public.products.id, including custom printing and handsets.
+-- 3. Product rows are locked FOR UPDATE and each cart row checks available stock.
+--    IMPORTANT: test duplicate product IDs in one cart and concurrent purchases in staging;
+--    duplicate cart rows can collectively exceed stock unless the client consolidates them or
+--    this RPC is extended to aggregate quantities by product before validation.
+-- 4. Verify idempotent retry response includes the originally redeemed points and correct subtotal/fee.
+-- 5. Test redemption=0, exact balance, insufficient balance, and concurrent same-customer checkouts.
+-- 6. Integrate this RPC in Customer HTML only after staging success; do not enable direct browser order inserts.
+-- 7. This RPC does not implement partial refund/return workflow or admin refund authorization.
+
+       or coalesce(e.value->>'quantity','') !~ '^[0-9]+
+
+  -- Idempotent retry: return existing order; never redeem a second time.
+  select * into v_existing from public.orders where checkout_request_id=p_request_id;
+  if found then
+    select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0)::numeric(12,2)
+      into v_subtotal
+    from public.order_items oi where oi.order_id=v_existing.id;
+    select coalesce(-sum(l.points),0)::integer into v_points
+    from public.reward_points_ledger l
+    where l.idempotency_key='checkout-redeem:'||p_request_id::text;
+    v_delivery_fee := case when coalesce(v_existing.instructions,'') like '%Delivery: home%' then 80 else 0 end;
+    return query select true,v_existing.id,v_subtotal,coalesce(v_points,0),
+      v_delivery_fee,coalesce(v_existing.total_amount,0)::numeric,
+      'This checkout request was already processed.'::text;
+    return;
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    begin
+      v_product_id := (v_item->>'product_id')::uuid;
+      v_quantity := (v_item->>'quantity')::integer;
+    exception when others then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Cart item has an invalid product ID or quantity.'::text;
+      return;
+    end;
+    if v_quantity is null or v_quantity<1 or v_quantity>100 then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Invalid item quantity.'::text;
+      return;
+    end if;
+    select p.name,p.price into v_product_name,v_unit_price
+      from public.products p where p.id=v_product_id for share;
+    if not found then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Product not found in catalog.'::text;
+      return;
+    end if;
+    if v_unit_price is null or v_unit_price<=0 then
+      return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Product price must be greater than zero.'::text;
+      return;
+    end if;
+    v_subtotal := v_subtotal + v_unit_price*v_quantity;
+  end loop;
+
+  if v_points>floor(v_subtotal)::integer then
+    return query select false,null::uuid,v_subtotal,0,0::numeric,v_subtotal,'Redeemed points cannot exceed item subtotal.'::text;
+    return;
+  end if;
+
+  select coalesce(sum(points),0)::bigint into v_balance
+    from public.reward_points_ledger where customer_mobile=v_mobile;
+  if v_points>v_balance then
+    return query select false,null::uuid,v_subtotal,0,0::numeric,v_subtotal,'Insufficient reward points.'::text;
+    return;
+  end if;
+
+  v_delivery_fee := case when p_delivery='home' then 80 else 0 end;
+  v_total := greatest(v_subtotal-v_points,0)+v_delivery_fee;
+
+  insert into public.orders
+    (checkout_request_id,customer_name,customer_mobile,customer_address,total_amount,status,
+     payment_method,payment_status,instructions)
+  values
+    (p_request_id,left(trim(p_customer_name),200),v_mobile,left(trim(p_customer_address),1000),
+     v_total,'Order Received','Cash on Delivery','pending','Delivery: '||p_delivery)
+  returning id into v_order_id;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::integer;
+    v_model_or_size := left(coalesce(v_item->>'model_or_size',''),250);
+    select p.name,p.price into v_product_name,v_unit_price from public.products p where p.id=v_product_id;
+    insert into public.order_items(order_id,product_id,product_name,model_or_size,quantity,price,unit_price)
+    values(v_order_id,v_product_id,left(v_product_name,250),v_model_or_size,v_quantity,v_unit_price,v_unit_price);
+  end loop;
+
+  if v_points>0 then
+    insert into public.reward_points_ledger
+      (customer_mobile,customer_name,order_id,entry_type,points,amount_inr,note,idempotency_key)
+    values
+      (v_mobile,left(trim(p_customer_name),200),v_order_id,'redeemed',-v_points,v_points,
+       'Reward points redeemed during atomic checkout','checkout-redeem:'||p_request_id::text);
+  end if;
+
+  return query select true,v_order_id,v_subtotal,v_points,v_delivery_fee,v_total,'Order and reward redemption saved atomically.'::text;
+exception when unique_violation then
+  -- Unique request ID prevents duplicate orders if two retries race.
+  select * into v_existing from public.orders where checkout_request_id=p_request_id;
+  if found then
+    select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0)::numeric(12,2)
+      into v_subtotal
+    from public.order_items oi where oi.order_id=v_existing.id;
+    select coalesce(-sum(l.points),0)::integer into v_points
+    from public.reward_points_ledger l
+    where l.idempotency_key='checkout-redeem:'||p_request_id::text;
+    v_delivery_fee := case when coalesce(v_existing.instructions,'') like '%Delivery: home%' then 80 else 0 end;
+    return query select true,v_existing.id,v_subtotal,coalesce(v_points,0),
+      v_delivery_fee,coalesce(v_existing.total_amount,0)::numeric,
+      'This checkout request was already processed.'::text;
+    return;
+  end if;
+  raise;
+end;
+$$;
+
+revoke all on function public.morya_checkout_with_rewards(uuid,text,text,text,text,jsonb,integer) from public,anon;
+grant execute on function public.morya_checkout_with_rewards(uuid,text,text,text,text,jsonb,integer) to authenticated;
+
+commit;
+
+-- PRE-PRODUCTION GATES:
+-- 1. Confirm orders column names/required fields and reward ledger migration are applied in staging.
+-- 2. Verify all customer cart product IDs map to public.products.id, including custom printing and handsets.
+-- 3. Test stock trigger under concurrent purchases; transaction must reject insufficient stock.
+-- 4. Verify idempotent retry response includes the originally redeemed points and correct subtotal/fee.
+-- 5. Test redemption=0, exact balance, insufficient balance, and concurrent same-customer checkouts.
+-- 6. Integrate this RPC in Customer HTML only after staging success; do not enable direct browser order inserts.
+-- 7. This RPC does not implement partial refund/return workflow or admin refund authorization.
+
+  ) then
+    return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Cart item has an invalid product ID or quantity.'::text;
     return;
   end if;
 
