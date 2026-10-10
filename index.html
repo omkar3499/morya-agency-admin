@@ -183,7 +183,7 @@ hr{border:0;border-top:1px solid #eee;margin:18px 0}
 <section id="customersTab" class="tab card hidden"><h2>👥 Customers</h2><p class="small">Orders मधून customer list तयार होते.</p><div id="customers">Loading...</div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
 <section id="pointsEarnedTab" class="tab card hidden"><h2>⭐ Points Earned</h2><p class="small">Completed purchase वर reward points tracking साठी section.</p><div class="info-box">Reward rule: प्रत्येक completed purchase वर 1% reward balance.</div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
 <section id="pointsUsedTab" class="tab card hidden"><h2>🎁 Points Used</h2><p class="small">Customer ने checkout मध्ये वापरलेले points इथे track केले जातील.</p><div class="info-box">Points usage history module.</div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
-<section id="remainingPointsTab" class="tab card hidden"><h2>💰 Remaining Points</h2><p class="small">प्रत्येक customer चा current reward balance.</p><div class="info-box">Reward balance module.</div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
+<section id="remainingPointsTab" class="tab card hidden"><h2>💰 Remaining Reward Points</h2><p class="small">Customer-wise reward balance from the Supabase ledger. Read-only until earn/redeem/reversal rules are enabled.</p><div class="info-box">Rule planned: eligible accessories, parts, covers and back skins earn 5% only after order completion. Do not enable redemption until secure server-side validation is configured.</div><div class="products-head"><h3>Customer Balances</h3><button class="light" onclick="loadRewardBalances()">↻ Refresh</button></div><div id="rewardBalancesMsg" class="small">Loading…</div><div id="rewardBalancesTable"></div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
 <section id="salesTab" class="tab card hidden"><h2>📊 Sales & Reports</h2><div id="salesSummary" class="stats"></div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
 <section id="lowStockTab" class="tab card hidden"><h2>⚠️ Low Stock</h2><div id="lowStockProducts">Loading...</div><button class="light" onclick="backToDashboard()">← Dashboard</button></section>
 <section id="handsetsTab" class="tab card hidden"><h2>📱 Mobile Handsets</h2><p class="small">Mobile Phone products मधील handset inventory: Color, IMEI 1/2, Serial आणि status.</p><div class="info-box">Handset management product edit मध्ये उपलब्ध आहे. Product category Mobile Phones निवडा.</div><button class="light" onclick="showProductMode('view');openAdminSection('productsTab','view')">📦 View Mobile Phones</button> <button class="light" onclick="backToDashboard()">← Dashboard</button></section>
@@ -242,6 +242,7 @@ function openAdminSection(id,mode){
  if(id==='customersTab')loadCustomers();
  if(id==='salesTab')loadSalesSummary();
  if(id==='lowStockTab')loadLowStock();
+ if(id==='remainingPointsTab')loadRewardBalances();
  window.scrollTo({top:0,behavior:'smooth'});
 }
 function backToDashboard(){hideAllAdminSections();window.scrollTo({top:0,behavior:'smooth'});}
@@ -420,6 +421,22 @@ async function editProduct(p){
 }
 async function toggleProduct(id,v){const r=await db.from('products').update({available:v}).eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadProducts()}
 async function deleteProduct(id){if(!confirm('हा product delete करायचा का?'))return;const h=await db.from('product_handsets').delete().eq('product_id',id);const r=await db.from('products').delete().eq('id',id);if(r.error)alert('❌ Delete failed: '+r.error.message);else loadProducts()}
+
+
+async function loadRewardBalances(){
+ const box=$('rewardBalancesTable'), msg=$('rewardBalancesMsg');
+ if(!box||!msg)return;
+ msg.textContent='Loading reward balances…'; box.innerHTML='';
+ const r=await db.from('reward_points_balances').select('customer_mobile,customer_name,balance_points,earned_points,redeemed_points,last_activity_at').order('customer_name');
+ if(r.error){
+  msg.textContent='Reward ledger not ready: '+r.error.message;
+  box.innerHTML='<p class="small">Run and verify the approved reward schema first. No points have been changed.</p>';
+  return;
+ }
+ const rows=r.data||[];
+ msg.textContent=rows.length?('Customers: '+rows.length):'No reward ledger entries yet.';
+ box.innerHTML=rows.length?'<div style="overflow:auto"><table class="review-table"><thead><tr><th>Customer</th><th>Mobile</th><th>Earned</th><th>Redeemed</th><th>Balance</th><th>Last activity</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.customer_name||'-')+'</td><td>'+esc(x.customer_mobile||'-')+'</td><td>'+Number(x.earned_points||0)+'</td><td>'+Number(x.redeemed_points||0)+'</td><td><b>'+Number(x.balance_points||0)+'</b></td><td>'+esc(x.last_activity_at?new Date(x.last_activity_at).toLocaleString():'-')+'</td></tr>').join('')+'</tbody></table></div>':'<p class="small">No reward balances available.</p>';
+}
 
 async function loadOrders(){
  const r=await db.from('orders').select('id,customer_name,customer_mobile,customer_address,address,instructions,photo_path,customer_photo_url,total_amount,status,created_at').order('created_at',{ascending:false}).limit(100);
