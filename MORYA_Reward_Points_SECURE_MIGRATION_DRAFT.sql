@@ -107,6 +107,7 @@ declare
   normalized_mobile text;
   current_balance bigint;
   existing_points integer;
+  existing_mobile text;
 begin
   if auth.uid() is null then
     return query select false,0::bigint,'Please sign in first.'::text; return;
@@ -120,11 +121,18 @@ begin
   end if;
 
   perform pg_advisory_xact_lock(hashtext(normalized_mobile));
-  select points into existing_points from public.reward_points_ledger
+  select points, customer_mobile into existing_points, existing_mobile
+    from public.reward_points_ledger
     where idempotency_key='redeemed:'||p_request_id::text;
   if found then
     select coalesce(sum(points),0)::bigint into current_balance
       from public.reward_points_ledger where customer_mobile=normalized_mobile;
+    if existing_mobile is distinct from normalized_mobile
+       or existing_points is distinct from -p_points then
+      return query select false,current_balance,
+        'Request ID was already used with different checkout details.'::text;
+      return;
+    end if;
     return query select true,current_balance,'This redemption request was already processed.'::text; return;
   end if;
 
@@ -156,5 +164,6 @@ commit;
 -- 1. Tested on staging and verified against actual order_items prices/status values.
 -- 2. Admin-only read policy is added after confirming admin auth role (not guessed here).
 -- 3. Checkout UI calls the redemption RPC with one stable UUID per attempt and only discounts after success.
--- 4. Partial returns are implemented; this draft handles full return/cancel after Delivered only.
+-- 4. Partial returns are NOT implemented. Full cancellation/return after Delivered only reverses points still available; if points were already spent, the unreversed remainder needs a debt/offset design before production.
 -- 5. Existing reward triggers/functions are checked to prevent duplicate rewards.
+-- 6. Redemption is not transactionally coupled to order + order_items creation; do not enable checkout redemption until an atomic checkout RPC is implemented.
