@@ -2,6 +2,7 @@
 -- Draft only: review and test in a Supabase staging project before production.
 -- Additive only: does not delete or rewrite existing orders, order_items, or products.
 -- Earns 5% on ALL product categories when order status becomes Delivered.
+-- IMPORTANT: existing orders are not backfilled. Only status transitions after this trigger is installed can earn points; existing Delivered rows are not automatically rewarded.
 -- Customers can read only their own ledger based on the verified Supabase Auth phone.
 -- Admin access policy is intentionally not guessed; configure it after confirming admin auth.
 
@@ -57,10 +58,12 @@ begin
   normalized_mobile := right(regexp_replace(coalesce(new.customer_mobile,''), '[^0-9]', '', 'g'), 10);
   if normalized_mobile = '' then return new; end if;
 
+  -- Earn only on a future transition into Delivered. Existing Delivered rows are not backfilled.
   if lower(coalesce(new.status,''))='delivered' and lower(coalesce(old.status,''))<>'delivered' then
     select coalesce(sum(coalesce(oi.unit_price,oi.price)*oi.quantity),0) into eligible_amount
     from public.order_items oi where oi.order_id=new.id;
     earned := floor(greatest(eligible_amount,0)*0.05)::integer;
+    -- A unique order-based idempotency key prevents duplicate earn entries.
     if earned>0 then
       insert into public.reward_points_ledger
         (customer_mobile,customer_name,order_id,entry_type,points,amount_inr,note,idempotency_key)
