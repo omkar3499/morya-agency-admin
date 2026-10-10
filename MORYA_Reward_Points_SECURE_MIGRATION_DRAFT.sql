@@ -33,6 +33,13 @@ create policy "Customers read their own reward ledger"
 on public.reward_points_ledger for select to authenticated
 using (customer_mobile = right(regexp_replace(coalesce(auth.jwt() ->> 'phone',''), '[^0-9]', '', 'g'), 10));
 
+-- Admin read access is scoped to the specified signed-in admin email.
+-- Draft only: verify this email is the confirmed Supabase Auth admin account before production.
+drop policy if exists "Morya admin reads reward ledger" on public.reward_points_ledger;
+create policy "Morya admin reads reward ledger"
+on public.reward_points_ledger for select to authenticated
+using (lower(coalesce(auth.jwt() ->> 'email','')) = 'ozagade8@gmail.com');
+
 create or replace view public.reward_points_balances
 with (security_invoker = true) as
 select customer_mobile, max(customer_name) as customer_name,
