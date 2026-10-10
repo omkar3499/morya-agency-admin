@@ -83,6 +83,15 @@ begin
     return;
   end if;
 
+  if exists (
+    select 1 from public.reward_points_ledger
+    where order_id = p_order_id and entry_type = 'reversal'
+      and idempotency_key = 'reversal:' || p_order_id::text
+  ) then
+    return query select false, 0, 'This order already has a full reward reversal; partial return adjustment is blocked.'::text;
+    return;
+  end if;
+
   select coalesce(sum(returned_amount_inr),0)::numeric(12,2)
     into v_prior_return_amount
   from public.reward_return_requests
