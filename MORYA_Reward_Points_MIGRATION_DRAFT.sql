@@ -1,7 +1,7 @@
 -- MORYA AGENCY REWARD POINTS — DRAFT MIGRATION
 -- Review on a staging project before running in production.
 -- Additive only: does not delete or rewrite existing order/product/customer rows.
--- Earns 5% on eligible categories only when an order transitions to Delivered.
+-- Earns 5% on ALL product categories, including accessories, parts, covers, custom printing, and mobile handsets, when an order transitions to Delivered.
 -- This draft intentionally does NOT enable checkout redemption yet.
 
 begin;
@@ -57,10 +57,7 @@ begin
     select coalesce(sum(oi.price * oi.quantity),0)
       into eligible_amount
     from public.order_items oi
-    join public.products p on p.id = oi.product_id
-    where oi.order_id = new.id
-      and lower(coalesce(p.category,'')) in
-        ('mobile_accessories','mobile_parts','mobile_cover','mobile_back_skin');
+    where oi.order_id = new.id;
 
     earned := floor(greatest(eligible_amount,0) * 0.05)::integer;
 
@@ -70,7 +67,7 @@ begin
       values
         (regexp_replace(coalesce(new.customer_mobile,''),'[^0-9]','','g'),
          new.customer_name, new.id, 'earned', earned, eligible_amount,
-         '5% eligible category reward on delivered order', 'earned:'||new.id::text)
+         '5% reward on all products on delivered order', 'earned:'||new.id::text)
       on conflict (idempotency_key) do nothing;
     end if;
   end if;
