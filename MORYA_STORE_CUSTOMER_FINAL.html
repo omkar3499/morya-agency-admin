@@ -356,51 +356,46 @@ body{padding-bottom:92px}
    const placeBtn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
    if(placeBtn){placeBtn.disabled=true;placeBtn.textContent='Placing Order…';}
    const subtotal=cartTotal();
-   // Do not use localStorage reward balance for discounts; shared server redemption is not yet wired atomically.
-   const rewardUsed=0;
-   const deliveryFee=delivery==='home'?80:0;
-   const total=Math.max(0,subtotal-rewardUsed+deliveryFee);
-   const items=state.cart.map(x=>({name:x.name,qty:x.qty,price:x.price,color:x.color||'',product_id:x.product_id||x.id||null}));
-   let orderId;
-   try{
-     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
-     const {data,error}=await sb.from('orders').insert([payload]).select('id').single();
-     if(error) throw error;
-     if(!data?.id) throw new Error('Order ID was not returned by Supabase.');
-     orderId=data.id;
-     // Preserve item details even when a cart item has no real UUID product ID.
-     // The previous code sent local/cart IDs into a UUID column, which can fail.
-     const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-     const itemRows=state.cart.map(x=>{
-       const candidate=x.product_id||x.raw?.[4]||x.raw?.product_id||null;
-       const productId=(typeof candidate==='string'&&uuidPattern.test(candidate))?candidate:null;
-       return {
-         order_id:orderId,
-         product_id:productId,
-         product_name:String(x.name||x.raw?.[0]||'Product').slice(0,250),
-         model_or_size:String(x.color||x.raw?.[3]||'').slice(0,250),
-         quantity:Math.max(1,parseInt(x.qty,10)||1),
-         price:Number(x.price)||0,
-         unit_price:Number(x.price)||0
-       };
-     });
-     if(!itemRows.length) throw new Error('Cart is empty; no order items to save.');
-     const ir=await sb.from('order_items').insert(itemRows);
-     if(ir.error) throw new Error('Order created, but product details could not be saved. Please contact the shop before retrying. '+ir.error.message);
-   }catch(e){
-     console.error('Order cloud insert failed',e);
+   const total=subtotal+(delivery==='home'?80:0);
+   const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+   const items=state.cart.map(x=>{
+     const candidate=x.product_id||x.raw?.[4]||x.raw?.product_id||null;
+     return {product_id:(typeof candidate==='string'&&uuidPattern.test(candidate))?candidate:null,quantity:Math.max(1,parseInt(x.qty,10)||1),model_or_size:String(x.color||x.raw?.[3]||'').slice(0,250)};
+   });
+   if(items.some(x=>!x.product_id)){
      window.msOrderSubmitting=false;
-     const retryBtn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
-     if(retryBtn){retryBtn.disabled=false;retryBtn.textContent='Place Order';}
-     alert('Order could not be confirmed in the online database. Your cart has been kept. Please try again later or contact Morya Agency.\n\nDetails: '+(e?.message||'Unknown error'));
+     const btn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
+     if(btn){btn.disabled=false;btn.textContent='Place Order';}
+     alert('Cart product is not linked to the online catalog. No order was submitted.');
+     return;
+   }
+   window.msCheckoutRequestId=window.msCheckoutRequestId||crypto.randomUUID();
+   let orderId, confirmedTotal;
+   try{
+     const {data,error}=await sb.rpc('morya_checkout_with_rewards',{
+       p_request_id:window.msCheckoutRequestId,
+       p_customer_name:name,p_customer_mobile:mobile,p_customer_address:address,
+       p_delivery:delivery,p_items:items,p_reward_points:0
+     });
+     if(error) throw error;
+     const result=Array.isArray(data)?data[0]:data;
+     if(!result?.success||!result?.order_id) throw new Error(result?.message||'Checkout not confirmed.');
+     orderId=result.order_id; confirmedTotal=Number(result.total_amount);
+     if(!Number.isFinite(confirmedTotal)||confirmedTotal<0) throw new Error('Invalid total from server.');
+   }catch(e){
+     console.error('Atomic checkout failed',e);
+     window.msOrderSubmitting=false;
+     const btn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
+     if(btn){btn.disabled=false;btn.textContent='Place Order';}
+     alert('Order could not be confirmed. Cart is kept. Please contact Morya Agency if this repeats.\n'+(e?.message||''));
      return;
    }
 
    window.msOrderSubmitting=false;
    state.name=name;state.mobile=mobile;
-   state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total,status:'Order Received',payment:'Cash on Delivery',items});
+   window.msCheckoutRequestId=null;state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total:confirmedTotal,status:'Order Received',payment:'Cash on Delivery',items:state.cart.map(x=>({name:x.name,qty:x.qty,color:x.color||''}))});
    state.usedReward=0;state.cart=[];save();sync();closeModal('msCheckoutModal');renderOrders();
-   const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+total+'\nPayment: Cash on Delivery\nStatus: Order Received');
+   const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+confirmedTotal+'\nPayment: Cash on Delivery\nStatus: Order Received');
    const go=confirm('Order saved in the online database.\nPayment: Cash on Delivery\nOrder #'+String(orderId).slice(-8)+'\n\nOpen WhatsApp to notify Morya Agency?');
    if(go){window.open(wa,'_blank')|| (window.location.href=wa)}
  };
