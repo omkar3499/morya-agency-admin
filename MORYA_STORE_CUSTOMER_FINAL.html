@@ -334,24 +334,52 @@ body{padding-bottom:92px}
  }
  window.msToggleReward=()=>{const total=cartTotal();state.usedReward=state.usedReward?0:Math.min(state.reward,total);save();renderCheckout()};
  window.msPlaceOrder=async()=>{
-   const name=document.getElementById('msName').value.trim(), mobile=document.getElementById('msMobile').value.replace(/\D/g,''), address=document.getElementById('msAddress').value.trim(), delivery=document.getElementById('msDelivery').value, payment=document.getElementById('msPayment').value;
-   if(!name||mobile.length<10||!address){alert('Please enter name, valid mobile number and full address.');return}
-   const subtotal=cartTotal(), rewardUsed=Math.min(state.usedReward,Math.min(state.reward,subtotal)), deliveryFee=delivery==='home'?80:0, total=Math.max(0,subtotal-rewardUsed+deliveryFee);
-   state.name=name;state.mobile=mobile;
-   const earned=0; // Points are credited only by the verified server-side order-completion flow.
+   const name=document.getElementById('msName').value.trim();
+   const mobile=document.getElementById('msMobile').value.replace(/\D/g,'');
+   const address=document.getElementById('msAddress').value.trim();
+   const delivery=document.getElementById('msDelivery').value;
+   const payment=document.getElementById('msPayment').value;
+   if(!name||mobile.length!==10||!address){alert('Please enter name, valid 10 digit mobile number and full address.');return}
+
+   const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+   const sess=sessionData?.session;
+   if(sessionError||!sess){alert('Please login with OTP before placing the order.');return}
+   const verifiedMobile=String(sess.user?.phone||'').replace(/\D/g,'').slice(-10);
+   if(verifiedMobile.length!==10||verifiedMobile!==mobile){
+     alert('Checkout mobile number must match the mobile number verified during OTP login.');
+     return;
+   }
+
+   const subtotal=cartTotal();
+   // Do not use localStorage reward balance for discounts; shared server redemption is not yet wired atomically.
+   const rewardUsed=0;
+   const deliveryFee=delivery==='home'?80:0;
+   const total=Math.max(0,subtotal-rewardUsed+deliveryFee);
    const items=state.cart.map(x=>({name:x.name,qty:x.qty,price:x.price,color:x.color||'',product_id:x.product_id||x.id||null}));
-   let orderId='LOCAL-'+Date.now();
+   let orderId;
    try{
-     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(rewardUsed?' | Reward used: '+rewardUsed:'')+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
+     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
      const {data,error}=await sb.from('orders').insert([payload]).select('id').single();
-     if(error) throw error; orderId=data.id;
+     if(error) throw error;
+     if(!data?.id) throw new Error('Order ID was not returned by Supabase.');
+     orderId=data.id;
      const itemRows=state.cart.filter(x=>x.product_id||x.id).map(x=>({order_id:orderId,product_id:x.product_id||x.id,quantity:x.qty,price:x.price}));
-     if(itemRows.length){const ir=await sb.from('order_items').insert(itemRows);if(ir.error)console.warn('order_items insert failed',ir.error)}
-   }catch(e){ console.warn('Order cloud insert failed',e); }
+     if(itemRows.length){
+       const ir=await sb.from('order_items').insert(itemRows);
+       if(ir.error) throw new Error('Order created but order items could not be saved. Please contact the shop before retrying. '+ir.error.message);
+     }
+   }catch(e){
+     console.error('Order cloud insert failed',e);
+     alert('Order could not be confirmed in the online database. Your cart has been kept. Please try again later or contact Morya Agency.\n\nDetails: '+(e?.message||'Unknown error'));
+     return;
+   }
+
+   state.name=name;state.mobile=mobile;
    state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total,status:'Order Received',payment:'Cash on Delivery',items});
-   state.usedReward=0; state.cart=[]; save(); sync(); closeModal('msCheckoutModal'); renderOrders();
+   state.usedReward=0;state.cart=[];save();sync();closeModal('msCheckoutModal');renderOrders();
    const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+total+'\nPayment: Cash on Delivery\nStatus: Order Received');
-   const go=confirm('Order placed successfully!\nPayment: Cash on Delivery\nOrder #'+String(orderId).slice(-8)+'\n\nOpen WhatsApp to notify Morya Agency?'); if(go){window.open(wa,'_blank')|| (window.location.href=wa)}
+   const go=confirm('Order saved in the online database.\nPayment: Cash on Delivery\nOrder #'+String(orderId).slice(-8)+'\n\nOpen WhatsApp to notify Morya Agency?');
+   if(go){window.open(wa,'_blank')|| (window.location.href=wa)}
  };
 
  function renderOrders(){
