@@ -4,8 +4,19 @@
 -- Points already spent are not made spendable again: the net ledger can be negative,
 -- while reward_points_balances should clamp spendable balance to zero and show reversal_debt_points.
 -- This function does not change order status, inventory, refunds, or payment records.
+-- Request table persists zero-point returns too, preventing request-ID reuse and retry drift.
 
 begin;
+
+create table if not exists public.reward_return_requests (
+  request_id uuid primary key,
+  order_id uuid not null references public.orders(id) on delete restrict,
+  returned_amount_inr numeric(12,2) not null check (returned_amount_inr > 0),
+  reversed_points integer not null default 0 check (reversed_points >= 0),
+  created_at timestamptz not null default now()
+);
+alter table public.reward_return_requests enable row level security;
+revoke all on public.reward_return_requests from public, anon, authenticated;
 
 create or replace function public.morya_record_partial_reward_return(
   p_order_id uuid,
@@ -29,6 +40,8 @@ declare
   v_prior_reversed_points integer;
   v_delta integer;
   v_existing_points integer;
+  v_existing_order_id uuid;
+  v_existing_amount numeric(12,2);
 begin
   v_email := lower(coalesce(auth.jwt()->>'email',''));
   if auth.uid() is null or v_email <> 'ozagade8@gmail.com' then
@@ -56,30 +69,43 @@ begin
     return;
   end if;
 
-  select points into v_existing_points
-  from public.reward_points_ledger
-  where idempotency_key = 'partial-return:' || p_request_id::text;
+  select order_id, returned_amount_inr, reversed_points
+    into v_existing_order_id, v_existing_amount, v_existing_points
+  from public.reward_return_requests
+  where request_id = p_request_id;
 
   if found then
-    return query select true, greatest(-coalesce(v_existing_points,0),0),
-      'This return request was already processed.'::text;
+    if v_existing_order_id <> p_order_id or v_existing_amount <> p_returned_amount_inr then
+      return query select false, 0, 'Request ID was already used with different return details.'::text;
+    else
+      return query select true, v_existing_points, 'This return request was already processed.'::text;
+    end if;
     return;
   end if;
 
-  select coalesce(sum(amount_inr),0)::numeric(12,2),
-         coalesce(-sum(points),0)::integer
-    into v_prior_return_amount, v_prior_reversed_points
+  select coalesce(sum(returned_amount_inr),0)::numeric(12,2)
+    into v_prior_return_amount
+  from public.reward_return_requests
+  where order_id = p_order_id;
+
+  select coalesce(-sum(points),0)::integer
+    into v_prior_reversed_points
   from public.reward_points_ledger
   where order_id = p_order_id and entry_type = 'reversal'
     and idempotency_key like 'partial-return:%';
 
-  v_new_total_return := least(v_earned_amount, v_prior_return_amount + p_returned_amount_inr);
+  if v_prior_return_amount + p_returned_amount_inr > v_earned_amount then
+    return query select false, 0, 'Cumulative returned amount cannot exceed the reward-eligible order amount.'::text;
+    return;
+  end if;
+  v_new_total_return := v_prior_return_amount + p_returned_amount_inr;
   v_target_points := floor(v_earned_points * v_new_total_return / v_earned_amount)::integer;
   v_delta := greatest(v_target_points - v_prior_reversed_points, 0);
 
+  insert into public.reward_return_requests(request_id, order_id, returned_amount_inr, reversed_points)
+  values (p_request_id, p_order_id, p_returned_amount_inr, v_delta);
+
   if v_delta = 0 then
-    -- No ledger row is needed when proportional rounding yields zero new points.
-    -- Retrying is safe because the same cumulative amount computes the same zero delta.
     return query select true, 0, 'Return recorded; no additional whole reward point due.'::text;
     return;
   end if;
@@ -102,6 +128,6 @@ commit;
 
 -- REQUIRED REVIEW BEFORE USE:
 -- 1. Confirm admin JWT email and ledger schema/constraints.
--- 2. Zero-delta partial returns do not create a ledger row; retries safely recompute the same result.
+-- 2. Request IDs and zero-point returns are persisted in reward_return_requests.
 -- 3. Test repeated request IDs, cumulative partial returns, full returns, and spent points in staging.
 -- 4. Integrate return amount with actual refund workflow; this RPC only adjusts rewards.
