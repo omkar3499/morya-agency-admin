@@ -427,7 +427,7 @@ async function loadRewardBalances(){
  const box=$('rewardBalancesTable'), msg=$('rewardBalancesMsg');
  if(!box||!msg)return;
  msg.textContent='Loading reward balances…'; box.innerHTML='';
- const r=await db.from('reward_points_balances').select('customer_mobile,customer_name,balance_points,earned_points,redeemed_points,last_activity_at').order('customer_name');
+ const r=await db.from('reward_points_balances').select('customer_mobile,customer_name,balance_points,reversal_debt_points,earned_points,redeemed_points,last_activity_at').order('customer_name');
  if(r.error){
   msg.textContent='Reward ledger not ready: '+r.error.message;
   box.innerHTML='<p class="small">Run and verify the approved reward schema first. No points have been changed.</p>';
@@ -435,7 +435,7 @@ async function loadRewardBalances(){
  }
  const rows=r.data||[];
  msg.textContent=rows.length?('Customers: '+rows.length):'No reward ledger entries yet.';
- box.innerHTML=rows.length?'<div style="overflow:auto"><table class="review-table"><thead><tr><th>Customer</th><th>Mobile</th><th>Earned</th><th>Redeemed</th><th>Balance</th><th>Last activity</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.customer_name||'-')+'</td><td>'+esc(x.customer_mobile||'-')+'</td><td>'+Number(x.earned_points||0)+'</td><td>'+Number(x.redeemed_points||0)+'</td><td><b>'+Number(x.balance_points||0)+'</b></td><td>'+esc(x.last_activity_at?new Date(x.last_activity_at).toLocaleString():'-')+'</td></tr>').join('')+'</tbody></table></div>':'<p class="small">No reward balances available.</p>';
+ box.innerHTML=rows.length?'<div style="overflow:auto"><table class="review-table"><thead><tr><th>Customer</th><th>Mobile</th><th>Earned</th><th>Redeemed</th><th>Balance</th><th>Return adjustment</th><th>Last activity</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.customer_name||'-')+'</td><td>'+esc(x.customer_mobile||'-')+'</td><td>'+Number(x.earned_points||0)+'</td><td>'+Number(x.redeemed_points||0)+'</td><td><b>'+Number(x.balance_points||0)+'</b></td><td>'+Number(x.reversal_debt_points||0)+'</td><td>'+esc(x.last_activity_at?new Date(x.last_activity_at).toLocaleString():'-')+'</td></tr>').join('')+'</tbody></table></div>':'<p class="small">No reward balances available.</p>';
 }
 
 async function loadOrders(){
@@ -444,7 +444,16 @@ async function loadOrders(){
  $('orderCount').textContent=r.data.length;$('orderValue').textContent='₹'+r.data.reduce((a,o)=>a+Number(o.total_amount||0),0).toFixed(0);
  $('orders').innerHTML=r.data.length?r.data.map(o=>`<div class="order"><div class="ordertop"><div><b>Order #${esc(o.id)}</b><div class="small">${new Date(o.created_at).toLocaleString()}</div></div><span class="badge">${esc(o.status||'New')}</span></div><p><b>${esc(o.customer_name)}</b> • ${esc(o.customer_mobile)}<br>📍 ${esc(o.address||o.customer_address||'-')}</p><p>💰 <b>₹${Number(o.total_amount||0).toFixed(0)}</b><br>📝 ${esc(o.instructions||'-')}</p><label>Status</label><select id="status_${o.id}">${['New','Printing','Ready','Delivered','Cancelled','Returned'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select><div class="actions"><button class="green" onclick="saveStatus('${o.id}')">Update Status</button>${o.photo_path?`<button class="light" onclick="downloadPhoto('${esc(o.photo_path)}')">⬇️ Download Original Photo</button>`:''}</div></div>`).join(''):'<p class="muted">No orders found.</p>';
 }
-async function saveStatus(id){const r=await db.from('orders').update({status:$('status_'+id).value}).eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadOrders()}
+async function saveStatus(id){
+ const nextStatus=$('status_'+id).value;
+ const r=await db.from('orders').update({status:nextStatus}).eq('id',id);
+ if(r.error){alert('❌ Status update failed: '+r.error.message);return}
+ await loadOrders();
+ await loadRewardBalances();
+ if(['Delivered','Cancelled','Returned'].includes(nextStatus)){
+   alert('Order status updated to '+nextStatus+'. Reward balance refreshed. If the reward SQL migration is not installed, reward points will not change yet.');
+ }
+}
 async function downloadPhoto(path){
  const r=await db.storage.from('customer-photos').createSignedUrl(path,300);
  if(r.error){alert('❌ '+r.error.message);return}
