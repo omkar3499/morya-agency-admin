@@ -363,11 +363,25 @@ body{padding-bottom:92px}
      if(error) throw error;
      if(!data?.id) throw new Error('Order ID was not returned by Supabase.');
      orderId=data.id;
-     const itemRows=state.cart.filter(x=>x.product_id||x.id).map(x=>({order_id:orderId,product_id:x.product_id||x.id,quantity:x.qty,price:x.price}));
-     if(itemRows.length){
-       const ir=await sb.from('order_items').insert(itemRows);
-       if(ir.error) throw new Error('Order created but order items could not be saved. Please contact the shop before retrying. '+ir.error.message);
-     }
+     // Preserve item details even when a cart item has no real UUID product ID.
+     // The previous code sent local/cart IDs into a UUID column, which can fail.
+     const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+     const itemRows=state.cart.map(x=>{
+       const candidate=x.product_id||x.raw?.[4]||x.raw?.product_id||null;
+       const productId=(typeof candidate==='string'&&uuidPattern.test(candidate))?candidate:null;
+       return {
+         order_id:orderId,
+         product_id:productId,
+         product_name:String(x.name||x.raw?.[0]||'Product').slice(0,250),
+         model_or_size:String(x.color||x.raw?.[3]||'').slice(0,250),
+         quantity:Math.max(1,parseInt(x.qty,10)||1),
+         price:Number(x.price)||0,
+         unit_price:Number(x.price)||0
+       };
+     });
+     if(!itemRows.length) throw new Error('Cart is empty; no order items to save.');
+     const ir=await sb.from('order_items').insert(itemRows);
+     if(ir.error) throw new Error('Order created, but product details could not be saved. Please contact the shop before retrying. '+ir.error.message);
    }catch(e){
      console.error('Order cloud insert failed',e);
      alert('Order could not be confirmed in the online database. Your cart has been kept. Please try again later or contact Morya Agency.\n\nDetails: '+(e?.message||'Unknown error'));
