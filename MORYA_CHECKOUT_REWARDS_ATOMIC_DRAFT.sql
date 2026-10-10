@@ -40,6 +40,7 @@ declare
   v_quantity integer;
   v_unit_price numeric(12,2);
   v_stock integer;
+  v_total_quantity integer;
   v_subtotal numeric(12,2) := 0;
   v_delivery_fee numeric(12,2) := 0;
   v_total numeric(12,2);
@@ -124,7 +125,11 @@ begin
       return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Product price must be greater than zero.'::text;
       return;
     end if;
-    if v_stock is not null and v_stock < v_quantity then
+    select coalesce(sum((e.value->>'quantity')::integer),0)::integer
+      into v_total_quantity
+    from jsonb_array_elements(p_items) e(value)
+    where (e.value->>'product_id')::uuid = v_product_id;
+    if v_stock is not null and v_stock < v_total_quantity then
       return query select false,null::uuid,0::numeric,0,0::numeric,0::numeric,'Insufficient stock for '||v_product_name||'.'::text;
       return;
     end if;
@@ -201,10 +206,8 @@ commit;
 -- PRE-PRODUCTION GATES:
 -- 1. Confirm orders column names/required fields and reward ledger migration are applied in staging.
 -- 2. Verify all customer cart product IDs map to public.products.id, including custom printing and handsets.
--- 3. Product rows are locked FOR UPDATE and each cart row checks available stock.
---    IMPORTANT: test duplicate product IDs in one cart and concurrent purchases in staging;
---    duplicate cart rows can collectively exceed stock unless the client consolidates them or
---    this RPC is extended to aggregate quantities by product before validation.
+-- 3. Product rows are locked FOR UPDATE and stock validation sums duplicate cart rows
+--    for the same product ID. Still test concurrent purchases and stock-trigger behavior in staging.
 -- 4. Verify idempotent retry response includes the originally redeemed points and correct subtotal/fee.
 -- 5. Test redemption=0, exact balance, insufficient balance, and concurrent same-customer checkouts.
 -- 6. Integrate this RPC in Customer HTML only after staging success; do not enable direct browser order inserts.
