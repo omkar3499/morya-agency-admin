@@ -311,10 +311,10 @@ body{padding-bottom:92px}
    if(!sess) return {ok:false,message:'Login to view your reward balance.'};
    const mobile=(state.mobile||'').replace(/\\D/g,'');
    if(!mobile) return {ok:false,message:'Mobile number is not saved in this app yet.'};
-   const r=await sb.from('reward_points_balances').select('balance_points,earned_points,redeemed_points').eq('customer_mobile',mobile).maybeSingle();
+   const r=await sb.from('reward_points_balances').select('balance_points,earned_points,redeemed_points,reversal_debt_points').eq('customer_mobile',mobile).maybeSingle();
    if(r.error) return {ok:false,message:'Shared rewards are not enabled yet. Please check again after Admin setup.'};
    const h=await sb.from('reward_points_ledger').select('entry_type,points,note,order_id,created_at').eq('customer_mobile',mobile).order('created_at',{ascending:false}).limit(20);
-   return {ok:true,balance:Number(r.data?.balance_points||0),earned:Number(r.data?.earned_points||0),redeemed:Number(r.data?.redeemed_points||0),history:h.error?[]:(h.data||[])};
+   return {ok:true,balance:Number(r.data?.balance_points||0),earned:Number(r.data?.earned_points||0),redeemed:Number(r.data?.redeemed_points||0),debt:Number(r.data?.reversal_debt_points||0),history:h.error?[]:(h.data||[])};
  }
  function cartTotal(){return state.cart.reduce((a,x)=>a+x.price*x.qty,0)}
  function renderCart(){
@@ -412,7 +412,7 @@ body{padding-bottom:92px}
  }
  window.msOpenOrders=()=>{renderOrders();document.getElementById('msOrdersModal').style.display='flex'};
  function renderAccount(){document.getElementById('msAccountBody').innerHTML=`<div class="msReward"><div><small>My Shared Reward Balance</small><br><b id="msAccountCloudBalance">Checking…</b><br><small>5% on eligible categories after order completion</small></div><button class="msPill" disabled>Redemption setup pending</button></div><div class="msRow"><b>Points History</b><div id="msRewardHistory" class="msMuted">Loading shared history…</div></div><div class="msRow"><b>👤 ${state.name||'Customer'}</b><div class="msMuted">${state.mobile||'Login/mobile number not saved yet'}</div></div><div class="msRow" onclick="msOpenOrders()" style="cursor:pointer"><b>📦 My Orders</b><div class="msMuted">View order history & status</div></div><div class="msRow" onclick="document.getElementById('settingsBtn').click();closeModal('msAccountModal')" style="cursor:pointer"><b>⚙️ Settings</b><div class="msMuted">Support, WhatsApp & app settings</div></div><div class="msRow" onclick="requestDeleteAccount()" style="cursor:pointer;border:1px solid #fecaca"><b style="color:#dc2626">🗑️ Delete Account</b><div class="msMuted">Delete your customer account</div></div><div class="msRow"><b>🛒 Buy Morya Agency</b><div class="msMuted">Mobile • Accessories • Custom Products</div></div>`;
- msCloudRewards().then(r=>{const el=document.getElementById('msAccountCloudBalance'),hist=document.getElementById('msRewardHistory');if(!el)return;el.textContent=r.ok?money(r.balance):'Not ready';if(hist)hist.innerHTML=r.ok&&r.history.length?r.history.map(x=>'<div style="padding:6px 0;border-bottom:1px solid #eee">'+(x.entry_type||'entry')+' · '+(Number(x.points)>0?'+':'')+Number(x.points)+' points · '+new Date(x.created_at).toLocaleDateString()+'</div>').join(''):(r.message||'No shared history yet.');});
+ msCloudRewards().then(r=>{const el=document.getElementById('msAccountCloudBalance'),hist=document.getElementById('msRewardHistory');if(!el)return;el.textContent=r.ok?(r.balance+' points'+(r.debt?' · Return adjustment '+r.debt:'')):'Not ready';if(hist)hist.innerHTML=r.ok&&r.history.length?r.history.map(x=>'<div style="padding:6px 0;border-bottom:1px solid #eee">'+(x.entry_type||'entry')+' · '+(Number(x.points)>0?'+':'')+Number(x.points)+' points · '+new Date(x.created_at).toLocaleDateString()+'</div>').join(''):(r.message||'No shared history yet.');});
  }
  window.msGoAccount=()=>{closeModal('msCartModal');renderAccount();document.getElementById('msAccountModal').style.display='flex';msActive('msAccountBtn')};
  window.msGoShop=()=>{msActive('msShopBtn');document.querySelector('.categories')?.scrollIntoView({behavior:'smooth',block:'start'});};
