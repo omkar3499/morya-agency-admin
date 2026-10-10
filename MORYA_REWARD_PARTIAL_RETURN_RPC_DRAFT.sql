@@ -78,17 +78,8 @@ begin
   v_delta := greatest(v_target_points - v_prior_reversed_points, 0);
 
   if v_delta = 0 then
-    -- Still record the return request so retries remain idempotent.
-    insert into public.reward_points_ledger
-      (customer_mobile, customer_name, order_id, entry_type, points, amount_inr, note, idempotency_key)
-    values
-      (v_mobile, v_name, p_order_id, 'reversal', -1, 0,
-       'Partial return recorded; no additional whole reward point due at this amount',
-       'partial-return:' || p_request_id::text);
-    -- Compensating entry keeps the net points unchanged; both rows are ledger-auditable.
-    update public.reward_points_ledger
-       set points = 0
-     where idempotency_key = 'partial-return:' || p_request_id::text;
+    -- No ledger row is needed when proportional rounding yields zero new points.
+    -- Retrying is safe because the same cumulative amount computes the same zero delta.
     return query select true, 0, 'Return recorded; no additional whole reward point due.'::text;
     return;
   end if;
@@ -111,7 +102,6 @@ commit;
 
 -- REQUIRED REVIEW BEFORE USE:
 -- 1. Confirm admin JWT email and ledger schema/constraints.
--- 2. Fix the zero-delta idempotency strategy before production: current schema rejects points=0,
---    so this branch intentionally fails closed on a zero-delta return rather than silently altering accounting.
+-- 2. Zero-delta partial returns do not create a ledger row; retries safely recompute the same result.
 -- 3. Test repeated request IDs, cumulative partial returns, full returns, and spent points in staging.
 -- 4. Integrate return amount with actual refund workflow; this RPC only adjusts rewards.
