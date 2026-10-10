@@ -43,7 +43,8 @@ using (lower(coalesce(auth.jwt() ->> 'email','')) = 'ozagade8@gmail.com');
 create or replace view public.reward_points_balances
 with (security_invoker = true) as
 select customer_mobile, max(customer_name) as customer_name,
-       coalesce(sum(points),0)::bigint as balance_points,
+       greatest(coalesce(sum(points),0),0)::bigint as balance_points,
+       greatest(-coalesce(sum(points),0),0)::bigint as reversal_debt_points,
        coalesce(sum(points) filter (where entry_type='earned'),0)::bigint as earned_points,
        coalesce(-sum(points) filter (where entry_type='redeemed'),0)::bigint as redeemed_points,
        max(created_at) as last_activity_at
@@ -57,7 +58,6 @@ declare
   eligible_amount numeric(12,2) := 0;
   earned integer := 0;
   prior_earned integer := 0;
-  available integer := 0;
   already_reversed boolean := false;
   reversal integer := 0;
 begin
@@ -88,14 +88,15 @@ begin
     select exists(select 1 from public.reward_points_ledger where idempotency_key='reversal:'||new.id::text)
     into already_reversed;
     if prior_earned>0 and not already_reversed then
-      select coalesce(sum(points),0)::integer into available
-      from public.reward_points_ledger where customer_mobile=normalized_mobile;
-      reversal := least(prior_earned,greatest(available,0));
+      -- Reverse the full earned amount. If points were already spent, the net ledger
+      -- may be negative; the balance view clamps spendable points to zero and exposes
+      -- reversal_debt_points. Future earnings offset this debt.
+      reversal := prior_earned;
       if reversal>0 then
         insert into public.reward_points_ledger
           (customer_mobile,customer_name,order_id,entry_type,points,amount_inr,note,idempotency_key)
         values (normalized_mobile,new.customer_name,new.id,'reversal',-reversal,0,
-          'Reward reversal on full cancellation/return; limited to available balance','reversal:'||new.id::text)
+          'Full reward reversal on cancellation/return; any deficit is offset by future earnings','reversal:'||new.id::text)
         on conflict (idempotency_key) do nothing;
       end if;
     end if;
@@ -174,6 +175,6 @@ commit;
 -- 1. Tested on staging and verified against actual order_items prices/status values.
 -- 2. Admin-only read policy is added after confirming admin auth role (not guessed here).
 -- 3. Checkout UI calls the redemption RPC with one stable UUID per attempt and only discounts after success.
--- 4. Partial returns are NOT implemented. Full cancellation/return after Delivered only reverses points still available; if points were already spent, the unreversed remainder needs a debt/offset design before production.
+-- 4. Partial returns are NOT implemented. Full cancellation/return reverses all earned points; if points were already spent, the net ledger can be negative. The balance view shows spendable balance as zero and reversal_debt_points separately; future earnings offset the debt.
 -- 5. Existing reward triggers/functions are checked to prevent duplicate rewards.
 -- 6. Redemption is not transactionally coupled to order + order_items creation; do not enable checkout redemption until an atomic checkout RPC is implemented.
