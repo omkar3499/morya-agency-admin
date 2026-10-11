@@ -275,8 +275,10 @@ async function loadLiveProducts(){
     render();
     const mobileCat=document.querySelector('.cat[data-cat="mobile"]');
     if(mobileCat) mobileCat.style.display='';
-    document.getElementById('liveStatus').textContent='● Live products connected';
-  }catch(e){console.error('Live products error:',e); document.getElementById('liveStatus').textContent='● Product connection error'; render();}
+    const mobileCount=(products.mobile||[]).length;
+    document.getElementById('liveStatus').textContent=mobileCount?'● Live products connected · '+mobileCount+' phones':'● Connected · no available phones';
+    if(!mobileCount) console.warn('Supabase connected, but no available mobile products were returned. Check products table: available=true and category is Mobiles/mobile/mobile_phone.');
+  }catch(e){console.error('Live products error:',e); document.getElementById('liveStatus').textContent='● Product connection error'; const area=document.getElementById('products'); if(area && !area.innerHTML.trim()) area.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:18px;color:#b91c1c">Products could not load. Check internet connection and Supabase products-table read permissions.</div>'; render();}
 }
 render();
 loadLiveProducts();
