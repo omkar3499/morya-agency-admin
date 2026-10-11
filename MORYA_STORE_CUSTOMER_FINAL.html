@@ -249,7 +249,7 @@ async function loadLiveProducts(){
     const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phone:'mobile',phones:'mobile',smartphone:'mobile',smartphones:'mobile',handset:'mobile',handsets:'mobile',mobile_device:'mobile',mobile_devices:'mobile',iphone:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
     const live={mobile:[],custom:[],parts:[],accessories:[],skin:[],cover:[]};
     (data||[]).forEach(p=>{
-      const categoryKey=String(p.category||'').trim().toLowerCase().replace(/[\\s-]+/g,'_');
+      const categoryKey=String(p.category||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
       let k=map[categoryKey]||null;
       if(!k && /(mobile|phone|smartphone|iphone|handset)/.test(categoryKey)) k='mobile';
       const n=String(p.name||'').toLowerCase();
