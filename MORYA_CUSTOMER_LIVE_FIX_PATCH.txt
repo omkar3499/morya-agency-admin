@@ -1,0 +1,26 @@
+MORYA STORE CUSTOMER APP — MINIMAL LIVE FIX
+==========================================
+
+Base file: MORYA_STORE_CUSTOMER_FINAL.html from main
+Base blob SHA: 0423e52709d236e6d27769bbd4cc55fc7fa3bf15
+
+Purpose:
+1. Declare the products catalogue before render() and loadLiveProducts() use it.
+2. Recognize Supabase category "mobiles" as the customer app's "mobile" category.
+
+PATCH A — Add after the closing }; of const localProducts = {...}, immediately before:
+let current=null,cart=0;
+
+Add:
+const products={mobile:[],...localProducts};
+
+PATCH B — In function productCategory(p), replace this line:
+if(c==='mobile_phone'||c==='mobile'||c.includes('mobile phone')||c.includes('phone')) return 'mobile';
+
+With:
+if(['mobile','mobiles','mobile_phone','mobile_phones','mobilephones','phones','phone'].includes(c)||c.includes('mobile phone')||c.includes('phone')) return 'mobile';
+
+IMPORTANT:
+- Do not merge the whole rewards-integration-draft branch into main; it contains unrelated changes.
+- This patch is not deployed to the live main branch.
+- After applying, test the live product query and verify LAVA ACTION 4 and Motorola A10E appear in Mobile Phones.
