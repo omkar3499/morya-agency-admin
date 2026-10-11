@@ -127,7 +127,7 @@ let current=null,cart=0;
 function productCategory(p){
  const n=String(p[0]||'').toLowerCase();
  const c=String(p[6]||'').toLowerCase();
- if(c==='mobile_phone'||c==='mobile'||c.includes('mobile phone')||c.includes('phone')) return 'mobile';
+ if(['mobile','mobiles','mobile_phone','mobile_phones','mobilephones','phones','phone'].includes(c)||c.includes('mobile phone')||c.includes('phone')) return 'mobile';
  if(/mobile\s*cover|transparent\s*cover|printed\s*cover|premium\s*cover/.test(n)||c.includes('cover')) return 'cover';
  if(/back\s*skin|mobile\s*skin/.test(n)||c.includes('skin')) return 'skin';
  if(/charging|battery|display|back panel|middle frame|ringer|speaker|camera glass|sim tray|cc board|network cable|on off strip|combo/.test(n)||c.includes('part')) return 'parts';
@@ -246,10 +246,12 @@ async function loadLiveProducts(){
   try{
     const {data,error}=await sb.from('products').select('id,name,price,stock,available,category,brand,model,description,image_url,is_customizable,color_options').eq('available',true).order('name');
     if(error) throw error;
-    const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phones:'mobile',phone:'mobile',mobilephones:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
+    const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phone:'mobile',phones:'mobile',smartphone:'mobile',smartphones:'mobile',handset:'mobile',handsets:'mobile',mobile_device:'mobile',mobile_devices:'mobile',iphone:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
     const live={mobile:[],custom:[],parts:[],accessories:[],skin:[],cover:[]};
     (data||[]).forEach(p=>{
-      let k=map[String(p.category||'').trim().toLowerCase()]||null;
+      const categoryKey=String(p.category||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+      let k=map[categoryKey]||null;
+      if(!k && /(mobile|phone|smartphone|iphone|handset)/.test(categoryKey)) k='mobile';
       const n=String(p.name||'').toLowerCase();
       // Never allow a product named as a cover/skin/part/accessory to appear under another category.
       if(/mobile\s*cover|transparent\s*cover|printed\s*cover|premium\s*cover/.test(n)) k='cover';
@@ -268,8 +270,8 @@ async function loadLiveProducts(){
     render();
     const mobileCat=document.querySelector('.cat[data-cat="mobile"]');
     if(mobileCat) mobileCat.style.display='';
-    document.getElementById('liveStatus').textContent='● Live products connected';
-  }catch(e){console.error('Live products error:',e); document.getElementById('liveStatus').textContent='● Product connection error'; render();}
+    document.getElementById('liveStatus').textContent=live.mobile.length?'● Live connected • '+live.mobile.length+' phone(s)':'● Connected • no phones found';
+  }catch(e){console.error('Live products error:',e); document.getElementById('liveStatus').textContent='● Product load failed'; render();}
 }
 render();
 loadLiveProducts();
@@ -398,7 +400,7 @@ const oldOpen=window.openProduct;window.openProduct=function(p,buy){oldOpen(p,bu
 window.msToggleWishCurrent=()=>{if(current){msToggleWish(current);openProduct(current)}};
 window.msWriteReview=async()=>{const sess=(await sb.auth.getSession()).data.session;if(!sess){document.getElementById('loginModal').style.display='flex';return}document.getElementById('msReviewBody').innerHTML='<b>'+current[0]+'</b><div class="msStars">'+[1,2,3,4,5].map(n=>'<button onclick="msSetStar('+n+')">☆</button>').join('')+'</div><textarea id="msReviewText" class="loginInput" rows="4" placeholder="Write your review"></textarea><button class="msCheckoutBtn" onclick="msSaveReview()">Submit Review</button>';document.getElementById('msReviewModal').style.display='flex'};
 window.msSetStar=n=>{reviewStars=n;document.querySelectorAll('.msStars button').forEach((b,i)=>b.textContent=i<n?'★':'☆')};window.msSaveReview=()=>{const id=String(current[4]||current[0]),t=(document.getElementById('msReviewText').value||'').trim();if(!t)return alert('Please write a review.');(reviews[id]||(reviews[id]=[])).push({stars:reviewStars,text:t,date:new Date().toLocaleDateString('en-IN')});saveR();closeModal('msReviewModal');openProduct(current)};
-const oldRender=window.render;window.render=function(cat='all'){oldRender(cat);setTimeout(()=>{document.querySelectorAll('.productBrowseCard').forEach((card,i)=>{const list=cat==='all'?Object.values(products).flat():(products[cat]||[]);const p=list[i];if(!p)return;card.style.position='relative';const btn=document.createElement('button');btn.className='msHeart';btn.textContent=isW(p)?'♥':'♡';btn.onclick=e=>{e.stopPropagation();msToggleWish(p)};card.appendChild(btn);const st=document.createElement('div');st.className='msStock '+(Number(p[5]||0)>0?'msInStock':'msOutStock');st.textContent=Number(p[5]||0)>0?'✓ '+p[5]+' in stock':'Out of stock';card.querySelector('.info')?.appendChild(st)})},20)};
+const oldRender=window.render;window.render=function(cat='all'){oldRender(cat);setTimeout(()=>{const list=cat==='all'?Object.values(products).flat():((products[cat]||[]).filter(p=>productCategory(p)===cat));document.querySelectorAll('.productBrowseCard').forEach((card,i)=>{const p=list[i];if(!p)return;card.style.position='relative';if(!card.querySelector('.msHeart')){const btn=document.createElement('button');btn.className='msHeart';btn.textContent=isW(p)?'♥':'♡';btn.onclick=e=>{e.stopPropagation();msToggleWish(p)};card.appendChild(btn)}card.querySelector('.msStock')?.remove();const st=document.createElement('div');st.className='msStock '+(Number(p[5]||0)>0?'msInStock':'msOutStock');st.textContent=Number(p[5]||0)>0?'✓ '+Number(p[5])+' in stock':'Out of stock';card.querySelector('.info')?.appendChild(st)})},20)};
 const oldCheckout=window.renderCheckout;window.renderCheckout=function(){oldCheckout();const b=document.getElementById('msCheckoutBody');if(!b)return;const sub=cartTotal(),disc=couponDiscount(sub);if(disc){const row=document.createElement('div');row.className='msCheckoutLine msDiscount';row.innerHTML='<span>Coupon '+appliedCoupon.code+'</span><b>−'+money(disc)+'</b>';b.insertBefore(row,b.querySelector('.msCheckoutLine:last-of-type'))} };
 const oldOrders=window.renderOrders;window.renderOrders=function(){oldOrders();const b=document.getElementById('msOrdersBody');if(!b)return;b.querySelectorAll('.msRow').forEach((row,i)=>{const o=state.orders[i];if(!o)return;const st=['Order Received','Photo Received','Work Started','Ready for Pickup','Delivered'];const cur=Math.max(0,st.indexOf(o.status));row.innerHTML+='<div class="msTrack">'+st.map((x,j)=>'<span class="'+(j<=cur?'done':'')+'"><i></i>'+x+'</span>').join('')+'</div><button class="msUseBtn" onclick="msBuyAgain('+i+')">🔁 Buy Again</button>'})};
 window.msBuyAgain=i=>{const o=state.orders[i];if(!o)return;(o.items||[]).forEach(it=>{const p=Object.values(products).flat().find(x=>x[0]===it.name);if(p)addCart(p,it.color||'')});closeModal('msOrdersModal');msOpenCart()};
