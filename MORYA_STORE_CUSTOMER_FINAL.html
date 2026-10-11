@@ -176,7 +176,10 @@ function addCurrent(){if(colorOptions(current).length&&!selectedColor){alert('Pl
 function buyCurrent(){if(colorOptions(current).length&&!selectedColor){alert('Please select a color.');return}add(current,selectedColor);closeModal('detailModal');msOpenCart()}
 function closeModal(id){document.getElementById(id).style.display='none'}
 let customerAuthMode='login';
-document.getElementById('loginBtn').onclick=()=>openCustomerLogin();
+const customerLoginButton=document.getElementById('loginBtn');
+if(customerLoginButton){
+ customerLoginButton.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();openCustomerLogin().catch(err=>{const m=document.getElementById('loginMsg');if(m){m.style.display='block';m.textContent='Login open error: '+(err?.message||err);}else alert('Login open error: '+(err?.message||err));});});
+}
 function setAuthMode(mode){
  customerAuthMode=mode==='signup'?'signup':'login';
  document.getElementById('authName').style.display=customerAuthMode==='signup'?'block':'none';
@@ -186,15 +189,30 @@ function setAuthMode(mode){
  document.getElementById('loginMsg').style.display='none';
 }
 async function openCustomerLogin(){
- const {data}=await sb.auth.getSession();
- if(data.session){const u=data.session.user;state.mobile=(u.user_metadata?.mobile||state.mobile||'');state.name=(u.user_metadata?.full_name||state.name||'');save();renderAccount();alert('You are already logged in.');return;}
+ const modal=document.getElementById('loginModal');
+ const msg=document.getElementById('loginMsg');
  document.getElementById('authName').value=state.name||'';
  document.getElementById('authMobile').value=state.mobile||'';
  document.getElementById('authEmail').value='';
  document.getElementById('authPassword').value='';
- document.getElementById('loginMsg').style.display='none';
+ msg.style.display='none';
  setAuthMode('login');
- document.getElementById('loginModal').style.display='flex';
+ // Open the modal immediately; auth status checks must not block the click response.
+ modal.style.display='flex';
+ try{
+  const {data,error}=await sb.auth.getSession();
+  if(error) throw error;
+  if(data.session){
+   const u=data.session.user;
+   state.mobile=(u.user_metadata?.mobile||state.mobile||'');
+   state.name=(u.user_metadata?.full_name||state.name||'');
+   save();renderAccount();modal.style.display='none';
+   alert('You are already logged in.');
+  }
+ }catch(err){
+  msg.style.display='block';
+  msg.textContent='Login is open, but account status could not be checked. You can still try Login. '+(err?.message||'');
+ }
 }
 async function submitCustomerAuth(){
  const name=(document.getElementById('authName').value||'').trim();
