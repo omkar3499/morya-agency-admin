@@ -246,10 +246,12 @@ async function loadLiveProducts(){
   try{
     const {data,error}=await sb.from('products').select('id,name,price,stock,available,category,brand,model,description,image_url,is_customizable,color_options').eq('available',true).order('name');
     if(error) throw error;
-    const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phones:'mobile',phone:'mobile',mobilephones:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
+    const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phone:'mobile',phones:'mobile',smartphone:'mobile',smartphones:'mobile',handset:'mobile',handsets:'mobile',mobile_device:'mobile',mobile_devices:'mobile',iphone:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
     const live={mobile:[],custom:[],parts:[],accessories:[],skin:[],cover:[]};
     (data||[]).forEach(p=>{
-      let k=map[String(p.category||'').trim().toLowerCase()]||null;
+      const categoryKey=String(p.category||'').trim().toLowerCase().replace(/[\\s-]+/g,'_');
+      let k=map[categoryKey]||null;
+      if(!k && /(mobile|phone|smartphone|iphone|handset)/.test(categoryKey)) k='mobile';
       const n=String(p.name||'').toLowerCase();
       // Never allow a product named as a cover/skin/part/accessory to appear under another category.
       if(/mobile\s*cover|transparent\s*cover|printed\s*cover|premium\s*cover/.test(n)) k='cover';
