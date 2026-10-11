@@ -121,6 +121,8 @@ cover:[
 ['Mobile Cover','₹149','📱','Model-specific Mobile Cover'],['Transparent Cover','₹149','📱','Transparent Cover'],
 ['Printed Cover','₹199','📱','Custom Printed Cover'],['Premium Cover','₹249','📱','Premium Mobile Cover']]
 };
+// Initialize product collections before category rendering and live Supabase loading.
+const products={mobile:[],...localProducts};
 let current=null,cart=0;
 function productCategory(p){
  const n=String(p[0]||'').toLowerCase();
