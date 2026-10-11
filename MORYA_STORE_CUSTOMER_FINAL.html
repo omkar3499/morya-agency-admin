@@ -141,7 +141,13 @@ function render(cat='all'){
  if(homeMode && cat==='all'){document.getElementById('products').innerHTML='';return;}
  let list=cat==='all'?Object.values(products).flat():((products[cat]||[]).filter(p=>productCategory(p)===cat));
  if(cat!=='all') list=list.filter(p=>productCategory(p)===cat);
- document.getElementById('products').innerHTML=list.map((p,i)=>{
+ const productArea=document.getElementById('products');
+ if(!list.length){
+   const messages={mobile:'No mobile phones are currently showing. In Admin, check that the phone product is marked Available and its category is Mobiles / Mobile Phones.',custom:'No custom products are currently available.',parts:'No mobile parts are currently available.',accessories:'No mobile accessories are currently available.',skin:'No mobile skins are currently available.',cover:'No mobile covers are currently available.'};
+   productArea.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:28px 18px;border:1px dashed #d1d5db;border-radius:14px;background:#fafafa;color:#374151"><div style="font-size:28px;margin-bottom:8px">📦</div><strong>No products found</strong><p style="font-size:13px;line-height:1.5;color:#6b7280;margin:8px auto 0;max-width:440px">${messages[cat]||'No products are currently available.'}</p></div>`;
+   return;
+ }
+ productArea.innerHTML=list.map((p,i)=>{
    const colors=Array.isArray(p[10])?p[10]:[];
    const colorHtml=colors.length
      ? `<div class="colorRow">${colors.slice(0,6).map(c=>`<span class="colorDot" title="${String(c).replace(/"/g,'&quot;')}" style="background:${colorToCss(c)}"></span>`).join('')}<span class="colorName">${colors.length} color${colors.length>1?'s':''}</span></div>`
