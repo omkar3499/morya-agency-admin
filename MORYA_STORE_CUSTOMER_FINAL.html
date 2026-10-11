@@ -121,8 +121,7 @@ cover:[
 ['Mobile Cover','₹149','📱','Model-specific Mobile Cover'],['Transparent Cover','₹149','📱','Transparent Cover'],
 ['Printed Cover','₹199','📱','Custom Printed Cover'],['Premium Cover','₹249','📱','Premium Mobile Cover']]
 };
-// Initialize the catalogue before any category click or Supabase request.
-// Keep existing demo categories and let live Supabase products replace them when available.
+// Initialize product collections before category rendering and live Supabase loading.
 const products={mobile:[],...localProducts};
 let current=null,cart=0;
 function productCategory(p){
@@ -141,13 +140,7 @@ function render(cat='all'){
  if(homeMode && cat==='all'){document.getElementById('products').innerHTML='';return;}
  let list=cat==='all'?Object.values(products).flat():((products[cat]||[]).filter(p=>productCategory(p)===cat));
  if(cat!=='all') list=list.filter(p=>productCategory(p)===cat);
- const productArea=document.getElementById('products');
- if(!list.length){
-   const messages={mobile:'No mobile phones are currently showing. In Admin, check that the phone product is marked Available and its category is Mobiles / Mobile Phones.',custom:'No custom products are currently available.',parts:'No mobile parts are currently available.',accessories:'No mobile accessories are currently available.',skin:'No mobile skins are currently available.',cover:'No mobile covers are currently available.'};
-   productArea.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:28px 18px;border:1px dashed #d1d5db;border-radius:14px;background:#fafafa;color:#374151"><div style="font-size:28px;margin-bottom:8px">📦</div><strong>No products found</strong><p style="font-size:13px;line-height:1.5;color:#6b7280;margin:8px auto 0;max-width:440px">${messages[cat]||'No products are currently available.'}</p></div>`;
-   return;
- }
- productArea.innerHTML=list.map((p,i)=>{
+ document.getElementById('products').innerHTML=list.map((p,i)=>{
    const colors=Array.isArray(p[10])?p[10]:[];
    const colorHtml=colors.length
      ? `<div class="colorRow">${colors.slice(0,6).map(c=>`<span class="colorDot" title="${String(c).replace(/"/g,'&quot;')}" style="background:${colorToCss(c)}"></span>`).join('')}<span class="colorName">${colors.length} color${colors.length>1?'s':''}</span></div>`
@@ -275,10 +268,8 @@ async function loadLiveProducts(){
     render();
     const mobileCat=document.querySelector('.cat[data-cat="mobile"]');
     if(mobileCat) mobileCat.style.display='';
-    const mobileCount=(products.mobile||[]).length;
-    document.getElementById('liveStatus').textContent=mobileCount?'● Live products connected · '+mobileCount+' phones':'● Connected · no available phones';
-    if(!mobileCount) console.warn('Supabase connected, but no available mobile products were returned. Check products table: available=true and category is Mobiles/mobile/mobile_phone.');
-  }catch(e){console.error('Live products error:',e); document.getElementById('liveStatus').textContent='● Product connection error'; const area=document.getElementById('products'); if(area && !area.innerHTML.trim()) area.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:18px;color:#b91c1c">Products could not load. Check internet connection and Supabase products-table read permissions.</div>'; render();}
+    document.getElementById('liveStatus').textContent='● Live products connected';
+  }catch(e){console.error('Live products error:',e); document.getElementById('liveStatus').textContent='● Product connection error'; render();}
 }
 render();
 loadLiveProducts();
@@ -317,98 +308,41 @@ body{padding-bottom:92px}
  function priceNum(p){return Number(String(p&&p[1]||'0').replace(/[^0-9.]/g,''))||0}
  function addCart(p,color=''){
    const id=(p[4]||p[0])+'|'+(color||''); let x=state.cart.find(i=>i.id===id); if(x)x.qty++; else state.cart.push({id,name:p[0],price:priceNum(p),raw:p,color:color||'',qty:1}); save(); sync(); alert(p[0]+(color?' • '+color:'')+' added to Cart'); }
- async function msCloudRewards(){
-   const sess=(await sb.auth.getSession()).data.session;
-   if(!sess) return {ok:false,message:'Login to view your reward balance.'};
-   const mobile=(state.mobile||'').replace(/\\D/g,'');
-   if(!mobile) return {ok:false,message:'Mobile number is not saved in this app yet.'};
-   const r=await sb.from('reward_points_balances').select('balance_points,earned_points,redeemed_points,reversal_debt_points').eq('customer_mobile',mobile).maybeSingle();
-   if(r.error) return {ok:false,message:'Shared rewards are not enabled yet. Please check again after Admin setup.'};
-   const h=await sb.from('reward_points_ledger').select('entry_type,points,note,order_id,created_at').eq('customer_mobile',mobile).order('created_at',{ascending:false}).limit(20);
-   return {ok:true,balance:Number(r.data?.balance_points||0),earned:Number(r.data?.earned_points||0),redeemed:Number(r.data?.redeemed_points||0),debt:Number(r.data?.reversal_debt_points||0),history:h.error?[]:(h.data||[])};
- }
  function cartTotal(){return state.cart.reduce((a,x)=>a+x.price*x.qty,0)}
  function renderCart(){
    const b=document.getElementById('msCartBody');
    if(!state.cart.length){b.innerHTML='<div style="text-align:center;padding:30px;color:#666">🛒<h3>Your cart is empty</h3><button class="msCheckoutBtn" onclick="closeModal(\'msCartModal\');msGoShop()">Continue Shopping</button></div>';return;}
-   let total=cartTotal(); b.innerHTML=`<div class="msReward"><div><small>Shared Reward Balance</small><br><b id="msCartCloudBalance">Checking…</b><br><small>Eligible categories earn 5% after order completion</small></div><button class="msPill" onclick="msGoAccount()">View</button></div>`+
+   let total=cartTotal(); b.innerHTML=`<div class="msReward"><div><small>Available Reward Balance</small><br><b>${money(state.reward)}</b><br><small>Earn 1% on completed purchases</small></div><button class="msPill" onclick="msGoAccount()">View</button></div>`+
    state.cart.map((x,i)=>`<div class="msCartItem">${imgHtml(x.raw)}<div class="grow"><b>${x.name}</b>${x.color?`<div class="msMuted">Color: ${x.color}</div>`:''}<div>${money(x.price)} × ${x.qty}</div></div><div class="msQty"><button onclick="msQty(${i},-1)">−</button><b>${x.qty}</b><button onclick="msQty(${i},1)">+</button></div></div>`).join('')+
    `<div style="margin-top:12px"><div class="msCheckoutLine"><span>Subtotal</span><b>${money(total)}</b></div><div class="msCheckoutLine"><span>Delivery</span><b>Calculated at checkout</b></div><button class="msCheckoutBtn" onclick="msOpenCheckout()">Proceed to Checkout</button></div>`;
-   msCloudRewards().then(r=>{const el=document.getElementById('msCartCloudBalance');if(el)el.textContent=r.ok?money(r.balance):'Not ready';});
  }
  window.msQty=(i,d)=>{state.cart[i].qty+=d;if(state.cart[i].qty<=0)state.cart.splice(i,1);save();sync();renderCart()};
  window.msOpenCart=()=>{renderCart();document.getElementById('msCartModal').style.display='flex'};
  window.msOpenCheckout=async()=>{ if(!state.cart.length)return; const sess=(await sb.auth.getSession()).data.session; if(!sess){ closeModal('msCartModal'); document.getElementById('loginModal').style.display='flex'; document.getElementById('loginMsg').style.display='block'; document.getElementById('loginMsg').textContent='Please login with your mobile number before checkout.'; return; } closeModal('msCartModal'); renderCheckout();document.getElementById('msCheckoutModal').style.display='flex'};
  function renderCheckout(){
-   const total=cartTotal(); const use=0; state.usedReward=0; save();
-   document.getElementById('msCheckoutBody').innerHTML=`<div class="msReward"><div><small>Reward Balance</small><br><b>${money(state.reward)}</b></div><button class="msPill" disabled title="Shared redemption is being secured">Not enabled yet</button></div>${use?`<div class="msCheckoutLine msDiscount"><span>Reward Discount</span><b>−${money(use)}</b></div>`:''}<label>Customer Name</label><input id="msName" class="loginInput" value="${state.name||''}" placeholder="Your name"><label>Mobile Number</label><input id="msMobile" class="loginInput" value="${state.mobile||''}" placeholder="10 digit mobile number"><label>Full Address</label><textarea id="msAddress" class="loginInput" rows="3" placeholder="Full address"></textarea><label>Delivery</label><select id="msDelivery" class="loginInput"><option value="pickup">Store Pickup — FREE</option><option value="home">Home Delivery — ₹80 within 50 km</option></select><label style='margin-top:10px'>Payment Method</label><select id="msPayment" class="loginInput"><option value="cod">💵 Cash on Delivery</option></select><div class="notice">Delivery: 1–3 days. Outside 50 km, extra charges may apply.</div><div class="msCheckoutLine"><span>Total Payable</span><b>${money(Math.max(0,total-use))}</b></div><button class="msCheckoutBtn" onclick="msPlaceOrder()">Place Order</button>`;
+   const total=cartTotal(); const max=Math.min(state.reward,total); const use=state.usedReward>0?Math.min(state.usedReward,max):0; state.usedReward=use; save();
+   document.getElementById('msCheckoutBody').innerHTML=`<div class="msReward"><div><small>Reward Balance</small><br><b>${money(state.reward)}</b></div><button class="msPill" onclick="msToggleReward()">${use?'Remove':'Use'} Balance</button></div>${use?`<div class="msCheckoutLine msDiscount"><span>Reward Discount</span><b>−${money(use)}</b></div>`:''}<label>Customer Name</label><input id="msName" class="loginInput" value="${state.name||''}" placeholder="Your name"><label>Mobile Number</label><input id="msMobile" class="loginInput" value="${state.mobile||''}" placeholder="10 digit mobile number"><label>Full Address</label><textarea id="msAddress" class="loginInput" rows="3" placeholder="Full address"></textarea><label>Delivery</label><select id="msDelivery" class="loginInput"><option value="pickup">Store Pickup — FREE</option><option value="home">Home Delivery — ₹80 within 50 km</option></select><label style='margin-top:10px'>Payment Method</label><select id="msPayment" class="loginInput"><option value="cod">💵 Cash on Delivery</option></select><div class="notice">Delivery: 1–3 days. Outside 50 km, extra charges may apply.</div><div class="msCheckoutLine"><span>Total Payable</span><b>${money(Math.max(0,total-use))}</b></div><button class="msCheckoutBtn" onclick="msPlaceOrder()">Place Order</button>`;
  }
  window.msToggleReward=()=>{const total=cartTotal();state.usedReward=state.usedReward?0:Math.min(state.reward,total);save();renderCheckout()};
- window.msOrderSubmitting=false;
  window.msPlaceOrder=async()=>{
-   if(window.msOrderSubmitting) return;
-   const name=document.getElementById('msName').value.trim();
-   const mobile=document.getElementById('msMobile').value.replace(/\D/g,'');
-   const address=document.getElementById('msAddress').value.trim();
-   const delivery=document.getElementById('msDelivery').value;
-   const payment=document.getElementById('msPayment').value;
-   if(!name||mobile.length!==10||!address){alert('Please enter name, valid 10 digit mobile number and full address.');return}
-
-   const {data:sessionData,error:sessionError}=await sb.auth.getSession();
-   const sess=sessionData?.session;
-   if(sessionError||!sess){alert('Please login with OTP before placing the order.');return}
-   const verifiedMobile=String(sess.user?.phone||'').replace(/\D/g,'').slice(-10);
-   if(verifiedMobile.length!==10||verifiedMobile!==mobile){
-     alert('Checkout mobile number must match the mobile number verified during OTP login.');
-     return;
-   }
-
-   window.msOrderSubmitting=true;
-   const placeBtn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
-   if(placeBtn){placeBtn.disabled=true;placeBtn.textContent='Placing Order…';}
-   const subtotal=cartTotal();
-   const total=subtotal+(delivery==='home'?80:0);
-   const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-   const items=state.cart.map(x=>{
-     const candidate=x.product_id||x.raw?.[4]||x.raw?.product_id||null;
-     return {product_id:(typeof candidate==='string'&&uuidPattern.test(candidate))?candidate:null,quantity:Math.max(1,parseInt(x.qty,10)||1),model_or_size:String(x.color||x.raw?.[3]||'').slice(0,250)};
-   });
-   if(items.some(x=>!x.product_id)){
-     window.msOrderSubmitting=false;
-     const btn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
-     if(btn){btn.disabled=false;btn.textContent='Place Order';}
-     alert('Cart product is not linked to the online catalog. No order was submitted.');
-     return;
-   }
-   window.msCheckoutRequestId=window.msCheckoutRequestId||crypto.randomUUID();
-   let orderId, confirmedTotal;
-   try{
-     const {data,error}=await sb.rpc('morya_checkout_with_rewards',{
-       p_request_id:window.msCheckoutRequestId,
-       p_customer_name:name,p_customer_mobile:mobile,p_customer_address:address,
-       p_delivery:delivery,p_items:items,p_reward_points:0
-     });
-     if(error) throw error;
-     const result=Array.isArray(data)?data[0]:data;
-     if(!result?.success||!result?.order_id) throw new Error(result?.message||'Checkout not confirmed.');
-     orderId=result.order_id; confirmedTotal=Number(result.total_amount);
-     if(!Number.isFinite(confirmedTotal)||confirmedTotal<0) throw new Error('Invalid total from server.');
-   }catch(e){
-     console.error('Atomic checkout failed',e);
-     window.msOrderSubmitting=false;
-     const btn=document.querySelector('#msCheckoutModal button[onclick="msPlaceOrder()"]');
-     if(btn){btn.disabled=false;btn.textContent='Place Order';}
-     alert('Order could not be confirmed. Cart is kept. Please contact Morya Agency if this repeats.\n'+(e?.message||''));
-     return;
-   }
-
-   window.msOrderSubmitting=false;
+   const name=document.getElementById('msName').value.trim(), mobile=document.getElementById('msMobile').value.replace(/\D/g,''), address=document.getElementById('msAddress').value.trim(), delivery=document.getElementById('msDelivery').value, payment=document.getElementById('msPayment').value;
+   if(!name||mobile.length<10||!address){alert('Please enter name, valid mobile number and full address.');return}
+   const subtotal=cartTotal(), rewardUsed=Math.min(state.usedReward,Math.min(state.reward,subtotal)), deliveryFee=delivery==='home'?80:0, total=Math.max(0,subtotal-rewardUsed+deliveryFee);
    state.name=name;state.mobile=mobile;
-   window.msCheckoutRequestId=null;state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total:confirmedTotal,status:'Order Received',payment:'Cash on Delivery',items:state.cart.map(x=>({name:x.name,qty:x.qty,color:x.color||''}))});
-   state.usedReward=0;state.cart=[];save();sync();closeModal('msCheckoutModal');renderOrders();
-   const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+confirmedTotal+'\nPayment: Cash on Delivery\nStatus: Order Received');
-   const go=confirm('Order saved in the online database.\nPayment: Cash on Delivery\nOrder #'+String(orderId).slice(-8)+'\n\nOpen WhatsApp to notify Morya Agency?');
-   if(go){window.open(wa,'_blank')|| (window.location.href=wa)}
+   const earned=Math.round(total*0.01*100)/100;
+   const items=state.cart.map(x=>({name:x.name,qty:x.qty,price:x.price,color:x.color||'',product_id:x.product_id||x.id||null}));
+   let orderId='LOCAL-'+Date.now();
+   try{
+     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(rewardUsed?' | Reward used: '+rewardUsed:'')+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
+     const {data,error}=await sb.from('orders').insert([payload]).select('id').single();
+     if(error) throw error; orderId=data.id;
+     const itemRows=state.cart.filter(x=>x.product_id||x.id).map(x=>({order_id:orderId,product_id:x.product_id||x.id,quantity:x.qty,price:x.price}));
+     if(itemRows.length){const ir=await sb.from('order_items').insert(itemRows);if(ir.error)console.warn('order_items insert failed',ir.error)}
+   }catch(e){ console.warn('Order cloud insert failed',e); }
+   state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total,status:'Order Received',payment:'Cash on Delivery',items});
+   state.reward=Math.max(0,state.reward-rewardUsed)+earned; state.usedReward=0; state.cart=[]; save(); sync(); closeModal('msCheckoutModal'); renderOrders();
+   const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+total+'\nPayment: Cash on Delivery\nStatus: Order Received');
+   const go=confirm('Order placed successfully!\nPayment: Cash on Delivery\nOrder #'+String(orderId).slice(-8)+'\n\nOpen WhatsApp to notify Morya Agency?'); if(go){window.open(wa,'_blank')|| (window.location.href=wa)}
  };
 
  function renderOrders(){
@@ -417,9 +351,7 @@ body{padding-bottom:92px}
    b.innerHTML=state.orders.map(o=>`<div class="msRow"><div class="msRowTop"><b>Order #${String(o.id).slice(-8)}</b><b>${money(o.total)}</b></div><div class="msMuted">${o.date}</div><div style="margin:8px 0"><b>Status:</b> ${o.status} &nbsp; <b>Payment:</b> ${o.payment||'Cash on Delivery'}</div><div class="msMuted">${o.items.map(i=>i.name+(i.color?' • '+i.color:'')+' × '+i.qty).join(', ')}</div></div>`).join('');
  }
  window.msOpenOrders=()=>{renderOrders();document.getElementById('msOrdersModal').style.display='flex'};
- function renderAccount(){document.getElementById('msAccountBody').innerHTML=`<div class="msReward"><div><small>My Shared Reward Balance</small><br><b id="msAccountCloudBalance">Checking…</b><br><small>5% on eligible categories after order completion</small></div><button class="msPill" disabled>Redemption setup pending</button></div><div class="msRow"><b>Points History</b><div id="msRewardHistory" class="msMuted">Loading shared history…</div></div><div class="msRow"><b>👤 ${state.name||'Customer'}</b><div class="msMuted">${state.mobile||'Login/mobile number not saved yet'}</div></div><div class="msRow" onclick="msOpenOrders()" style="cursor:pointer"><b>📦 My Orders</b><div class="msMuted">View order history & status</div></div><div class="msRow" onclick="document.getElementById('settingsBtn').click();closeModal('msAccountModal')" style="cursor:pointer"><b>⚙️ Settings</b><div class="msMuted">Support, WhatsApp & app settings</div></div><div class="msRow" onclick="requestDeleteAccount()" style="cursor:pointer;border:1px solid #fecaca"><b style="color:#dc2626">🗑️ Delete Account</b><div class="msMuted">Delete your customer account</div></div><div class="msRow"><b>🛒 Buy Morya Agency</b><div class="msMuted">Mobile • Accessories • Custom Products</div></div>`;
- msCloudRewards().then(r=>{const el=document.getElementById('msAccountCloudBalance'),hist=document.getElementById('msRewardHistory');if(!el)return;el.textContent=r.ok?(r.balance+' points'+(r.debt?' · Return adjustment '+r.debt:'')):'Not ready';if(hist)hist.innerHTML=r.ok&&r.history.length?r.history.map(x=>'<div style="padding:6px 0;border-bottom:1px solid #eee">'+(x.entry_type||'entry')+' · '+(Number(x.points)>0?'+':'')+Number(x.points)+' points · '+new Date(x.created_at).toLocaleDateString()+'</div>').join(''):(r.message||'No shared history yet.');});
- }
+ function renderAccount(){document.getElementById('msAccountBody').innerHTML=`<div class="msReward"><div><small>My Reward Balance</small><br><b>${money(state.reward)}</b><br><small>1% reward on completed purchases</small></div><button class="msPill" onclick="msOpenCart()">Use at Checkout</button></div><div class="msRow"><b>👤 ${state.name||'Customer'}</b><div class="msMuted">${state.mobile||'Login/mobile number not saved yet'}</div></div><div class="msRow" onclick="msOpenOrders()" style="cursor:pointer"><b>📦 My Orders</b><div class="msMuted">View order history & status</div></div><div class="msRow" onclick="document.getElementById('settingsBtn').click();closeModal('msAccountModal')" style="cursor:pointer"><b>⚙️ Settings</b><div class="msMuted">Support, WhatsApp & app settings</div></div><div class="msRow" onclick="requestDeleteAccount()" style="cursor:pointer;border:1px solid #fecaca"><b style="color:#dc2626">🗑️ Delete Account</b><div class="msMuted">Delete your customer account</div></div><div class="msRow"><b>🛒 Buy Morya Agency</b><div class="msMuted">Mobile • Accessories • Custom Products</div></div>`}
  window.msGoAccount=()=>{closeModal('msCartModal');renderAccount();document.getElementById('msAccountModal').style.display='flex';msActive('msAccountBtn')};
  window.msGoShop=()=>{msActive('msShopBtn');document.querySelector('.categories')?.scrollIntoView({behavior:'smooth',block:'start'});};
  function msActive(id){document.querySelectorAll('#msBottomNav button').forEach(b=>b.classList.remove('msActive'));document.getElementById(id)?.classList.add('msActive')}
