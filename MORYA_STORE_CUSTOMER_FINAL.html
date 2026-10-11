@@ -128,7 +128,7 @@ let current=null,cart=0;
 function productCategory(p){
  const n=String(p[0]||'').toLowerCase();
  const c=String(p[6]||'').toLowerCase();
- if(c==='mobile_phone'||c==='mobile'||c.includes('mobile phone')||c.includes('phone')) return 'mobile';
+ if(['mobile','mobiles','mobile_phone','mobile_phones','mobilephones','phones','phone'].includes(c)||c.includes('mobile phone')||c.includes('phone')) return 'mobile';
  if(/mobile\s*cover|transparent\s*cover|printed\s*cover|premium\s*cover/.test(n)||c.includes('cover')) return 'cover';
  if(/back\s*skin|mobile\s*skin/.test(n)||c.includes('skin')) return 'skin';
  if(/charging|battery|display|back panel|middle frame|ringer|speaker|camera glass|sim tray|cc board|network cable|on off strip|combo/.test(n)||c.includes('part')) return 'parts';
