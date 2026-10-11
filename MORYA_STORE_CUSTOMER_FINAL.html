@@ -82,7 +82,7 @@ body{background:#f4f5f7;color:#111827;letter-spacing:.05px}
 </section>
 </main>
 
-<div class="modal" id="loginModal"><div class="box"><div class="boxHead">👤 Customer Login <button class="close" onclick="closeModal(\'loginModal\')">×</button></div><div class="boxBody"><p id="loginHelp">Enter your mobile number. We will send an OTP.</p><input id="loginMobile" class="loginInput" inputmode="numeric" maxlength="10" placeholder="10 digit mobile number"><button id="sendOtpBtn" class="primary" onclick="sendCustomerOtp()">Send OTP</button><div id="otpArea" style="display:none;margin-top:10px"><input id="loginOtp" class="loginInput" inputmode="numeric" maxlength="6" placeholder="Enter 6 digit OTP"><button id="verifyOtpBtn" class="primary" onclick="verifyCustomerOtp()">Verify OTP & Login</button></div><div id="loginMsg" class="notice" style="display:none"></div></div></div></div>
+<div class="modal" id="loginModal"><div class="box"><div class="boxHead">👤 Customer Account <button class="close" onclick="closeModal('loginModal')">×</button></div><div class="boxBody"><div id="authFields"><input id="authName" class="loginInput" placeholder="Full name" autocomplete="name"><input id="authMobile" class="loginInput" inputmode="numeric" maxlength="10" placeholder="10 digit mobile number" autocomplete="tel"><input id="authEmail" class="loginInput" type="email" placeholder="Email address" autocomplete="email"><input id="authPassword" class="loginInput" type="password" placeholder="Password (minimum 6 characters)" autocomplete="current-password"></div><button id="authSubmit" class="primary" onclick="submitCustomerAuth()">Login</button><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:13px"><button type="button" onclick="setAuthMode('login')" id="authLoginTab">Login</button><button type="button" onclick="setAuthMode('signup')" id="authSignupTab">Create Account</button><button type="button" onclick="resetCustomerPassword()">Forgot Password?</button></div><div id="loginMsg" class="notice" style="display:none"></div></div></div></div>
 <div class="modal" id="detailModal"><div class="box"><div class="boxHead" id="dTitle">Product <button class="close" onclick="closeModal('detailModal')">×</button></div><div class="boxBody"><div class="detailImg" id="dImg">☕</div><h2 id="dName"></h2><div class="detailPrice" id="dPrice"></div><div id="dColors"></div><p id="dDesc"></p><div id="dHint" style="font-size:13px;color:#666;margin:8px 0 12px">Product details पाहा, मग Add to Cart किंवा Buy Now निवडा.</div><button class="primary" onclick="addCurrent()">🛒 Add to Cart</button><button class="primary" style="background:#111;color:#fff" onclick="buyCurrent()">⚡ Buy Now</button></div></div></div>
 
 <div class="modal" id="settingsModal"><div class="box"><div class="boxHead">⚙️ Settings <button class="close" onclick="closeModal('settingsModal')">×</button></div><div class="boxBody"><div style="text-align:center;padding:8px 0 16px"><div style="font-size:42px">🛍️</div><h2 style="margin:6px 0">Morya Agency</h2><p style="color:#666;margin:0">Customer Support & Marketing</p></div><div style="border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:10px"><b>📞 Customer Support</b><div style="font-size:18px;font-weight:800;margin-top:6px">7262822323</div><button class="primary" onclick="callSupport()">📞 Call Support</button></div><div style="border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:10px"><b>💬 WhatsApp</b><p style="margin:6px 0;color:#666">Customer support साठी WhatsApp वर संपर्क करा.</p><button class="primary" style="background:#25D366;color:#fff" onclick="openWhatsApp()">💬 WhatsApp Support</button></div><div style="background:#fff8cc;border-radius:12px;padding:14px;text-align:center;margin-top:12px"><div style="font-size:22px;font-weight:900">🛒 Buy Morya Agency</div><p style="margin:6px 0 0;color:#555">Mobile • Accessories • Custom Products</p></div></div></div></div>
@@ -175,43 +175,60 @@ window.selectColor=i=>{const colors=colorOptions(current);selectedColor=colors[i
 function addCurrent(){if(colorOptions(current).length&&!selectedColor){alert('Please select a color.');return}add(current,selectedColor);closeModal('detailModal')}
 function buyCurrent(){if(colorOptions(current).length&&!selectedColor){alert('Please select a color.');return}add(current,selectedColor);closeModal('detailModal');msOpenCart()}
 function closeModal(id){document.getElementById(id).style.display='none'}
+let customerAuthMode='login';
 document.getElementById('loginBtn').onclick=()=>openCustomerLogin();
+function setAuthMode(mode){
+ customerAuthMode=mode==='signup'?'signup':'login';
+ document.getElementById('authName').style.display=customerAuthMode==='signup'?'block':'none';
+ document.getElementById('authMobile').style.display=customerAuthMode==='signup'?'block':'none';
+ document.getElementById('authSubmit').textContent=customerAuthMode==='signup'?'Create Account':'Login';
+ document.getElementById('authPassword').autocomplete=customerAuthMode==='signup'?'new-password':'current-password';
+ document.getElementById('loginMsg').style.display='none';
+}
 async function openCustomerLogin(){
-  const sess=(await sb.auth.getSession()).data.session;
-  if(sess){
-    const phone=(sess.user.phone||'').replace(/^\\+91/,'');
-    state.mobile=phone||state.mobile||''; save(); alert('You are already logged in.'); return;
-  }
-  document.getElementById('loginMobile').value=state.mobile||''; document.getElementById('loginOtp').value=''; document.getElementById('otpArea').style.display='none'; document.getElementById('loginMsg').style.display='none'; document.getElementById('loginModal').style.display='flex';
+ const {data}=await sb.auth.getSession();
+ if(data.session){const u=data.session.user;state.mobile=(u.user_metadata?.mobile||state.mobile||'');state.name=(u.user_metadata?.full_name||state.name||'');save();renderAccount();alert('You are already logged in.');return;}
+ document.getElementById('authName').value=state.name||'';
+ document.getElementById('authMobile').value=state.mobile||'';
+ document.getElementById('authEmail').value='';
+ document.getElementById('authPassword').value='';
+ document.getElementById('loginMsg').style.display='none';
+ setAuthMode('login');
+ document.getElementById('loginModal').style.display='flex';
 }
-async function sendCustomerOtp(){
-  const raw=(document.getElementById('loginMobile').value||'').replace(/\\D/g,'');
-  const msg=document.getElementById('loginMsg'); msg.style.display='block'; msg.textContent='Sending OTP...';
-  if(raw.length!==10){msg.textContent='Please enter a valid 10 digit mobile number.';return;}
-  const phone='+91'+raw;
-  const {error}=await sb.auth.signInWithOtp({phone,options:{channel:'sms'}});
-  if(error){msg.textContent='OTP could not be sent: '+error.message+' | Supabase Phone/SMS Auth must be enabled.';return;}
-  document.getElementById('otpArea').style.display='block';
-  document.getElementById('sendOtpBtn').textContent='Resend OTP';
-  msg.textContent='OTP sent. Enter the OTP received on your mobile.';
+async function submitCustomerAuth(){
+ const name=(document.getElementById('authName').value||'').trim();
+ const mobile=(document.getElementById('authMobile').value||'').replace(/\D/g,'');
+ const email=(document.getElementById('authEmail').value||'').trim().toLowerCase();
+ const password=document.getElementById('authPassword').value||'';
+ const msg=document.getElementById('loginMsg');msg.style.display='block';msg.textContent='Please wait...';
+ if(!/^\S+@\S+\.\S+$/.test(email)){msg.textContent='Please enter a valid email address.';return;}
+ if(password.length<6){msg.textContent='Password must be at least 6 characters.';return;}
+ if(customerAuthMode==='signup'){
+  if(!name){msg.textContent='Please enter your full name.';return;}
+  if(mobile.length!==10){msg.textContent='Please enter a valid 10 digit mobile number.';return;}
+  const {data,error}=await sb.auth.signUp({email,password,options:{data:{full_name:name,mobile}}});
+  if(error){msg.textContent='Account creation failed: '+error.message;return;}
+  if(data.session){state.name=name;state.mobile=mobile;save();document.getElementById('loginModal').style.display='none';renderAccount();msg.textContent='Account created successfully.';return;}
+  msg.textContent='Account created. Check your email to confirm the account, then log in. If confirmation is disabled in Supabase, you can log in now.';
+  return;
+ }
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){msg.textContent='Login failed: '+error.message;return;}
+ state.name=data.user?.user_metadata?.full_name||state.name||'Customer';
+ state.mobile=data.user?.user_metadata?.mobile||state.mobile||'';
+ save();document.getElementById('loginModal').style.display='none';sync();renderAccount();
 }
-async function verifyCustomerOtp(){
-  const raw=(document.getElementById('loginMobile').value||'').replace(/\\D/g,'');
-  const token=(document.getElementById('loginOtp').value||'').replace(/\\D/g,'');
-  const msg=document.getElementById('loginMsg'); msg.style.display='block'; msg.textContent='Verifying OTP...';
-  if(raw.length!==10||token.length!==6){msg.textContent='Enter valid mobile number and 6 digit OTP.';return;}
-  const {data,error}=await sb.auth.verifyOtp({phone:'+91'+raw,token,type:'sms'});
-  if(error){msg.textContent='OTP verification failed: '+error.message;return;}
-  state.mobile=raw;
-  if(data.user?.user_metadata?.full_name) state.name=data.user.user_metadata.full_name;
-  save();
-  msg.textContent='Login successful.';
-  document.getElementById('loginModal').style.display='none';
-  sync();
-  renderAccount();
+async function resetCustomerPassword(){
+ const email=(document.getElementById('authEmail').value||'').trim().toLowerCase();
+ const msg=document.getElementById('loginMsg');msg.style.display='block';
+ if(!/^\S+@\S+\.\S+$/.test(email)){msg.textContent='Enter your registered email address first.';return;}
+ msg.textContent='Sending password reset email...';
+ const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href.split('#')[0]});
+ msg.textContent=error?'Password reset failed: '+error.message:'Password reset link sent. Check your email inbox and spam folder.';
 }
 sb.auth.getSession().then(({data})=>{
-  if(data.session && data.session.user?.phone){state.mobile=data.session.user.phone.replace(/^\\+91/,'');save();}
+ if(data.session?.user){state.mobile=data.session.user.user_metadata?.mobile||state.mobile||'';state.name=data.session.user.user_metadata?.full_name||state.name||'Customer';save();renderAccount();}
 });
 document.getElementById('cartBtn').onclick=()=>alert('Cart → Checkout → Login → Address → Delivery → Done');
 document.getElementById('ordersBtn').onclick=()=>alert('My Orders → Login → Your orders and status');
