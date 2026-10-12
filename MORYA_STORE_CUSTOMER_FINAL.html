@@ -73,6 +73,9 @@ html,body{background:#0b0b0c!important;color:#f4efe6!important}
 .cat .ico{filter:saturate(.82)}
 .msActive{color:#e0c17c!important}
 button{cursor:pointer}
+
+/* Hide legacy bottom navigation; top header contains these actions already. */
+#msBottomNav{display:none!important}
 </style>
 </head>
 <body>
@@ -357,12 +360,7 @@ body{padding-bottom:92px}
 .msReward{background:linear-gradient(135deg,#111827,#263246);color:#fff;border-radius:18px;padding:17px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;gap:12px}.msReward b{color:#ffd400;font-size:23px}.msReward small{color:#cbd5e1}.msPill{background:#ffd400;color:#111;border:0;border-radius:10px;padding:10px 13px;font-weight:900}.msModalList{display:grid;gap:10px}.msRow{border:1px solid #e5e7eb;border-radius:13px;padding:12px;background:#fff}.msRowTop{display:flex;justify-content:space-between;gap:8px}.msMuted{color:#6b7280;font-size:12px}.msRent{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;display:flex;gap:12px;align-items:center}.msRent img{width:82px;height:72px;object-fit:contain;background:#f7f8fa;border-radius:12px}.msRent .msPrice{font-weight:950;font-size:18px;margin:3px 0}.msCheckoutLine{display:flex;justify-content:space-between;padding:7px 0}.msDiscount{color:#16803c;font-weight:800}.msUseBtn{width:100%;border:1px solid #111;background:#fff;border-radius:10px;padding:11px;font-weight:900;margin-top:8px}.msCartItem{display:flex;gap:10px;align-items:center;border-bottom:1px solid #eee;padding:10px 0}.msCartItem img{width:58px;height:58px;object-fit:contain;background:#f7f8fa;border-radius:10px}.msCartItem .grow{flex:1}.msQty{display:flex;align-items:center;gap:7px}.msQty button{width:28px;height:28px;border:1px solid #ddd;background:#fff;border-radius:7px}.msCheckoutBtn{width:100%;padding:13px;border:0;border-radius:11px;background:#ffd400;font-weight:950;margin-top:10px}
 @media(min-width:801px){#msBottomNav{bottom:18px}}
 </style>
-<div id="msBottomNav">
- <button id="msHomeBtn" class="msActive"><span class="msIcon">⌂</span>Home</button>
- <button id="msShopBtn"><span class="msIcon">🛍</span>Shop</button>
- <button id="msOrdersBtn"><span class="msIcon">📦</span>Orders</button>
- <button id="msAccountBtn"><span class="msIcon">👤</span>Account</button>
-</div>
+<!-- Redundant bottom navigation removed; top navigation remains available. -->
 <div class="modal" id="msOrdersModal"><div class="box"><div class="boxHead">📦 My Orders <button class="close" onclick="closeModal('msOrdersModal')">×</button></div><div class="boxBody" id="msOrdersBody"></div></div></div>
 <div class="modal" id="msAccountModal"><div class="box"><div class="boxHead">👤 My Account <button class="close" onclick="closeModal('msAccountModal')">×</button></div><div class="boxBody" id="msAccountBody"></div></div></div>
 <div class="modal" id="msCartModal"><div class="box"><div class="boxHead">🛒 My Cart <button class="close" onclick="closeModal('msCartModal')">×</button></div><div class="boxBody" id="msCartBody"></div></div></div>
