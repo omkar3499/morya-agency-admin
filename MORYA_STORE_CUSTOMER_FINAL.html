@@ -178,7 +178,7 @@ function closeModal(id){document.getElementById(id).style.display='none'}
 let customerAuthMode='login';
 const customerLoginButton=document.getElementById('loginBtn');
 if(customerLoginButton){
- customerLoginButton.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();openCustomerLogin().catch(err=>{const m=document.getElementById('loginMsg');if(m){m.style.display='block';m.textContent='Login open error: '+(err?.message||err);}else alert('Login open error: '+(err?.message||err));});});
+ customerLoginButton.onclick=function(ev){ev.preventDefault();document.getElementById('loginModal').style.display='flex';openCustomerLogin().catch(err=>{const m=document.getElementById('loginMsg');if(m){m.style.display='block';m.textContent='Login open error: '+(err?.message||err);}});};
 }
 function setAuthMode(mode){
  customerAuthMode=mode==='signup'?'signup':'login';
@@ -395,7 +395,7 @@ body{padding-bottom:92px}
  document.getElementById('msHomeBtn').onclick=()=>{msActive('msHomeBtn');window.scrollTo({top:0,behavior:'smooth'})};
  document.getElementById('msShopBtn').onclick=()=>msGoShop();
  document.getElementById('msOrdersBtn').onclick=async()=>{msActive('msOrdersBtn');const sess=(await sb.auth.getSession()).data.session;if(!sess){document.getElementById('loginModal').style.display='flex';document.getElementById('loginMsg').style.display='block';document.getElementById('loginMsg').textContent='Please login to view your orders.';return;}msOpenOrders()};
- document.getElementById('msAccountBtn').onclick=async()=>{msActive('msAccountBtn');const sess=(await sb.auth.getSession()).data.session;if(!sess){document.getElementById('loginModal').style.display='flex';document.getElementById('loginMsg').style.display='block';document.getElementById('loginMsg').textContent='Please login to open your account.';return;}renderAccount();document.getElementById('msAccountModal').style.display='flex'};
+ document.getElementById('msAccountBtn').onclick=()=>{msActive('msAccountBtn');openCustomerLogin().catch(err=>{const m=document.getElementById('loginMsg');m.style.display='block';m.textContent='Login error: '+(err?.message||err);document.getElementById('loginModal').style.display='flex';});};
  // Make existing top cart actually functional
  document.getElementById('cartBtn').onclick=()=>msOpenCart();
  // Make product add/buy use real cart
