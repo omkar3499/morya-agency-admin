@@ -479,7 +479,9 @@ body{padding-bottom:92px}
 <script>
 (function(){
  const KEY='morya_store_v2';
- const state=JSON.parse(localStorage.getItem(KEY)||'{"cart":[],"orders":[],"reward":0,"usedReward":0,"mobile":"","name":""}');
+ const DEFAULT_STATE={cart:[],orders:[],reward:0,usedReward:0,mobile:'',name:''};
+ let state=DEFAULT_STATE;
+ try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof saved==='object'&&!Array.isArray(saved))state={...DEFAULT_STATE,...saved,cart:Array.isArray(saved.cart)?saved.cart:[],orders:Array.isArray(saved.orders)?saved.orders:[]};}catch(e){console.warn('Saved customer data could not be read; starting safely.',e);}
  const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
  const money=n=>'₹'+Number(n||0).toLocaleString('en-IN');
  function sync(){
@@ -510,18 +512,18 @@ body{padding-bottom:92px}
  window.msPlaceOrder=async()=>{
    const name=document.getElementById('msName').value.trim(), mobile=document.getElementById('msMobile').value.replace(/\D/g,''), address=document.getElementById('msAddress').value.trim(), delivery=document.getElementById('msDelivery').value, payment=document.getElementById('msPayment').value;
    if(!name||mobile.length<10||!address){alert('Please enter name, valid mobile number and full address.');return}
-   const subtotal=cartTotal(), rewardUsed=Math.min(state.usedReward,Math.min(state.reward,subtotal)), deliveryFee=delivery==='home'?80:0, total=Math.max(0,subtotal-rewardUsed+deliveryFee);
+   const subtotal=cartTotal(), rewardUsed=Math.min(state.usedReward,Math.min(state.reward,subtotal)), couponUsed=Math.min(subtotal-rewardUsed,Number(window.moryaCouponDiscount?.(subtotal)||0)), deliveryFee=delivery==='home'?80:0, total=Math.max(0,subtotal-rewardUsed-couponUsed+deliveryFee);
    state.name=name;state.mobile=mobile;
    const earned=Math.round(total*0.01*100)/100;
    const items=state.cart.map(x=>({name:x.name,qty:x.qty,price:x.price,color:x.color||'',product_id:x.product_id||x.id||null}));
    let orderId='LOCAL-'+Date.now();
    try{
-     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(rewardUsed?' | Reward used: '+rewardUsed:'')+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
+     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(rewardUsed?' | Reward used: '+rewardUsed:'')+(couponUsed?' | Coupon discount: '+couponUsed:'')+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
      const {data,error}=await sb.from('orders').insert([payload]).select('id').single();
      if(error) throw error; orderId=data.id;
      const itemRows=state.cart.filter(x=>x.product_id||x.id).map(x=>({order_id:orderId,product_id:x.product_id||x.id,quantity:x.qty,price:x.price}));
      if(itemRows.length){const ir=await sb.from('order_items').insert(itemRows);if(ir.error)console.warn('order_items insert failed',ir.error)}
-   }catch(e){ console.warn('Order cloud insert failed',e); }
+   }catch(e){ console.error('Order cloud insert failed',e); alert('ऑर्डर सर्व्हरवर सेव्ह झाली नाही. इंटरनेट तपासा आणि पुन्हा प्रयत्न करा. तुमची Cart रिकामी केलेली नाही.'); return; }
    state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total,status:'Order Received',payment:'Cash on Delivery',items});
    state.reward=Math.max(0,state.reward-rewardUsed)+earned; state.usedReward=0; state.cart=[]; save(); sync(); closeModal('msCheckoutModal'); renderOrders();
    const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+total+'\nPayment: Cash on Delivery\nStatus: Order Received');
@@ -568,7 +570,7 @@ body{padding-bottom:92px}
 <div class="modal" id="msReviewModal"><div class="box"><div class="boxHead">⭐ Rate & Review <button class="close" onclick="closeModal('msReviewModal')">×</button></div><div class="boxBody" id="msReviewBody"></div></div></div><script>
 (function(){
 const WKEY='morya_store_wishlist';const RKEY='morya_store_reviews';
-const wish=JSON.parse(localStorage.getItem(WKEY)||'[]');const reviews=JSON.parse(localStorage.getItem(RKEY)||'{}');let appliedCoupon=null;let reviewStars=5;
+const safeParse=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key)||'null');return v===null?fallback:v}catch(e){console.warn('Saved data could not be read:',key,e);return fallback}};const wishRaw=safeParse(WKEY,[]),reviewsRaw=safeParse(RKEY,{});const wish=Array.isArray(wishRaw)?wishRaw:[];const reviews=reviewsRaw&&typeof reviewsRaw==='object'&&!Array.isArray(reviewsRaw)?reviewsRaw:{};let appliedCoupon=null;let reviewStars=5;
 const saveW=()=>localStorage.setItem(WKEY,JSON.stringify(wish));const saveR=()=>localStorage.setItem(RKEY,JSON.stringify(reviews));
 function isW(p){return wish.some(x=>String(x.id)===String(p[4]||p[0]));}
 function renderW(){const b=document.getElementById('msWishlistBody');if(!b)return;if(!wish.length){b.innerHTML='<div style="text-align:center;padding:30px;color:#666">❤️<h3>Wishlist is empty</h3><p>Tap ♡ on a product to save it.</p></div>';return;}b.innerHTML='<div class="msWishlistGrid">'+wish.map((x,i)=>'<div class="msWishlistItem"><div style="font-size:42px">'+(x.raw[2]||'📦')+'</div><div class="grow"><b>'+x.name+'</b><div class="msMuted">'+x.price+'</div><button class="msPill" onclick="msWishOpen('+i+')">View Product</button></div><button class="msPill" onclick="msWishRemove('+i+')">♥</button></div>').join('')+'</div>';}
@@ -577,6 +579,7 @@ window.msToggleWish=p=>{const id=p[4]||p[0],i=wish.findIndex(x=>String(x.id)===S
 window.msOpenCoupon=()=>{document.getElementById('msCouponBody').innerHTML='<div class="msCoupon"><b>🎟️ Coupon</b><div class="msMuted">Enter an active coupon code.</div><input id="msCouponCode" placeholder="Coupon code"><button class="msPill" onclick="msApplyCoupon()">Apply Coupon</button><div id="msCouponMsg" style="margin-top:8px;font-weight:800"></div></div><div class="msRow"><b>🎁 Offers</b><div class="msMuted">Active offers and advertisements appear on Home.</div></div>';document.getElementById('msCouponModal').style.display='flex'};
 window.msApplyCoupon=()=>{const c=(document.getElementById('msCouponCode').value||'').trim().toUpperCase();if(c==='MORYA10'){appliedCoupon={code:c,rate:.10,max:100};document.getElementById('msCouponMsg').textContent='✓ Coupon applied';document.getElementById('msCouponMsg').style.color='#16803c';closeModal('msCouponModal');if(document.getElementById('msCheckoutModal').style.display==='flex')renderCheckout()}else{document.getElementById('msCouponMsg').textContent='Invalid coupon code';document.getElementById('msCouponMsg').style.color='#dc2626'}};
 function couponDiscount(n){return appliedCoupon?Math.min(appliedCoupon.max,Math.round(n*appliedCoupon.rate*100)/100):0}
+window.moryaCouponDiscount=couponDiscount;
 const oldOpen=window.openProduct;window.openProduct=function(p,buy){oldOpen(p,buy);setTimeout(()=>{const box=document.querySelector('#detailModal .boxBody');if(!box)return;let e=document.getElementById('msDetailExtra');if(!e){e=document.createElement('div');e.id='msDetailExtra';box.appendChild(e)}const rs=reviews[String(p[4]||p[0])]||[];const avg=rs.length?(rs.reduce((a,x)=>a+x.stars,0)/rs.length).toFixed(1):'0.0';e.innerHTML='<div class="msStock '+(Number(p[5]||0)>0?'msInStock':'msOutStock')+'">'+(Number(p[5]||0)>0?'✓ '+p[5]+' in stock':'Out of stock')+'</div><button class="msUseBtn" onclick="msToggleWishCurrent()">'+(isW(p)?'♥ Saved to Wishlist':'♡ Add to Wishlist')+'</button><div class="msReview"><b>⭐ Rating '+avg+'</b><div class="msMuted">'+(rs.length?rs.length+' review(s)':'No reviews yet')+'</div><button class="msPill" onclick="msWriteReview()">Write a Review</button></div>';},40)};
 window.msToggleWishCurrent=()=>{if(current){msToggleWish(current);openProduct(current)}};
 window.msWriteReview=async()=>{const sess=(await sb.auth.getSession()).data.session;if(!sess){document.getElementById('loginModal').style.display='flex';return}document.getElementById('msReviewBody').innerHTML='<b>'+current[0]+'</b><div class="msStars">'+[1,2,3,4,5].map(n=>'<button onclick="msSetStar('+n+')">☆</button>').join('')+'</div><textarea id="msReviewText" class="loginInput" rows="4" placeholder="Write your review"></textarea><button class="msCheckoutBtn" onclick="msSaveReview()">Submit Review</button>';document.getElementById('msReviewModal').style.display='flex'};
