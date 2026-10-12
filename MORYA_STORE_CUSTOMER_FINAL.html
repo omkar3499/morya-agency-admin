@@ -208,6 +208,7 @@ button{cursor:pointer}
 
 <div class="modal" id="settingsModal"><div class="box"><div class="boxHead">⚙️ Settings <button class="close" onclick="closeModal('settingsModal')">×</button></div><div class="boxBody">
 <div class="msSettingsMenu"><div class="msSettingsTitle">Account & Shopping</div>
+<button class="msSettingsAction" id="msHealthBtn" onclick="document.getElementById('msHealthModal')?.style.setProperty('display','flex')">🩺 <span><b>Check App Status</b><small>Internet, speed, products and services</small></span><strong>›</strong></button>
 <button class="msSettingsAction" onclick="closeModal('settingsModal');window.msOpenCart()">🛒 <span><b>My Cart</b><small>View cart and checkout</small></span><strong>›</strong></button>
 <button class="msSettingsAction" onclick="closeModal('settingsModal');window.msOpenOrders()">📦 <span><b>My Orders</b><small>Track your orders</small></span><strong>›</strong></button>
 <button class="msSettingsAction" onclick="closeModal('settingsModal');document.getElementById('loginBtn').click()">👤 <span><b id="settingsLoginLabel">Login / Logout</b><small>Manage your customer account</small></span><strong>›</strong></button>
@@ -597,10 +598,8 @@ renderW();
 <script>
 (function(){
  const menu=document.querySelector('#settingsModal .msSettingsMenu');
- if(!menu||document.getElementById('msHealthBtn'))return;
- const b=document.createElement('button');b.id='msHealthBtn';b.className='msSettingsAction';b.innerHTML='🩺 <span><b>Check App Status</b><small>Internet, speed, products and services</small></span><strong>›</strong>';
- b.onclick=()=>{const m=document.getElementById('msHealthModal');if(m)m.style.display='flex';};
- menu.appendChild(b);
+ if(!menu)return;
+ if(!document.getElementById('msHealthBtn')){const b=document.createElement('button');b.id='msHealthBtn';b.className='msSettingsAction';b.innerHTML='🩺 <span><b>Check App Status</b><small>Internet, speed, products and services</small></span><strong>›</strong>';menu.appendChild(b);}
  const modal=document.createElement('div');modal.className='modal';modal.id='msHealthModal';
  modal.innerHTML='<div class="box"><div class="boxHead">🩺 App Health Check <button class="close" id="msHealthClose">×</button></div><div class="boxBody"><p style="color:#b8b0a3;margin-top:0">तुमच्या मोबाईलवरील अॅप आणि इंटरनेट तपासा.</p><div id="msHealthResults" style="display:grid;gap:9px"></div><button class="primary" id="msHealthRun">↻ पुन्हा तपासा</button><button class="primary" id="msHealthCopy" style="background:#292319;color:#f4efe6">रिपोर्ट कॉपी करा</button><p style="font-size:11px;color:#b8b0a3">हा तपासणी रिपोर्ट ग्राहक सपोर्ट/Admin ला पाठवू शकता. ऑर्डर सेव्ह होते याची खात्री करण्यासाठी प्रत्यक्ष टेस्ट ऑर्डर आवश्यक आहे.</p></div></div>';
  document.body.appendChild(modal);
