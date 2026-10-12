@@ -76,6 +76,39 @@ button{cursor:pointer}
 
 /* Hide legacy bottom navigation; top header contains these actions already. */
 #msBottomNav{display:none!important}
+
+/* PREMIUM HOME PAGE REFINEMENT */
+.premiumBenefits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 18px}
+.premiumBenefits>div{display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto auto;align-items:center;column-gap:8px;padding:13px 14px;background:linear-gradient(145deg,#191817,#111112);border:1px solid #3a3327;border-radius:15px}
+.premiumBenefits>div>span{grid-row:1/3;display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#2a2419;color:#e0c17c;font-size:18px}
+.premiumBenefits b{font-size:12px;color:#f4efe6;line-height:1.3}
+.premiumBenefits small{font-size:10px;color:#b8b0a3;margin-top:3px}
+.heroVisual img{filter:drop-shadow(0 12px 18px #0005)}
+.section{margin-top:12px}
+@media(max-width:600px){
+ .wrap{padding:0 12px;margin:12px auto}
+ .hero{min-height:0!important;padding:23px 20px!important;border-radius:20px!important;gap:10px}
+ .heroCopy{max-width:100%;min-width:0}
+ .hero h1{font-size:clamp(25px,7vw,34px)!important;line-height:1.08!important;letter-spacing:-.7px!important}
+ .hero p{font-size:13px!important;line-height:1.45!important;margin:10px 0 14px!important;max-width:58%}
+ .heroVisual{width:43%!important;right:-4px!important;opacity:.96}
+ .heroVisual img{max-width:100%;height:auto;object-fit:contain}
+ .heroActions{gap:9px!important}
+ .hero button{font-size:11px!important;padding:11px 12px!important;max-width:100%}
+ .trust{font-size:11px!important}
+ .premiumBenefits{gap:7px;margin:12px 0 15px}
+ .premiumBenefits>div{grid-template-columns:1fr;justify-items:start;padding:10px 9px;gap:5px;border-radius:13px}
+ .premiumBenefits>div>span{grid-row:auto;width:27px;height:27px;font-size:15px}
+ .premiumBenefits b{font-size:10px}
+ .premiumBenefits small{font-size:9px}
+ .categories{gap:8px;margin:12px 0}
+ .cat{padding:12px 5px!important;border-radius:15px!important;font-size:12px}
+ .ico{font-size:27px!important}
+ .section{padding:13px;border-radius:18px}
+ .sectionHead h2{font-size:19px}
+ .grid{gap:9px}
+ .pic{height:145px}
+}
 </style>
 <style id="removeDuplicateBottomNav">#msBottomNav{display:none!important;visibility:hidden!important;pointer-events:none!important}</style>
 </head>
@@ -104,6 +137,8 @@ button{cursor:pointer}
   <button id="adNext" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:3;border:0;border-radius:50%;width:38px;height:38px;background:#fff;color:#111;font-size:24px">›</button>
   <div id="adDots" style="position:absolute;bottom:8px;left:0;right:0;text-align:center;z-index:3"></div>
 </section>
+
+<div class="premiumBenefits" aria-label="Morya Store benefits"><div><span>✦</span><b>Premium Products</b><small>Curated for you</small></div><div><span>✓</span><b>Local Store</b><small>Trusted service</small></div><div><span>↗</span><b>Easy Ordering</b><small>Order with confidence</small></div></div>
 
 <div class="categories">
  <div class="cat" data-cat="mobile"><span class="ico">📱</span>Mobile Phones</div>
@@ -175,6 +210,8 @@ function productCategory(p){
 }
 let homeMode=true;
 function render(cat='all'){
+ const productSection=document.querySelector('.section');
+ if(productSection) productSection.style.display=(homeMode && cat==='all')?'none':'block';
  if(homeMode && cat==='all'){document.getElementById('products').innerHTML='';return;}
  let list=cat==='all'?Object.values(products).flat():((products[cat]||[]).filter(p=>productCategory(p)===cat));
  if(cat!=='all') list=list.filter(p=>productCategory(p)===cat);
