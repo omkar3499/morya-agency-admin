@@ -140,6 +140,20 @@ button{cursor:pointer}
 .searchSuggestionText small{font-size:11px;color:#d9bd7a}
 .searchSuggestionEmpty{padding:14px 12px;color:#b8b0a3;font-size:12px}
 @media(max-width:600px){.searchSuggestions{max-height:55vh}.searchSuggestion{padding:9px}}
+/* Live product name suggestions while typing */
+.searchWrap{position:relative}
+.searchSuggestions{position:absolute;top:calc(100% + 7px);left:0;right:0;z-index:100;max-height:min(60vh,420px);overflow:auto;background:#171718;border:1px solid #4a402e;border-radius:13px;box-shadow:0 16px 40px #000a;padding:5px}
+.searchSuggestions[hidden]{display:none!important}
+.searchSuggestion{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:10px;border:0;border-bottom:1px solid #302c25;background:transparent;color:#f4efe6;cursor:pointer}
+.searchSuggestion:last-child{border-bottom:0}
+.searchSuggestion:hover,.searchSuggestion:focus{background:#2a251b;outline:none}
+.searchSuggestionIcon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:9px;background:#242321;overflow:hidden;font-size:23px}
+.searchSuggestionIcon img{width:100%;height:100%;object-fit:contain}
+.searchSuggestionText{display:flex;flex-direction:column;gap:4px;min-width:0}
+.searchSuggestionText b{font-size:13px;color:#f4efe6}
+.searchSuggestionText small{font-size:11px;color:#d9bd7a}
+.searchSuggestionEmpty{padding:14px 12px;color:#b8b0a3;font-size:12px}
+@media(max-width:600px){.searchSuggestions{max-height:55vh}.searchSuggestion{padding:9px}}
 </style>
 <style id="removeDuplicateBottomNav">#msBottomNav{display:none!important;visibility:hidden!important;pointer-events:none!important}</style>
 </head>
@@ -374,7 +388,7 @@ function openWhatsApp(){const text=encodeURIComponent('Hello Morya Agency, I nee
  const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const allSearchProducts=()=>[...new Map(Object.values(products).flat().filter(p=>Array.isArray(p)&&p[0]).map(p=>[String(p[4]||p[0]).toLowerCase(),p])).values()];
  function closeSuggestions(){suggestBox.hidden=true;searchInput.setAttribute('aria-expanded','false');}
- function chooseSuggestion(p){searchInput.value=p[0];closeSuggestions();homeMode=false;document.querySelector('.section').style.display='block';render('all');document.querySelectorAll('.card').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(String(p[0]).toLowerCase())?'block':'none');openProduct(p);}
+ function chooseSuggestion(p){searchInput.value=p[0];closeSuggestions();homeMode=false;document.querySelector('.section').style.display='block';render('all');document.getElementById('title').textContent='Search Results';document.getElementById('back').style.display='block';document.querySelectorAll('.card').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(String(p[0]).toLowerCase())?'block':'none');openProduct(p);}
  function updateSuggestions(){
   const q=searchInput.value.trim().toLowerCase();
   document.querySelectorAll('.card').forEach(c=>c.style.display=!q||c.innerText.toLowerCase().includes(q)?'block':'none');
