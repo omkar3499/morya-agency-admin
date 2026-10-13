@@ -21,12 +21,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: npm
-          cache-dependency-path: desktop-admin/package-lock.json
 
       - name: Install dependencies
-        run: npm install --package-lock-only; npm ci
-        shell: pwsh
+        run: npm install --no-audit --no-fund
 
       - name: Build Windows x64 installer
         run: npm run dist
