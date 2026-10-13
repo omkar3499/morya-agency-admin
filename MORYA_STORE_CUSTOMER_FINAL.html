@@ -300,7 +300,7 @@ function add(p,color=''){cart++;document.getElementById('cartCount').textContent
 let buyAfterColor=false; let selectedColor='';
 function colorToCss(c){const m={black:'#111827',white:'#fff',blue:'#2563eb',red:'#ef4444',green:'#16a34a',yellow:'#facc15',purple:'#7c3aed',pink:'#ec4899',grey:'#9ca3af',gray:'#9ca3af',orange:'#f97316',silver:'#cbd5e1',gold:'#d4a72c'};return m[String(c||'').trim().toLowerCase()]||'#e5e7eb'}
 function colorOptions(p){const raw=p&&p[10];if(!Array.isArray(raw))return [];return raw.map(c=>typeof c==='string'?c:(c&&typeof c==='object'?(c.name||c.color||c.label||''):String(c||''))).map(c=>String(c).trim()).filter(Boolean)}
-function openProduct(p,buyNow=false){current=p;buyAfterColor=buyNow;selectedColor='';document.getElementById('dTitle').childNodes[0].textContent=p[0]+' ';document.getElementById('dName').textContent=p[0];document.getElementById('dPrice').textContent=p[1];const img=document.getElementById('dImg');img.innerHTML=/^https?:|^data:image/.test(String(p[2]||''))?`<img src="${p[2]}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`:`<div style="font-size:110px">${p[2]}</div>`;document.getElementById('dDesc').textContent=p[3];const colors=colorOptions(p);document.getElementById('dColors').innerHTML=colors.length?`<div style="font-weight:900;margin:8px 0 4px">Color: <span id="selectedColorLabel">Select</span></div><div class="colorRow">${colors.map((c,i)=>`<button type="button" class="colorDot" title="${String(c).replace(/"/g,'&quot;')}" style="background:${colorToCss(c)}" onclick="window.selectColor(${i})" aria-label="Choose ${String(c).replace(/"/g,'&quot;')}" style="background:${colorToCss(c)}"></button>`).join('')}</div>`:'';document.getElementById('detailModal').style.display='flex';}
+function openProduct(p,buyNow=false){current=p;buyAfterColor=buyNow;selectedColor='';document.getElementById('dTitle').childNodes[0].textContent=p[0]+' ';document.getElementById('dName').textContent=p[0];document.getElementById('dPrice').textContent=p[1];const img=document.getElementById('dImg');img.innerHTML=/^https?:|^data:image/.test(String(p[2]||''))?`<img src="${p[2]}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`:`<div style="font-size:110px">${p[2]}</div>`;document.getElementById('dDesc').textContent=p[3];const colors=colorOptions(p);document.getElementById('dColors').innerHTML=colors.length?`<div style="font-weight:900;margin:8px 0 4px">Color: <span id="selectedColorLabel">Select</span></div><div class="colorRow">${colors.map((c,i)=>`<button type="button" class="colorDot" title="${String(c).replace(/"/g,'&quot;')}" style="background:${colorToCss(c)}" onclick="window.selectColor(${i})" aria-label="Choose ${String(c).replace(/"/g,'&quot;')}"></button>`).join('')}</div>`:'';document.getElementById('detailModal').style.display='flex';}
 window.selectColor=i=>{const colors=colorOptions(current);selectedColor=colors[i]||'';const label=document.getElementById('selectedColorLabel');if(label)label.textContent=selectedColor||'Select';document.querySelectorAll('#dColors .colorDot').forEach((b,j)=>{b.classList.toggle('active',j===i);b.setAttribute('aria-pressed',j===i?'true':'false');});};
 function addCurrent(){if(colorOptions(current).length&&!selectedColor){alert('Please select a color.');return}add(current,selectedColor);closeModal('detailModal')}
 function buyCurrent(){if(colorOptions(current).length&&!selectedColor){alert('Please select a color.');return}add(current,selectedColor);closeModal('detailModal');msOpenCart()}
@@ -631,5 +631,16 @@ renderW();
  modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none';});
  run();
 })();
-</script></body>
+</script><style>
+/* Premium dark-gold contrast fixes: prices, selectable colours and points */
+.productBrowseCard .price{display:block!important;color:#ffd700!important;-webkit-text-fill-color:#ffd700!important;font-size:21px!important;font-weight:950!important;line-height:1.35!important;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 1px #000!important;opacity:1!important;visibility:visible!important}
+#dPrice{color:#ffd700!important;-webkit-text-fill-color:#ffd700!important;text-shadow:0 1px 2px #000!important}
+#dColors .colorDot{width:34px!important;height:34px!important;min-width:34px;border:2px solid #fff!important;box-shadow:0 0 0 1px #9ca3af!important;cursor:pointer!important;touch-action:manipulation;position:relative;z-index:3}
+#dColors .colorDot.active{box-shadow:0 0 0 3px #d4a72c!important;transform:scale(1.06)}
+#dColors .colorRow{gap:10px!important;padding:5px 2px}
+#selectedColorLabel{color:#ffd700!important;font-weight:900}
+.customerPointsBadge{background:linear-gradient(145deg,#332818,#14110c)!important;border:1px solid #d4a72c!important;box-shadow:0 3px 12px #0005,inset 0 0 0 1px #6e542b!important}
+#customerPointsValue{color:#ffd700!important;-webkit-text-fill-color:#ffd700!important;font-weight:950!important}
+</style>
+</body>
 </html>
