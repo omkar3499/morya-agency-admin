@@ -1,13 +1,13 @@
 {
   "name": "morya-agency-admin-desktop",
-  "version": "1.0.0",
-  "description": "MORYA AGENCY Admin desktop wrapper for Windows 7 x64",
+  "version": "1.0.1",
+  "description": "MORYA AGENCY Admin desktop wrapper for Windows 7 32-bit",
   "main": "main.js",
   "author": "MORYA AGENCY",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis --x64"
+    "dist": "electron-builder --win nsis --ia32"
   },
   "devDependencies": {
     "electron": "22.3.27",
@@ -28,11 +28,11 @@
         {
           "target": "nsis",
           "arch": [
-            "x64"
+            "ia32"
           ]
         }
       ],
-      "artifactName": "MORYA-AGENCY-Admin-Setup-${version}-win-x64.${ext}"
+      "artifactName": "MORYA-AGENCY-Admin-Setup-${version}-win-ia32.${ext}"
     },
     "nsis": {
       "oneClick": false,
