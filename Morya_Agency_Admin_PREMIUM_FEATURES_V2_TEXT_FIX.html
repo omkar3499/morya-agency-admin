@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Morya Agency — Final Admin Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#111827}
+header{background:#111827;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:10}.top{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;gap:10px;align-items:center}.logo{background:#fff;color:#111827;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px}.brand b{font-size:18px}.brand small{display:block;color:#cbd5e1}
+main{max-width:1200px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 3px 15px #0000000a}
+.login{max-width:440px;margin:60px auto}.login h1{margin:0 0 6px}
+label{display:block;font-weight:700;margin-top:10px}input,select,textarea{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;margin-top:5px;font-size:15px;background:#fff}
+textarea{min-height:80px;resize:vertical}button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:#111827;color:#fff}.green{background:#16a34a;color:#fff}.red{background:#dc2626;color:#fff}.light{background:#eef2f7;color:#111827}.logout{background:#fff;color:#111827}
+.hidden{display:none}.muted,.small{color:#667085}.small{font-size:13px}.msg{padding:11px;border-radius:10px;margin-top:10px;background:#fee2e2;color:#991b1b;white-space:pre-wrap}.ok{background:#dcfce7;color:#166534}
+.hero{background:linear-gradient(135deg,#111827,#334155);color:#fff;border-radius:20px;padding:22px}.hero h1{margin:0 0 5px}.hero p{margin:0;color:#cbd5e1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.stat{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px}.stat small{color:#667085}.stat strong{display:block;font-size:27px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.item{border:1px solid #e5e7eb;border-radius:14px;padding:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.badge{display:inline-block;background:#eef2f7;border-radius:99px;padding:5px 9px;font-size:12px;font-weight:700}
+.thumb{width:100%;max-width:150px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;background:#f3f4f6}.admedia{width:100%;max-width:240px;max-height:150px;border-radius:10px;object-fit:cover;background:#111}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tabs button.active{background:#111827;color:#fff}
+.order{border:1px solid #e5e7eb;border-radius:14px;padding:15px;margin:10px 0}.ordertop{display:flex;justify-content:space-between;gap:10px}
+hr{border:0;border-top:1px solid #eee;margin:18px 0}
+
+.wizard{border:1px solid #e5e7eb}.wizard-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.steps{display:flex;justify-content:space-between;gap:4px;margin:20px 0 26px;position:relative}.steps:before{content:"";position:absolute;left:7%;right:7%;top:18px;height:3px;background:#dbe2ea;z-index:0}.step{position:relative;z-index:1;flex:1;text-align:center;color:#667085}.step span{width:36px;height:36px;border-radius:50%;background:#e5e7eb;display:grid;place-items:center;margin:auto;font-weight:800}.step small{display:block;font-size:11px;margin-top:5px;line-height:1.1}.step.active{color:#1677ff}.step.active span{background:#1677ff;color:#fff}.step.done span{background:#16a34a;color:#fff}.wizard-step{min-height:220px;max-height:calc(100dvh - 390px);overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 10px;scrollbar-width:thin}.wizard-nav{position:sticky;bottom:0;z-index:5;background:#fafafa;padding:10px 0 calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e5e7eb;display:flex;gap:10px}.wizard-nav button{flex:1;min-height:48px}.wizard{scroll-margin-top:8px;overflow:visible}.mobile-field{display:block}.profit-box{background:#dcfce7;color:#166534;border-radius:12px;padding:13px;margin:12px 0}.upload-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}.main-preview,.upload-box{min-height:230px;border:2px dashed #d5dce5;border-radius:14px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px}.main-preview img{max-width:100%;height:210px;object-fit:contain;border-radius:10px}.main-preview .camera,.upload-box span{font-size:42px}.upload-box{cursor:pointer}.upload-box small{color:#667085;margin-top:5px}.image-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.image-thumb{width:80px;height:80px;border:1px solid #ddd;border-radius:10px;overflow:hidden;position:relative;background:#fff}.image-thumb img{width:100%;height:100%;object-fit:contain}.image-thumb button{position:absolute;top:2px;right:2px;width:22px;height:22px;padding:0;border-radius:50%;background:#dc2626;color:#fff}.info-box{background:#eaf4ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:12px;padding:12px;margin-bottom:12px}.handset-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin:12px 0}.handset-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.status-pill{background:#dcfce7;color:#166534;border-radius:99px;padding:5px 9px;font-size:12px;font-weight:800}.delete-handset{background:#fee2e2;color:#dc2626;padding:7px 10px}.checkline{display:flex;align-items:center;gap:8px}.checkline input{width:auto;margin:0}.review-box{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:15px}.review-image{width:120px;height:120px;object-fit:contain;border:1px solid #eee;border-radius:10px;background:#fafafa}.review-row{display:flex;gap:14px;align-items:flex-start}.review-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.review-table th,.review-table td{border:1px solid #e5e7eb;padding:7px;text-align:left}.products-head{display:flex;justify-content:space-between;align-items:center;margin-top:20px}.product-card{display:grid;grid-template-columns:90px 1fr;gap:12px}.product-card img{width:90px;height:90px;object-fit:contain;border:1px solid #eee;border-radius:10px;background:#fafafa}
+@media(max-width:700px){.wizard-step{max-height:calc(100dvh - 390px);min-height:200px}.stats{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}.ordertop{flex-direction:column}.upload-grid{grid-template-columns:1fr}.steps{gap:0}.step small{font-size:9px}.wizard{padding:12px}.wizard-step{min-height:330px}}
+
+
+.field-mobile{display:block}.field-nonmobile{display:none}
+
+html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px;font-weight:800;font-size:20px}.workspace-tabs{margin:0 0 12px;display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.workspace-tabs button{white-space:nowrap;flex:0 0 auto}.tab.card{margin:0}.product-card{min-width:0;overflow:hidden}.product-card img{width:100%;height:120px;object-fit:contain;background:#f7f8fa;border-radius:12px;border:1px solid #edf0f4;margin-bottom:10px}.product-card .actions button{font-size:12px;padding:9px 10px}
+@media(max-width:700px){main{padding:10px}.hero{padding:18px;border-radius:18px}.hero h1{font-size:30px}.premium-menu-grid{gap:10px}.premium-menu-card{min-width:0;padding:13px 10px;gap:8px;border-radius:18px}.premium-menu-card .pm-icon{width:42px;height:42px;flex-basis:42px;font-size:24px}.premium-menu-card b{font-size:16px}.premium-menu-card small{font-size:11px}.premium-menu-card small strong{font-size:22px}.premium-menu-card em{font-size:19px}.premium-add-product{grid-template-columns:46px minmax(0,1fr) 20px;padding:13px 12px}.premium-add-product span{width:46px;height:46px;font-size:28px}.premium-add-product b{font-size:17px}.premium-add-product small{font-size:11px}.premium-mini-grid{gap:7px}.premium-mini-grid button{min-width:0;padding:10px 3px}.premium-mini-grid span{font-size:20px}.premium-mini-grid b{font-size:10px}.dashboard-summary{gap:7px}.dashboard-summary>div{min-width:0;padding:9px 10px}.dashboard-summary b{font-size:17px}.grid{grid-template-columns:1fr}.upload-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+.settings-menu-grid button{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-height:76px;text-align:left;cursor:pointer}.settings-menu-grid button small{font-weight:400;opacity:.8}.settings-detail{margin-top:12px}
+
+/* FIX: Settings Stock & Orders summary cards — prevent labels and values overlapping */
+.dashboard-summary > button{min-width:0;width:100%;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:7px;padding:14px 16px;white-space:normal;line-height:1.35;overflow-wrap:anywhere;}
+.dashboard-summary > button small{display:block;width:100%;font-size:13px;line-height:1.4;white-space:normal;}
+.dashboard-summary > button b{display:block;width:100%;font-size:27px;line-height:1.2;margin:2px 0 0;white-space:normal;overflow-wrap:anywhere;}
+@media(max-width:700px){.dashboard-summary{grid-template-columns:1fr 1fr;gap:8px}.dashboard-summary > button{padding:12px 10px;gap:6px}.dashboard-summary > button small{font-size:12px}.dashboard-summary > button b{font-size:24px;line-height:1.2}}
+</style>
+
+<style>
+/* FINAL PREMIUM BOX DASHBOARD */
+.premium-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.premium-menu-card{border:0;border-radius:20px;padding:17px 14px;min-height:116px;color:#fff;display:flex;align-items:center;gap:12px;text-align:left;box-shadow:0 9px 24px #071b3a1c;position:relative;cursor:pointer}
+.premium-menu-card.blue{background:linear-gradient(135deg,#1685ff,#2877df)}
+.premium-menu-card.green{background:linear-gradient(135deg,#16c98a,#0daf75)}
+.premium-menu-card.pink{background:linear-gradient(135deg,#ef4b78,#df3c6b)}
+.premium-menu-card.purple{background:linear-gradient(135deg,#7654e8,#643fd4)}
+.premium-menu-card .pm-icon{font-size:32px;width:52px;height:52px;border-radius:15px;background:#ffffff22;display:grid;place-items:center;flex:0 0 52px}
+.premium-menu-card b{display:block;font-size:18px}.premium-menu-card small{display:block;font-size:12px;opacity:.92;margin-top:5px}.premium-menu-card small strong{font-size:24px;display:block;line-height:1.05}.premium-menu-card em{font-style:normal;font-size:24px;margin-left:auto}
+.premium-add-product{width:100%;border:0;border-radius:18px;background:linear-gradient(135deg,#ffcf19,#f5b400);padding:15px 18px;display:grid;grid-template-columns:52px 1fr auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;box-shadow:0 8px 22px #f5b4002b;cursor:pointer;margin:2px 0 13px}.premium-add-product span{grid-row:1/3;width:52px;height:52px;border-radius:15px;background:#14233e;color:#fff;display:grid;place-items:center;font-size:31px}.premium-add-product b{font-size:18px}.premium-add-product small{font-size:12px;color:#604d00;margin-top:3px}.premium-add-product em{grid-column:3;grid-row:1/3;font-style:normal;font-size:25px}.premium-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:0 0 14px}.premium-mini-grid button{border:1px solid #e5eaf1;background:#fff;border-radius:16px;padding:12px 6px;min-height:76px;box-shadow:0 5px 14px #071b3a0b;cursor:pointer}.premium-mini-grid span{display:block;font-size:23px}.premium-mini-grid b{display:block;font-size:11px;margin-top:5px;color:#25324a}.dashboard-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.dashboard-summary>div{background:#fff;border:1px solid #e7ebf0;border-radius:15px;padding:10px 13px;display:flex;justify-content:space-between;align-items:center}.dashboard-summary small{color:#687385}.dashboard-summary b{font-size:18px}.legacy-tabs{margin-top:4px}
+@media(max-width:700px){.premium-menu-grid{grid-template-columns:1fr 1fr}.premium-mini-grid{grid-template-columns:repeat(4,1fr)}.premium-menu-card{min-height:112px}.premium-menu-card .pm-icon{width:46px;height:46px;flex-basis:46px;font-size:27px}.premium-menu-card b{font-size:16px}.premium-menu-card em{font-size:20px}}
+
+html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px;font-weight:800;font-size:20px}.workspace-tabs{margin:0 0 12px;display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.workspace-tabs button{white-space:nowrap;flex:0 0 auto}.tab.card{margin:0}.product-card{min-width:0;overflow:hidden}.product-card img{width:100%;height:120px;object-fit:contain;background:#f7f8fa;border-radius:12px;border:1px solid #edf0f4;margin-bottom:10px}.product-card .actions button{font-size:12px;padding:9px 10px}
+@media(max-width:700px){main{padding:10px}.hero{padding:18px;border-radius:18px}.hero h1{font-size:30px}.premium-menu-grid{gap:10px}.premium-menu-card{min-width:0;padding:13px 10px;gap:8px;border-radius:18px}.premium-menu-card .pm-icon{width:42px;height:42px;flex-basis:42px;font-size:24px}.premium-menu-card b{font-size:16px}.premium-menu-card small{font-size:11px}.premium-menu-card small strong{font-size:22px}.premium-menu-card em{font-size:19px}.premium-add-product{grid-template-columns:46px minmax(0,1fr) 20px;padding:13px 12px}.premium-add-product span{width:46px;height:46px;font-size:28px}.premium-add-product b{font-size:17px}.premium-add-product small{font-size:11px}.premium-mini-grid{gap:7px}.premium-mini-grid button{min-width:0;padding:10px 3px}.premium-mini-grid span{font-size:20px}.premium-mini-grid b{font-size:10px}.dashboard-summary{gap:7px}.dashboard-summary>div{min-width:0;padding:9px 10px}.dashboard-summary b{font-size:17px}.grid{grid-template-columns:1fr}.upload-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+<style>
+/* Morya premium black & gold mobile theme */
+:root{color-scheme:light}body{background:#f7f5ef;color:#171717}header{background:linear-gradient(120deg,#080808,#252016);border-bottom:2px solid #c79b30}.logo{background:#d6b45b;color:#111}.hero{background:linear-gradient(135deg,#080808,#292216);border:1px solid #bd963a}.hero p{color:#e7d9b3}.premium-menu-card.blue,.premium-menu-card.green,.premium-menu-card.pink,.premium-menu-card.purple{background:linear-gradient(135deg,#171717,#3a301a);border:1px solid #b48b2c;color:#f9e9b7}.premium-menu-card .pm-icon{background:#c7a44a22;color:#e4c36b}.premium-add-product{background:linear-gradient(110deg,#f4df9b,#c89d35)!important;color:#18130a!important}.premium-add-product span{background:#111;color:#f4d77c}.premium-mini-grid button,.stat,.card{border-color:#e3d7b8}.primary,.tabs button.active{background:linear-gradient(120deg,#161616,#3a301a);color:#f5d783;border:1px solid #b18a30}.green{background:#28694b;color:#fff}.badge{background:#f5e9c6;color:#483814}.workspace-top{color:#201a0b}.step.active span,.step.done span{background:#c7a343;color:#111;border-color:#c7a343}.wizard{border-color:#d8c38a}.wizard-step{overflow-wrap:anywhere}
+@media(max-width:700px){.card{padding:13px}.wizard-step{min-height:0}.premium-menu-card{min-height:100px}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+<div class="top">
+  <div class="brand"><div class="logo">📱</div><div><b>Morya Agency</b><small>Final Admin Panel</small></div></div>
+  <button id="logoutBtn" class="logout hidden" style="display:none!important">Logout</button>
+</div>
+</header>
+
+<main>
+<section id="loginBox" class="card login">
+<h1>🔐 Admin Login</h1>
+<p class="muted">Morya Agency management dashboard</p>
+<form id="loginForm">
+<label>Email</label><input id="email" type="email" autocomplete="username" required>
+<label>Password</label><input id="password" type="password" autocomplete="current-password" required>
+<button id="loginBtn" class="primary" type="submit" style="width:100%;margin-top:16px">Login to Dashboard</button>
+</form><div id="loginMsg"></div><button class="light" style="width:100%;margin-top:10px" onclick="openSettingsWhileSignedOut()">⚙️ Settings</button>
+</section>
+
+<section id="dashboard" class="hidden">
+<div id="dashboardHome">
+<div class="hero"><h1>MORYA AGENCY</h1><p>ADMIN DASHBOARD • Products • Orders • Customers • Reports</p></div>
+
+<div class="premium-menu-grid">
+  <button class="premium-menu-card blue" onclick="openAdminTab('productsTab')"><span class="pm-icon">📦</span><span><b>Products</b><small><strong id="productCount">0</strong> Products</small></span><em>→</em></button>
+  <button class="premium-menu-card green" onclick="openAdminTab('ordersTab')"><span class="pm-icon">🛒</span><span><b>Orders</b><small><strong id="orderCount">0</strong> Orders</small></span><em>→</em></button>
+  <button class="premium-menu-card pink" onclick="openAdminTab('customersTab')"><span class="pm-icon">👥</span><span><b>Customers</b><small>Customer profiles</small></span><em>→</em></button>
+  <button class="premium-menu-card purple" onclick="openAdminTab('reportsTab')"><span class="pm-icon">📊</span><span><b>Reports</b><small>Sales • Stock • Profit</small></span><em>→</em></button>
+</div>
+
+<button class="premium-add-product" onclick="openProductWizard()"><span>＋</span><b>Add Product</b><small>Mobile • Parts • Accessories • Customize</small><em>→</em></button>
+<button class="premium-add-product" style="background:linear-gradient(110deg,#d1fae5,#5eead4);color:#102a2a;margin-top:10px" onclick="openAdminTab('adjustTab')"><span>⚖️</span><b>Product Adjust</b><small>Add stock • Reduce stock • Damaged stock</small><em>→</em></button>
+
+<div class="premium-mini-grid">
+  <button onclick="openAdminTab('adsTab')"><span>📢</span><b>Advertisements</b></button>
+  <button onclick="showAdminNotice('Ratings module is reserved for the customer app integration.')"><span>⭐</span><b>Ratings</b></button>
+  <button onclick="showAdminNotice('Rewards module is reserved for the customer app integration.')"><span>🎁</span><b>Rewards</b></button>
+  <button onclick="openSettingsPanel()"><span>⚙️</span><b>Settings</b></button>
+</div>
+<div class="actions"><button class="light" onclick="exportAdminBackup()">⬇️ Backup / Export Data</button></div>
+</div>
+<section id="settingsPanel" class="card hidden" style="margin:12px 0">
+  <div class="workspace-top"><button class="light" onclick="closeSettingsPanel()">← Dashboard</button><div>⚙️ Settings</div></div>
+  <div id="settingsMainMenu">
+    <p class="muted">मुख्य पर्याय निवडा. त्यावर क्लिक केल्यावर त्या विभागातील सेटिंग उघडतील.</p>
+    <div class="grid settings-menu-grid">
+      <button class="card" onclick="openSettingsCategory('settingsStock')">📦 Stock & Orders Summary <small>Low Stock, Order Value</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsShop')">🏪 Shop Details <small>नाव, पत्ता, मोबाइल, वेळ</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsOffers')">🎉 Discounts & Offers <small>ऑफरची माहिती</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsAppearance')">🎨 App Appearance <small>App नाव, लोगो, Theme</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsCustomer')">📲 Customer App & QR <small>Download link आणि QR</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsInvoice')">🧾 Invoice / Bill <small>बिल, अटी, संपर्क</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsPayment')">💳 Payment Settings <small>UPI आणि Payment QR</small></button>
+      <button class="card" onclick="openSettingsCategory('settingsAccount')">🔑 Admin Account <small>Admin email माहिती</small></button>
+    </div>
+    <div id="settingsLoginAction" class="card" style="margin:10px 0"><h3>🔐 Login</h3><p class="muted">Admin login केलेले नसल्यास येथे Login करा.</p><button class="primary" onclick="settingsLoginAction()">Login</button></div>
+    <div id="settingsLogoutAction" class="card hidden" style="margin:10px 0"><h3>🚪 Logout</h3><p class="muted">Settings मधील सर्वात शेवटचा पर्याय.</p><button class="red" onclick="document.getElementById('logoutBtn').click()">Logout</button></div>
+  </div>
+  <div id="settingsStock" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>📦 Stock & Orders Summary</h3><div class="dashboard-summary" style="margin:8px 0"><button type="button" onclick="openSettingsSummaryTarget('low')" style="text-align:left;cursor:pointer"><small>📦 Low Stock · Click करा</small><b id="settingsLowStock">—</b><small>कमी स्टॉकची उत्पादने पाहा →</small></button><button type="button" onclick="openSettingsSummaryTarget('orders')" style="text-align:left;cursor:pointer"><small>🛒 Order Value · Click करा</small><b id="settingsOrderValue">—</b><small>ऑर्डर्स पाहा →</small></button></div></div>
+  <div id="settingsShop" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>🏪 Shop Details</h3><div class="grid"><div><label>Shop Name</label><input id="cfgShopName" placeholder="Morya Agency"></div><div><label>Mobile</label><input id="cfgMobile" placeholder="Shop mobile number"></div><div><label>WhatsApp</label><input id="cfgWhatsapp" placeholder="WhatsApp number"></div><div><label>Email</label><input id="cfgEmail" type="email" placeholder="Shop email"></div><div><label>Address</label><input id="cfgAddress" placeholder="Shop address"></div><div><label>Opening Time</label><input id="cfgOpening" placeholder="e.g. 10:00 AM - 9:00 PM"></div></div><div style="margin-top:8px"><label>Shop Status</label><select id="cfgShopStatus"><option value="open">Open</option><option value="closed">Closed</option></select></div></div>
+  <div id="settingsOffers" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>🎉 Discounts & Offers</h3><label>Discount / Offer Details</label><textarea id="cfgOffers" rows="3" placeholder="Enter current offers"></textarea></div>
+  <div id="settingsAppearance" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>🎨 App Appearance</h3><div class="grid"><div><label>App Name</label><input id="cfgAppName" placeholder="Morya Agency Admin"></div><div><label>Theme</label><select id="cfgTheme"><option value="default">Default</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div><label>Logo Image URL (optional)</label><input id="cfgLogo" placeholder="https://..."></div>
+  <div id="settingsCustomer" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>📲 Customer App & QR</h3><label>Customer App Download Link</label><input id="cfgCustomerLink" placeholder="Paste customer app link"><label style="margin-top:8px">Customer App QR Image URL (optional)</label><input id="cfgCustomerQr" placeholder="Paste QR image URL"><button class="light" type="button" onclick="previewSettingQR('cfgCustomerLink')">Generate / Preview App QR</button><div id="customerQrPreview"></div></div>
+  <div id="settingsInvoice" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>🧾 Invoice / Bill</h3><label>Invoice Heading</label><input id="cfgInvoiceTitle" placeholder="Morya Agency - Invoice"><label style="margin-top:8px">Terms & Conditions</label><textarea id="cfgTerms" rows="3" placeholder="Enter bill terms and conditions"></textarea><label style="margin-top:8px">Contact Us Details</label><textarea id="cfgContact" rows="2" placeholder="Phone, WhatsApp, address"></textarea></div>
+  <div id="settingsPayment" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>💳 Payment Settings</h3><label>UPI ID</label><input id="cfgUpi" placeholder="yourname@upi"><label style="margin-top:8px">Payment QR Image URL (optional)</label><input id="cfgPaymentQr" placeholder="Paste payment QR image URL"><button class="light" type="button" onclick="previewSettingQR('cfgUpi',true)">Generate / Preview UPI QR</button><div id="paymentQrPreview"></div></div>
+  <div id="settingsAccount" class="settings-detail hidden"><button class="light" onclick="backSettingsMenu()">← सर्व Settings</button><h3>🔑 Admin Account</h3><p class="muted">Admin user ID / email आणि password बदलण्यासाठी सुरक्षित authentication सेटिंग आवश्यक आहे. या टेस्टमध्ये password किंवा OTP बदलण्याचा पर्याय बनावट दाखवलेला नाही.</p><label>Admin User ID / Email (display only)</label><input id="cfgAdminEmail" placeholder="Current admin email"><p class="muted">Forgot password / OTP: Supabase authentication मधून जोडणे बाकी आहे.</p></div>
+  <div id="settingsSaveActions" class="card hidden" style="margin:10px 0"><button class="primary" type="button" onclick="saveMoryaSettings()">💾 Save Settings</button> <button class="light" type="button" onclick="loadMoryaSettings()">↻ Reload Saved Settings</button><p id="cfgSaveMsg" class="muted">Settings या browser/device मध्येच save होतात. इतर फोनवर आपोआप sync होत नाहीत.</p></div>
+</section>
+<div id="workspace" class="hidden">
+<div class="workspace-top"><button class="light" onclick="closeAdminTab()">← Dashboard</button><div id="workspaceTitle">Admin</div></div>
+<div class="tabs workspace-tabs">
+<button class="light active" data-tab="productsTab">📦 Products</button>
+<button class="light" data-tab="ordersTab">🛒 Orders</button>
+<button class="light" data-tab="customersTab">👥 Customers</button>
+<button class="light" data-tab="reportsTab">📊 Reports</button>
+<button class="light" data-tab="adsTab">📢 Advertisements</button>
+<button class="light" data-tab="adjustTab">⚖️ Product Adjust</button>
+</div>
+<section id="productsTab" class="tab card">
+<h2>📦 Products</h2>
+<p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
+
+<div class="wizard card" style="background:#fafafa">
+  <div class="wizard-head">
+    <div><h3 id="formTitle" style="margin:0">➕ Add Product</h3><div id="stepTitle" class="small">Step 1 of 5</div></div>
+    <button class="light" onclick="clearProductForm()">✕ Clear</button>
+  </div>
+  <div class="steps">
+    <div class="step active" data-step="1"><span>1</span><small>Basic<br>Details</small></div>
+    <div class="step" data-step="2"><span>2</span><small>Price &<br>Stock</small></div>
+    <div class="step" data-step="3"><span>3</span><small>Images</small></div>
+    <div class="step" data-step="4"><span>4</span><small>Handset<br>Details</small></div>
+    <div class="step" data-step="5"><span>5</span><small>Review</small></div>
+  </div>
+
+  <input type="hidden" id="productId">
+
+  <div class="wizard-step" data-panel="1">
+    <h3>Step 1: Basic Details</h3>
+    <div class="row">
+      <div><label>Product Name *</label><input id="pName" placeholder="उदा. Motorola A10e"></div>
+      <div><label>Category *</label><select id="pCategory">
+        <option value="mobiles">📱 Mobile Phones</option>
+        <option value="mobile_parts">🔧 Mobile Parts</option>
+        <option value="mobile_accessories">📦 Mobile Accessories</option>
+        <option value="mobile_back_skin">📱 Mobile Back Skin</option>
+        <option value="mobile_cover">📱 Mobile Cover</option>
+        <option value="custom_printing" selected>🎨 Customize Products</option>
+      </select></div>
+    </div>
+    <div class="row">
+      <div><label>Brand</label><input id="pBrand" placeholder="उदा. Motorola / Samsung"></div>
+      <div id="modelWrap" class="mobile-field"><label>Model *</label><input id="pModel" placeholder="उदा. A10e"></div>
+    </div>
+    <div id="ramWrap" class="mobile-field"><label>RAM / Storage</label><input id="pRam" placeholder="उदा. 8GB / 128GB"></div>
+    <label>Description</label><textarea id="pDescription" placeholder="Product details"></textarea>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="2">
+    <h3>Step 2: Price & Stock</h3>
+    <div class="row">
+      <div><label>Purchase Price ₹ <span class="small">(Admin only)</span></label><input id="pPurchase" type="number" min="0"></div>
+      <div><label>Sale Price ₹ *</label><input id="pPrice" type="number" min="0"></div>
+    </div>
+    <div class="profit-box">🧮 <b>Profit: ₹<span id="profitPreview">0</span></b></div>
+    <div class="row">
+      <div><label>Stock Quantity *</label><input id="pStock" type="number" min="0" value="1"><div class="small">Mobile Phone मध्ये इतके actual handsets आहेत.</div></div>
+      <div><label>Warranty</label><input id="pWarranty" placeholder="उदा. 6 Months / 1 Year"></div>
+    </div>
+    <label>Available</label><select id="pAvailable"><option value="true">Yes</option><option value="false">No</option></select>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="3">
+    <h3>Step 3: Product Images</h3>
+    <div class="upload-grid">
+      <div class="main-preview" id="mainImagePreview"><div class="camera">📷</div><b>Product Image Preview</b><span class="small">Upload केल्यावर image इथे दिसेल</span></div>
+      <div class="upload-box" style="gap:10px">
+        <input id="pImageFiles" type="file" accept="image/*" multiple hidden>
+        <input id="pCameraFile" type="file" accept="image/*" capture="environment" hidden>
+        <button type="button" class="primary" onclick="document.getElementById('pCameraFile').click()">📷 Take Photo</button>
+        <button type="button" class="light" onclick="document.getElementById('pImageFiles').click()">🖼️ Choose from Gallery</button>
+        <small>Camera किंवा Gallery — दोन्ही पर्याय उपलब्ध</small>
+      </div>
+    </div>
+    <div id="imageThumbs" class="image-thumbs"></div>
+    <input type="hidden" id="pImage">
+    <div class="small">Maximum 4 images. पहिली image customer product card साठी main image म्हणून save होईल.</div>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="4">
+    <h3 id="detailsHeading">Step 4: Category Details</h3>
+    <div id="mobileHandsets" class="hidden">
+      <div class="info-box">ℹ️ Stock <b id="handsetCountText">1</b> आहे. कृपया प्रत्येक handset ची वेगळी माहिती भरा.</div>
+      <div id="handsetList"></div>
+    </div>
+    <div id="nonMobileDetails">
+      <div id="compatibleWrap"><label>Compatible Model <span class="small">(Parts / Accessories where applicable)</span></label><input id="pCompatible" placeholder="उदा. Vivo Y16"></div>
+      <label class="checkline"><input id="pCustom" type="checkbox"> Customer photo customization available</label>
+    </div>
+  </div>
+
+  <div class="wizard-step hidden" data-panel="5">
+    <h3>Step 5: Review & Add Product</h3>
+    <div id="reviewBox" class="review-box"></div>
+  </div>
+
+  <div class="wizard-nav">
+    <button id="backBtn" class="light" onclick="prevProductStep()">← Back</button>
+    <button id="nextBtn" class="primary" onclick="nextProductStep()">Next →</button>
+    <button id="saveBtn" class="green hidden" onclick="saveProduct()">✅ Add Product</button>
+  </div>
+  <div id="productMsg"></div>
+</div>
+
+<div class="products-head"><h3>Product List</h3><button class="light" onclick="loadProducts()">↻ Refresh</button></div>
+<div id="products">Loading...</div>
+</section>
+
+<section id="ordersTab" class="tab card hidden">
+<h2>🛒 Customer Orders</h2>
+<button class="primary" onclick="loadOrders()">Refresh Orders</button>
+<div id="orders">Loading...</div>
+</section>
+
+<section id="customersTab" class="tab card hidden">
+<h2>👥 Customer Profiles</h2><p class="small">ग्राहक माहिती विद्यमान Orders मधून तयार होते; नवीन database table लागत नाही.</p>
+<button class="primary" onclick="loadCustomers()">Refresh Customers</button><div id="customersList">Loading...</div>
+</section>
+<section id="reportsTab" class="tab card hidden">
+<h2>📊 Sales & Stock Reports</h2><p class="small">Reports विद्यमान Products आणि Orders मधून मोजले जातात.</p>
+<div class="actions"><button class="primary" onclick="loadReports()">Refresh Reports</button><button class="light" onclick="exportReportsCSV()">⬇️ Export Reports CSV</button></div><div id="reportsContent">Load report to view summary.</div>
+</section>
+<section id="adjustTab" class="tab card hidden">
+<h2>⚖️ Product Adjust</h2>
+<p class="small">स्टॉक वाढवणे, कमी करणे किंवा खराब मालाची नोंद. Confirm केल्यावर existing products table मधील stock update होईल. कोणताही product किंवा order delete होणार नाही.</p>
+<div class="card" style="background:#fafafa">
+<label>Product निवडा</label><select id="adjProduct"><option value="">Loading products...</option></select>
+<div class="row"><div><label>Adjustment Type</label><select id="adjType"><option value="add">Add Stock (माल आला)</option><option value="reduce">Reduce Stock (स्टॉक कमी)</option><option value="damaged">Damaged / Loss Stock</option><option value="count">Set Actual Stock (प्रत्यक्ष मोजणी)</option></select></div><div><label>Quantity</label><input id="adjQty" type="number" min="1" step="1" value="1"></div></div>
+<label>Reason</label><select id="adjReason"><option value="Purchase received">Purchase received / नवीन माल</option><option value="Damaged stock">Damaged stock / खराब माल</option><option value="Stock mismatch">Stock mismatch / मोजणीत फरक</option><option value="Missing stock">Missing stock / माल कमी</option><option value="Other">Other / इतर</option></select>
+<div id="adjPreview" class="msg">Product निवडा म्हणजे सध्याचा आणि बदलानंतरचा stock दिसेल.</div>
+<div class="actions"><button class="green" onclick="confirmStockAdjustment()">Confirm Stock Adjustment</button><button class="light" onclick="loadAdjustmentProducts()">Refresh Products</button></div><div id="adjMsg"></div>
+</div>
+<h3>Recent Loss / Adjustment Report</h3><p class="small">ही अलीकडील नोंद या ब्राउझरमध्येच राहते. कायमस्वरूपी audit history साठी वेगळी database table आवश्यक आहे.</p><div id="adjHistory"></div>
+</section>
+
+<section id="adsTab" class="tab card hidden">
+<h2>📢 Advertisements</h2>
+<p class="small">Image किंवा video upload करून customer page वर advertisement दाखवता येईल.</p>
+<div class="card" style="background:#fafafa">
+<h3 id="adFormTitle">➕ Add Advertisement</h3>
+<input type="hidden" id="adId">
+<label>Business Name</label><input id="adBusiness" placeholder="Business name">
+<label>Description</label><input id="adDescription" placeholder="Short offer/details">
+<div class="row">
+<div><label>WhatsApp</label><input id="adWhatsapp" placeholder="917262822323"></div>
+<div><label>Media Type</label><select id="adType"><option value="image">Image</option><option value="video">Video</option></select></div>
+</div>
+<label>Upload Image / Video</label><input id="adFile" type="file" accept="image/*,video/*">
+<label>OR Media URL</label><input id="adUrl" placeholder="https://...">
+<div class="row">
+<div><label>Sort Order</label><input id="adSort" type="number" value="1"></div>
+<div><label>Active</label><select id="adActive"><option value="true">ON</option><option value="false">OFF</option></select></div>
+</div>
+<p class="small">Active ON असल्यास जाहिरात customer app मध्ये दाखवता येईल. Schedule साठी database मध्ये वेगळे columns आवश्यक असतात; सध्या compatibility साठी schedule fields वापरले जात नाहीत.</p>
+<div class="actions"><button class="green" onclick="saveAd()">💾 Save Advertisement</button><button class="light" onclick="clearAdForm()">Clear</button></div>
+<div id="adMsg"></div>
+</div>
+<div id="ads">Loading...</div>
+</section>
+</section>
+</main>
+
+<script>
+const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
+const SUPABASE_KEY="sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:window.localStorage,storageKey:'morya-agency-admin-auth-v1'}});
+const $=id=>document.getElementById(id);
+const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+function setWorkspaceTab(tab){
+ document.querySelectorAll('.workspace-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));
+ document.querySelectorAll('#workspace .tab').forEach(x=>x.classList.add('hidden'));
+ const el=$(tab); if(el)el.classList.remove('hidden');
+ $('workspaceTitle').textContent=tab==='productsTab'?'Products':tab==='ordersTab'?'Customer Orders':tab==='customersTab'?'Customers':tab==='reportsTab'?'Reports':tab==='adsTab'?'Advertisements':'Product Adjust';
+ if(tab==='productsTab')loadProducts();
+ if(tab==='ordersTab')loadOrders();
+ if(tab==='customersTab')loadCustomers();
+ if(tab==='reportsTab')loadReports();
+ if(tab==='adsTab')loadAds();
+ if(tab==='adjustTab'){loadAdjustmentProducts();renderAdjustmentHistory();}
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function openAdminTab(tab){$('dashboardHome').classList.add('hidden');$('workspace').classList.remove('hidden');setWorkspaceTab(tab);window.scrollTo({top:0,behavior:'instant'});}
+function closeAdminTab(){document.querySelectorAll('#workspace .tab').forEach(x=>x.classList.add('hidden'));$('workspace').classList.add('hidden');$('dashboardHome').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}
+document.querySelectorAll('.workspace-tabs button').forEach(b=>b.onclick=()=>setWorkspaceTab(b.dataset.tab));
+
+let productStep=1;
+let selectedImageFiles=[];
+let handsetDraft=[];
+let previewObjectUrls=[];
+const makeId=()=>window.crypto?.randomUUID?crypto.randomUUID():('id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
+
+updateCategoryFields();setProductStep(1);renderImagePreview();
+
+$('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault(); const btn=$('loginBtn');btn.disabled=true;$('loginMsg').className='msg ok';$('loginMsg').textContent='⏳ Login checking...';
+ try{
+  const r=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+  if(r.error)throw r.error;
+  $('loginMsg').textContent='✅ Login successful.';await showDashboard();
+ }catch(err){$('loginMsg').className='msg';$('loginMsg').textContent='❌ Login failed: '+(err.message||'Please check internet and login details.');}
+ finally{btn.disabled=false;}
+});
+$('logoutBtn').onclick=async()=>{const b=$('logoutBtn');b.disabled=true;try{const r=await db.auth.signOut();if(r.error)throw r.error;location.reload()}catch(e){alert('Logout failed: '+e.message);b.disabled=false}};
+
+async function showDashboard(){
+ $('loginBox').classList.add('hidden');$('dashboard').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('workspace').classList.add('hidden');$('dashboardHome').classList.remove('hidden');if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);
+ const results=await Promise.allSettled([loadProducts(),loadOrders(),loadAds()]);
+ results.forEach((r,i)=>{if(r.status==='rejected')console.error('Dashboard load failed',i,r.reason)});
+}
+
+function calculateProfit(){
+ const sale=Number($('pPrice').value||0), purchase=Number($('pPurchase').value||0);
+ const profit=sale-purchase;
+ $('profitPreview').textContent=profit.toFixed(0);
+}
+$('pPrice').addEventListener('input',calculateProfit);
+$('pPurchase').addEventListener('input',calculateProfit);
+$('pStock').addEventListener('input',()=>{if(productStep===4)buildHandsets();});
+$('pCategory').addEventListener('change',updateCategoryFields);
+async function compressProductImage(file){
+ // Compress large phone photos before preview/upload to prevent browser freezes.
+ if(!file.type.startsWith('image/')) throw new Error('फक्त image files निवडा.');
+ if(file.size>30*1024*1024) throw new Error('फोटो 30 MB पेक्षा मोठा आहे. कृपया लहान फोटो निवडा.');
+ let bitmap;
+ try { bitmap = await createImageBitmap(file); }
+ catch(e) {
+   bitmap = await new Promise((resolve,reject)=>{const img=new Image();const u=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(u);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('फोटो उघडता आला नाही. दुसरा फोटो निवडा.'))};img.src=u;});
+ }
+ const w=bitmap.width||bitmap.naturalWidth, h=bitmap.height||bitmap.naturalHeight;
+ if(!w||!h) throw new Error('फोटोची माहिती वाचता आली नाही.');
+ const scale=Math.min(1,1600/Math.max(w,h));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+ const ctx=canvas.getContext('2d');if(!ctx)throw new Error('फोटो तयार करता आला नाही.');ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);if(bitmap.close)bitmap.close();
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.82));if(!blob)throw new Error('फोटो compress करता आला नाही.');
+ const base=(file.name||'product').replace(/\.[^.]+$/,'');return new File([blob],base+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
+}
+async function handleProductImageSelection(input){
+ const files=[...(input.files||[])];if(!files.length)return;
+ if(files.some(f=>!f.type.startsWith('image/'))){alert('फक्त image files निवडा.');input.value='';return}
+ if(files.length>4)alert('जास्तीत जास्त 4 images निवडता येतील. पहिल्या 4 images वापरल्या जातील.');
+ const chosen=files.slice(0,4);const other=input.id==='pCameraFile'?'pImageFiles':'pCameraFile';$(other).value='';
+ const oldText=$('stepTitle').textContent;$('stepTitle').textContent='फोटो तयार करत आहे…';
+ try { selectedImageFiles=await Promise.all(chosen.map(compressProductImage));renderImagePreview(); }
+ catch(err){selectedImageFiles=[];renderImagePreview();alert(err.message||'फोटो वाचताना त्रुटी आली. पुन्हा प्रयत्न करा.');}
+ finally {$('stepTitle').textContent=oldText;input.value='';}
+}
+$('pImageFiles').addEventListener('change',e=>handleProductImageSelection(e.target));
+$('pCameraFile').addEventListener('change',e=>handleProductImageSelection(e.target));
+
+function isMobileProduct(){return $('pCategory').value==='mobiles'}
+function updateCategoryFields(){
+ const mobile=isMobileProduct();
+ $('modelWrap').style.display=mobile?'block':'none';
+ $('ramWrap').style.display=mobile?'block':'none';
+ $('mobileHandsets').classList.toggle('hidden',!mobile);
+ $('nonMobileDetails').classList.toggle('hidden',mobile);
+ if(productStep===4)buildHandsets();
+}
+
+function setProductStep(n){
+ productStep=Math.max(1,Math.min(5,n));
+ document.querySelectorAll('.wizard-step').forEach(p=>p.classList.toggle('hidden',Number(p.dataset.panel)!==productStep));
+ document.querySelectorAll('.step').forEach(el=>{const n=Number(el.dataset.step);el.classList.toggle('active',n===productStep);el.classList.toggle('done',n<productStep)});
+ $('stepTitle').textContent='Step '+productStep+' of 5';
+ $('backBtn').classList.toggle('hidden',productStep===1);
+ $('nextBtn').classList.toggle('hidden',productStep===5);
+ $('saveBtn').classList.toggle('hidden',productStep!==5);
+ if(productStep===4)buildHandsets();
+ if(productStep===5)buildReview();
+ /* Keep the wizard anchored; only the active step content may scroll. */
+ const wizard=document.querySelector('#productsTab .wizard');
+ if(wizard){const y=wizard.getBoundingClientRect().top+window.pageYOffset-8;window.scrollTo({top:Math.max(0,y),behavior:'instant'});}
+ const activePanel=document.querySelector('.wizard-step:not(.hidden)');
+ if(activePanel)activePanel.scrollTop=0;
+}
+function validateProductStep(){
+ if(productStep===1){
+  if(!$('pName').value.trim()){alert('Product Name required.');return false}
+  if(isMobileProduct()&&!$('pModel').value.trim()){alert('Mobile Model required.');return false}
+ }
+ if(productStep===2){
+  const price=Number($('pPrice').value),stock=Number($('pStock').value);
+  if(!$('pPrice').value.trim()||!Number.isFinite(price)||price<=0){alert('Sale Price 0 पेक्षा जास्त भरा.');return false}
+  if(!$('pStock').value.trim()||!Number.isInteger(stock)||stock<0){alert('Stock हा 0 किंवा त्यापेक्षा मोठा पूर्णांक असावा.');return false}
+  const purchase=Number($('pPurchase').value||0);if(!Number.isFinite(purchase)||purchase<0){alert('Purchase Price योग्य भरा.');return false}
+ }
+ if(productStep===4&&isMobileProduct()){
+  const n=Number($('pStock').value||0);if(!Number.isInteger(n)||n<1){alert('Mobile Stock कमीत कमी 1 असावा.');return false}
+  let rows=[...document.querySelectorAll('.handset-card')];if(rows.length!==n){buildHandsets();rows=[...document.querySelectorAll('.handset-card')]}
+  const allImeis=[];
+  for(let i=0;i<n;i++){
+   const c=rows[i];if(!c){alert('Handset details पुन्हा भरा.');return false}
+   const color=c.querySelector('.hs-color')?.value.trim()||'';
+   const i1=(c.querySelector('.hs-imei1')?.value||'').replace(/\s/g,'');
+   const i2=(c.querySelector('.hs-imei2')?.value||'').replace(/\s/g,'');
+   if(!color||!i1||!i2){alert('प्रत्येक handset साठी Color, IMEI 1 आणि IMEI 2 भरा.');return false}
+   if(!/^\d{15}$/.test(i1)||!/^\d{15}$/.test(i2)){alert('प्रत्येक IMEI मध्ये नेमके 15 अंक असावेत.');return false}
+   allImeis.push(i1,i2);
+  }
+  if(new Set(allImeis).size!==allImeis.length){alert('Duplicate IMEI आढळला. प्रत्येक IMEI वेगळा असावा.');return false}
+ }
+ return true;
+}
+function nextProductStep(){if(!validateProductStep())return;setProductStep(productStep+1)}
+function prevProductStep(){setProductStep(productStep-1)}
+
+function renderImagePreview(){
+ const main=$('mainImagePreview'),thumbs=$('imageThumbs');thumbs.innerHTML='';
+ previewObjectUrls.forEach(u=>URL.revokeObjectURL(u));previewObjectUrls=[];
+ if(!selectedImageFiles.length){
+  const existing=$('pImage').value.trim();
+  main.innerHTML=existing?`<img src="${esc(existing)}" alt="Current product image"><b>Current product image</b>`:'<div class="camera">📷</div><b>Product Image Preview</b><span class="small">Upload केल्यावर image इथे दिसेल</span>';
+  return;
+ }
+ const urls=selectedImageFiles.map(f=>URL.createObjectURL(f));previewObjectUrls=urls;
+ main.innerHTML=`<img src="${urls[0]}" alt="preview"><b>${esc(selectedImageFiles[0].name)}</b>`;
+ urls.forEach((u,i)=>{const d=document.createElement('div');d.className='image-thumb';d.innerHTML=`<img src="${u}" alt=""><button type="button" onclick="removeSelectedImage(${i})">×</button>`;thumbs.appendChild(d)});
+}
+function removeSelectedImage(i){selectedImageFiles.splice(i,1);renderImagePreview()}
+
+function buildHandsets(){
+ if(!isMobileProduct())return;
+ const count=Math.max(1,Number($('pStock').value||1));
+ $('handsetCountText').textContent=count;
+ const old=[...document.querySelectorAll('.handset-card')].map(c=>({color:c.querySelector('.hs-color')?.value||'',i1:c.querySelector('.hs-imei1')?.value||'',i2:c.querySelector('.hs-imei2')?.value||'',serial:c.querySelector('.hs-serial')?.value||''}));
+ const list=$('handsetList');list.innerHTML='';
+ for(let i=0;i<count;i++){
+   const x=old[i]||handsetDraft[i]||{};
+   const card=document.createElement('div');card.className='handset-card';
+   card.innerHTML=`<div class="handset-top"><b>Handset ${i+1}</b><span class="status-pill">Available</span></div>
+   <div class="row"><div><label>Color *</label><input class="hs-color" value="${esc(x.color||'')}" placeholder="Red / Yellow"></div><div><label>IMEI 1 *</label><input class="hs-imei1" inputmode="numeric" value="${esc(x.i1||'')}" placeholder="15 digit IMEI"></div></div>
+   <div class="row"><div><label>IMEI 2 *</label><input class="hs-imei2" inputmode="numeric" value="${esc(x.i2||'')}" placeholder="15 digit IMEI"></div><div><label>Serial No.</label><input class="hs-serial" value="${esc(x.serial||'')}" placeholder="Serial number"></div></div>`;
+   list.appendChild(card);
+ }
+}
+function collectHandsets(){return [...document.querySelectorAll('.handset-card')].map((c,i)=>({handset_no:i+1,color:c.querySelector('.hs-color').value.trim(),imei_1:c.querySelector('.hs-imei1').value.replace(/\s/g,'').trim(),imei_2:c.querySelector('.hs-imei2').value.replace(/\s/g,'').trim(),serial_no:c.querySelector('.hs-serial').value.trim(),status:'Available'}))}
+
+function buildReview(){
+ const mobile=isMobileProduct(), imgs=selectedImageFiles.length?URL.createObjectURL(selectedImageFiles[0]):$('pImage').value;
+ const hs=mobile?collectHandsets():[];
+ $('reviewBox').innerHTML=`<div class="review-row">${imgs?`<img class="review-image" src="${esc(imgs)}">`:''}<div><h3 style="margin:0">${esc($('pName').value||'Product')}</h3><div class="small">${esc($('pBrand').value)} ${mobile?'• '+esc($('pModel').value):''}</div><p>Sale Price: <b>₹${Number($('pPrice').value||0).toFixed(0)}</b><br>Stock: <b>${Number($('pStock').value||0)}</b><br>Warranty: ${esc($('pWarranty').value||'-')}</p></div></div>
+ <hr><p><b>Purchase Price:</b> ₹${Number($('pPurchase').value||0).toFixed(0)} &nbsp; <b>Profit:</b> ₹${Number($('pPrice').value||0)-Number($('pPurchase').value||0)}</p>
+ ${mobile?`<h4>Handset Details</h4><table class="review-table"><tr><th>#</th><th>Color</th><th>IMEI 1</th><th>IMEI 2</th><th>Serial</th></tr>${hs.map(x=>`<tr><td>${x.handset_no}</td><td>${esc(x.color)}</td><td>${esc(x.imei_1)}</td><td>${esc(x.imei_2)}</td><td>${esc(x.serial_no||'-')}</td></tr>`).join('')}</table>`:''}`;
+}
+
+async function uploadProductImages(productId){
+ if(!selectedImageFiles.length)return $('pImage').value.trim()||null;
+ let mainUrl=null;
+ for(let i=0;i<selectedImageFiles.length;i++){
+   const file=selectedImageFiles[i];const ext='jpg';const path=`products/${productId}/${makeId()}.${ext}`;
+   const up=await db.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type});
+   if(up.error)throw new Error('Image upload failed: '+up.error.message);
+   const pub=db.storage.from('product-images').getPublicUrl(path);if(i===0)mainUrl=pub.data.publicUrl;
+ }
+ return mainUrl;
+}
+
+function clearProductForm(){
+ ['productId','pName','pBrand','pModel','pRam','pCompatible','pWarranty','pPrice','pImage','pDescription','pPurchase'].forEach(id=>$(id).value='');$('pStock').value='1';
+ $('pCategory').value='custom_printing';$('pAvailable').value='true';$('pCustom').checked=false;$('productMsg').textContent='';$('productMsg').className='';$('formTitle').textContent='➕ Add Product';selectedImageFiles=[];$('pImageFiles').value='';$('pCameraFile').value='';handsetDraft=[];renderImagePreview();setProductStep(1);updateCategoryFields();calculateProfit();
+}
+
+async function saveProduct(){
+ if(productStep!==5)return;
+ for(const step of [1,2,4]){productStep=step;if(!validateProductStep()){setProductStep(step);return}}
+ setProductStep(5);
+ const id=$('productId').value.trim()||null;
+ const product={name:$('pName').value.trim(),description:$('pDescription').value.trim(),price:Number($('pPrice').value||0),stock:Number($('pStock').value||0),image_url:$('pImage').value.trim()||null,available:$('pAvailable').value==='true',category:$('pCategory').value,brand:$('pBrand').value.trim()||null,model:isMobileProduct()?$('pModel').value.trim():null,ram_storage:isMobileProduct()?($('pRam').value.trim()||null):null,compatible_model:isMobileProduct()?null:($('pCompatible').value.trim()||null),warranty:$('pWarranty').value.trim()||null,is_customizable:isMobileProduct()?false:$('pCustom').checked};
+ if(!product.name){alert('Product name required.');return}
+ $('saveBtn').disabled=true;$('productMsg').className='msg ok';$('productMsg').textContent='⏳ Product saving...';
+ let r;
+ try{r=id?await db.from('products').update(product).eq('id',id).select('id').single():await db.from('products').insert(product).select('id').single();}
+ catch(err){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='❌ Save failed: '+(err.message||err);return}
+ if(r.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='❌ '+r.error.message;return}
+ const pid=id||r.data.id;
+ try{const img=await uploadProductImages(pid);if(img){const u=await db.from('products').update({image_url:img}).eq('id',pid);if(u.error)throw new Error(u.error.message);}}
+ catch(e){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but '+e.message;return}
+ const priv={product_id:pid,purchase_price:Number($('pPurchase').value||0),profit:Number($('pPrice').value||0)-Number($('pPurchase').value||0),imei_1:null,imei_2:null,serial_no:null,updated_at:new Date().toISOString()};
+ const q=await db.from('product_private').upsert(priv,{onConflict:'product_id'});
+ if(q.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but private data error: '+q.error.message;return}
+ if(isMobileProduct()){
+   const del=await db.from('product_handsets').delete().eq('product_id',pid);if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but old handset cleanup failed: '+del.error.message;return}
+   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,status:'Available'}));
+   const ins=await db.from('product_handsets').insert(rows);if(ins.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but handset details error: '+ins.error.message;return}
+ }else{
+   const del=await db.from('product_handsets').delete().eq('product_id',pid);
+   if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but old handset cleanup failed: '+del.error.message;return}
+ }
+ $('productMsg').className='msg ok';$('productMsg').textContent='✅ Product saved successfully.';$('saveBtn').disabled=false;clearProductForm();await loadProducts();
+}
+
+async function loadProducts(){
+ const [pr,priv]=await Promise.all([
+   db.from('products').select('id,name,description,price,stock,image_url,available,category,brand,model,ram_storage,compatible_model,warranty,is_customizable').order('created_at',{ascending:false}),
+   db.from('product_private').select('product_id,purchase_price,profit')
+ ]);
+ if(pr.error){$('products').innerHTML='<div class="msg">❌ '+esc(pr.error.message)+'</div>';return}
+ const pm=new Map((priv.data||[]).map(x=>[x.product_id,x]));
+ $('productCount').textContent=pr.data.length;const lowCounter=$('lowStock');if(lowCounter)lowCounter.textContent=pr.data.filter(x=>Number(x.stock)<=5).length;
+ $('products').innerHTML=pr.data.length?'<div class="grid">'+pr.data.map(p=>{const x=pm.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name)}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">No products found.</p>';
+}
+async function editProduct(p){
+ try{
+  const privR=await db.from('product_private').select('purchase_price').eq('product_id',p.id).maybeSingle();
+  if(privR.error)console.warn('Private product details unavailable:',privR.error.message);
+  $('productId').value=p.id;$('formTitle').textContent='✏️ Edit Product';$('pName').value=p.name||'';$('pDescription').value=p.description||'';$('pPrice').value=p.price??'';$('pStock').value=p.stock??1;$('pImage').value=p.image_url||'';$('pAvailable').value=String(p.available);$('pCategory').value=p.category||'custom_printing';$('pBrand').value=p.brand||'';$('pModel').value=p.model||'';$('pRam').value=p.ram_storage||'';$('pCompatible').value=p.compatible_model||'';$('pWarranty').value=p.warranty||'';$('pCustom').checked=!!p.is_customizable;$('pPurchase').value=privR.data?.purchase_price??'';
+  selectedImageFiles=[];$('pImageFiles').value='';$('pCameraFile').value='';handsetDraft=[];renderImagePreview();updateCategoryFields();
+  if(isMobileProduct()){const h=await db.from('product_handsets').select('handset_no,color,imei_1,imei_2,serial_no,status').eq('product_id',p.id).order('handset_no');if(h.error)throw h.error;handsetDraft=(h.data||[]).map(x=>({color:x.color||'',i1:x.imei_1||'',i2:x.imei_2||'',serial:x.serial_no||''}));}
+  $('handsetList').innerHTML='';setProductStep(1);calculateProfit();
+ }catch(err){alert('Product edit load failed: '+(err.message||err))}
+}
+async function toggleProduct(id,v){const r=await db.from('products').update({available:v}).eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadProducts()}
+async function deleteProduct(id){
+ if(!confirm('हा product delete करायचा का?'))return;
+ try{
+  const h=await db.from('product_handsets').delete().eq('product_id',id);if(h.error)throw new Error('Handset cleanup failed: '+h.error.message);
+  const pr=await db.from('product_private').delete().eq('product_id',id);if(pr.error)throw new Error('Private data cleanup failed: '+pr.error.message);
+  const r=await db.from('products').delete().eq('id',id);if(r.error)throw new Error('Product delete failed: '+r.error.message);
+  await loadProducts();
+ }catch(e){alert('❌ Delete failed: '+e.message+'\nकाही related records आधी delete झाले असू शकतात; Supabase table permissions तपासा.')}
+}
+
+let adjustmentProducts=[];
+const ADJ_HISTORY_KEY='morya-agency-stock-adjustment-history-v1';
+async function loadAdjustmentProducts(){
+ const sel=$('adjProduct'); if(!sel)return; sel.innerHTML='<option value="">Loading...</option>';
+ const r=await db.from('products').select('id,name,stock,price,category,brand,model').order('name');
+ if(r.error){sel.innerHTML='<option value="">Products load failed</option>';$('adjMsg').textContent='❌ '+r.error.message;return;}
+ adjustmentProducts=r.data||[];sel.innerHTML='<option value="">-- Product निवडा --</option>'+adjustmentProducts.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — Stock: ${Number(p.stock||0)}</option>`).join('');
+ sel.onchange=updateAdjustmentPreview;$('adjType').onchange=updateAdjustmentPreview;$('adjQty').oninput=updateAdjustmentPreview;updateAdjustmentPreview();
+}
+function updateAdjustmentPreview(){
+ const p=adjustmentProducts.find(x=>String(x.id)===$('adjProduct')?.value);const box=$('adjPreview');if(!box)return;
+ if(!p){box.textContent='Product निवडा म्हणजे सध्याचा आणि बदलानंतरचा stock दिसेल.';return;}
+ const current=Number(p.stock||0),q=Math.max(0,Number($('adjQty').value||0)),type=$('adjType').value;let next=current;
+ if(type==='add')next=current+q;else if(type==='reduce'||type==='damaged')next=current-q;else next=q;
+ box.textContent=`${p.name}: सध्याचा Stock ${current} → नवीन Stock ${next}`+(next<0?' — ❌ उपलब्ध स्टॉकपेक्षा जास्त कमी करता येणार नाही.':'');
+}
+async function confirmStockAdjustment(){
+ const p=adjustmentProducts.find(x=>String(x.id)===$('adjProduct').value);const q=Number($('adjQty').value);if(!p){alert('कृपया Product निवडा.');return;}if(!Number.isInteger(q)||q<1){alert('Quantity 1 किंवा त्यापेक्षा जास्त पूर्ण संख्या असावी.');return;}
+ const current=Number(p.stock||0),type=$('adjType').value;let next=current;if(type==='add')next=current+q;else if(type==='reduce'||type==='damaged')next=current-q;else next=q;
+ if(next<0){alert('उपलब्ध स्टॉकपेक्षा जास्त कमी करता येणार नाही.');return;}
+ const label=type==='add'?'Add Stock':type==='reduce'?'Reduce Stock':type==='damaged'?'Damaged / Loss Stock':'Set Actual Stock';
+ if(!confirm(`${p.name}\nStock: ${current} → ${next}\nप्रकार: ${label}\nकारण: ${$('adjReason').value}\nहा बदल करायचा का?`))return;
+ const r=await db.from('products').update({stock:next}).eq('id',p.id);if(r.error){$('adjMsg').textContent='❌ Stock update failed: '+r.error.message;return;}
+ const history={date:new Date().toISOString(),product_id:p.id,product_name:p.name,type:label,quantity:q,old_stock:current,new_stock:next,reason:$('adjReason').value,loss_value:type==='damaged'?q*Number((await getPurchasePrice(p.id))||p.price||0):0};
+ try{const a=JSON.parse(localStorage.getItem(ADJ_HISTORY_KEY)||'[]');a.unshift(history);localStorage.setItem(ADJ_HISTORY_KEY,JSON.stringify(a.slice(0,100)));}catch(e){}
+ $('adjMsg').className='msg ok';$('adjMsg').textContent='✅ Stock update झाला. Adjustment history या browser मध्ये सेव्ह झाली.';await loadProducts();await loadAdjustmentProducts();renderAdjustmentHistory();
+}
+async function getPurchasePrice(id){try{const r=await db.from('product_private').select('purchase_price').eq('product_id',id).maybeSingle();return r.data?.purchase_price||0;}catch(e){return 0;}}
+function renderAdjustmentHistory(){const el=$('adjHistory');if(!el)return;let a=[];try{a=JSON.parse(localStorage.getItem(ADJ_HISTORY_KEY)||'[]');}catch(e){}el.innerHTML=a.length?a.slice(0,30).map(x=>`<div class="item"><b>${esc(x.product_name)}</b><p class="small">${new Date(x.date).toLocaleString()} • ${esc(x.type)} • ${esc(x.reason)}</p><p>Stock: ${Number(x.old_stock)} → ${Number(x.new_stock)} • Qty: ${Number(x.quantity)}${x.loss_value?` • Est. loss ₹${Number(x.loss_value).toFixed(2)}`:''}</p></div>`).join(''):'<p class="muted">अजून adjustment नोंदी नाहीत.</p>'; }
+
+async function loadOrders(){
+ const r=await db.from('orders').select('id,customer_name,customer_mobile,customer_address,address,instructions,photo_path,customer_photo_url,total_amount,status,created_at').order('created_at',{ascending:false}).limit(100);
+ if(r.error){$('orders').innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return}
+ const rows=r.data||[];$('orderCount').textContent=rows.length;const orderValueCounter=$('orderValue');if(orderValueCounter)orderValueCounter.textContent='₹'+rows.reduce((a,o)=>a+Number(o.total_amount||0),0).toFixed(0);
+ const statuses=['Pending','Accepted','Packed','Shipped','Delivered','Rejected','Cancelled','New','Printing','Ready'];
+ $('orders').innerHTML=rows.length?rows.map(o=>`<div class="order"><div class="ordertop"><div><b>Order #${esc(o.id)}</b><div class="small">${new Date(o.created_at).toLocaleString()}</div></div><span class="badge">${esc(o.status||'Pending')}</span></div><p><b>${esc(o.customer_name||'Customer')}</b> • ${esc(o.customer_mobile||'-')}<br>📍 ${esc(o.address||o.customer_address||'-')}</p><p>💰 <b>₹${Number(o.total_amount||0).toFixed(2)}</b><br>📝 ${esc(o.instructions||'-')}</p><label>Status</label><select id="status_${esc(o.id)}">${[...new Set([o.status||'Pending',...statuses])].map(st=>`<option value="${esc(st)}" ${st===(o.status||'Pending')?'selected':''}>${esc(st)}</option>`).join('')}</select><div class="actions"><button class="green" onclick="saveStatus('${String(o.id).replace(/'/g, "\\'")}')">Save Status</button><button class="light" onclick="printOrderInvoice('${o.id}')">Invoice</button><button class="light" onclick="quickOrderStatus('${String(o.id).replace(/'/g, "\\'")}', 'Accepted')">✓ Accept</button><button class="red" onclick="quickCancelOrder('${String(o.id).replace(/'/g, "\\'")}')">Cancel / Reject</button>${o.photo_path?`<button class="light" onclick="downloadPhoto('${esc(o.photo_path)}')">⬇️ Download Photo</button>`:''}</div></div>`).join(''):'<p class="muted">No orders found.</p>';
+}
+async function saveStatus(id){const status=$('status_'+id).value;if(['Cancelled','Rejected'].includes(status)){return quickCancelOrder(id,status)}const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
+async function quickOrderStatus(id,status){const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
+async function quickCancelOrder(id,desired='Cancelled'){
+ const reason=prompt(desired==='Rejected'?'Order reject करण्याचे कारण लिहा:':'Order cancel करण्याचे कारण लिहा:');if(reason===null)return;if(!reason.trim()){alert('कृपया कारण लिहा.');return}
+ const old=await db.from('orders').select('instructions').eq('id',id).maybeSingle();if(old.error){alert('Order माहिती मिळाली नाही: '+old.error.message);return}
+ const existing=old.data?.instructions||'';const note=`\n[Admin ${desired} reason: ${reason.trim()}]`;const update={status:desired,instructions:(existing+note).trim()};
+ const r=await db.from('orders').update(update).eq('id',id);if(r.error){alert('❌ Order update failed: '+r.error.message);return}alert('Order status आणि कारण सेव्ह केले.');loadOrders();
+}
+async function loadCustomers(){
+ const el=$('customersList');if(!el)return;el.textContent='Loading customers...';
+ const r=await db.from('orders').select('customer_name,customer_mobile,customer_address,address,total_amount,created_at,status').order('created_at',{ascending:false}).limit(1000);
+ if(r.error){el.innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return}
+ const map=new Map();(r.data||[]).forEach(o=>{const key=(o.customer_mobile||o.customer_name||'Unknown').trim();if(!map.has(key))map.set(key,{name:o.customer_name||'Customer',mobile:o.customer_mobile||'-',address:o.address||o.customer_address||'-',orders:0,spent:0,last:o.created_at});const c=map.get(key);c.orders++;c.spent+=Number(o.total_amount||0);if(o.created_at>c.last)c.last=o.created_at;});
+ const list=[...map.values()];el.innerHTML=list.length?`<p class="small">${list.length} customers from last 1000 orders</p>`+list.map(c=>`<div class="item"><b>${esc(c.name)}</b><p class="small">📞 ${esc(c.mobile)}<br>📍 ${esc(c.address)}</p><p>Orders: <b>${c.orders}</b> • Total: <b>₹${c.spent.toFixed(2)}</b><br><span class="small">Last order: ${new Date(c.last).toLocaleString()}</span></p></div>`).join(''):'<p>No customer records found in orders.</p>';
+}
+async function loadReports(){
+ const el=$('reportsContent');if(!el)return;el.textContent='Loading reports...';
+ const [pr,orr]=await Promise.all([db.from('products').select('id,name,stock,price,purchase_price,category'),db.from('orders').select('id,total_amount,status,created_at')]);
+ if(pr.error||orr.error){el.innerHTML='<div class="msg">❌ '+esc(pr.error?.message||orr.error?.message)+'</div>';return}
+ const products=pr.data||[],orders=orr.data||[];const sales=orders.reduce((s,o)=>s+Number(o.total_amount||0),0);const low=products.filter(p=>Number(p.stock||0)<=5);const stockValue=products.reduce((s,p)=>s+Number(p.stock||0)*Number(p.price||0),0);const byStatus={};orders.forEach(o=>{const st=o.status||'Pending';byStatus[st]=(byStatus[st]||0)+1});
+ el.innerHTML=`<div class="stats"><div class="stat"><small>Total Orders</small><strong>${orders.length}</strong></div><div class="stat"><small>Order Value</small><strong>₹${sales.toFixed(0)}</strong></div><div class="stat"><small>Products</small><strong>${products.length}</strong></div><div class="stat"><small>Low Stock</small><strong>${low.length}</strong></div></div><div class="item"><h3>Order Status</h3>${Object.entries(byStatus).map(([k,v])=>`<p>${esc(k)}: <b>${v}</b></p>`).join('')||'<p>No orders</p>'}</div><div class="item"><h3>Low Stock Products (≤ 5)</h3>${low.map(p=>`<p>${esc(p.name)} — ${Number(p.stock||0)} in stock</p>`).join('')||'<p>None</p>'}</div><p class="small">Approximate stock retail value: ₹${stockValue.toFixed(2)}. Profit and customer purchase totals depend on available database fields and are not claimed here.</p>`;
+}
+async function exportReportsCSV(){
+ try{
+  const [pr,orr]=await Promise.all([db.from('products').select('id,name,category,brand,model,stock,price,available'),db.from('orders').select('id,customer_name,customer_mobile,total_amount,status,created_at').order('created_at',{ascending:false})]);
+  const err=[pr,orr].find(x=>x.error);if(err)throw err.error;
+  const rows=[['TYPE','ID','NAME / CUSTOMER','CATEGORY / MOBILE','MODEL / STATUS','STOCK','PRICE / ORDER VALUE','AVAILABLE / DATE']];
+  (pr.data||[]).forEach(p=>rows.push(['PRODUCT',p.id,p.name||'',p.category||'',p.model||'',p.stock??0,p.price??0,p.available??'']));
+  (orr.data||[]).forEach(o=>rows.push(['ORDER',o.id,o.customer_name||'',o.customer_mobile||'',o.status||'Pending','',o.total_amount??0,o.created_at||'']));
+  const csv=rows.map(row=>row.map(v=>{const x=String(v??'');return '"'+x.replace(/"/g,'""')+'"'}).join(',')).join('\r\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='morya-agency-report-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);alert('CSV report तयार झाला. Downloads मध्ये तपासा.');
+ }catch(e){alert('Report export failed: '+(e.message||e))}
+}
+async function printOrderInvoice(id){
+ try{
+  const r=await db.from('orders').select('id,customer_name,customer_mobile,customer_address,address,instructions,total_amount,status,created_at').eq('id',id).maybeSingle();
+  if(r.error)throw r.error;if(!r.data){alert('Order सापडली नाही.');return}
+  const o=r.data;const shop=(document.getElementById('cfgShopName')?.value||'MORYA AGENCY');
+  const safe=v=>String(v??'-').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const w=window.open('','_blank','width=760,height=850');if(!w){alert('Invoice उघडण्यासाठी browser pop-up allow करा.');return}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${safe(o.id)}</title><style>body{font:15px Arial,sans-serif;color:#111;padding:28px;max-width:700px;margin:auto}h1{margin-bottom:4px}hr{border:0;border-top:1px solid #aaa;margin:20px 0}.row{display:flex;justify-content:space-between;gap:20px}.total{font-size:22px;font-weight:bold;text-align:right;margin-top:24px}.muted{color:#555}button{padding:10px 16px}@media print{button{display:none}body{padding:0}}</style></head><body><h1>${safe(shop)}</h1><div class="muted">Order Invoice / Order Summary</div><hr><div class="row"><div><b>Order ID:</b> ${safe(o.id)}<br><b>Date:</b> ${safe(o.created_at?new Date(o.created_at).toLocaleString():'-')}<br><b>Status:</b> ${safe(o.status||'Pending')}</div><div><b>Customer:</b> ${safe(o.customer_name||'Customer')}<br><b>Mobile:</b> ${safe(o.customer_mobile||'-')}<br><b>Address:</b> ${safe(o.address||o.customer_address||'-')}</div></div><hr><p><b>Order notes:</b><br>${safe(o.instructions||'-')}</p><div class="total">Order Total: ₹${Number(o.total_amount||0).toFixed(2)}</div><p class="muted">This printout summarizes the order total stored in the system. Item-wise details and tax are not shown because they are not fetched by this invoice.</p><button onclick="window.print()">Print / Save PDF</button></body></html>`);w.document.close();
+ }catch(e){alert('Invoice तयार करता आली नाही: '+(e.message||e))}
+}
+async function exportAdminBackup(){
+ try{
+  const [products,orders,ads,privateProducts]=await Promise.all([
+   db.from('products').select('*'),
+   db.from('orders').select('*'),
+   db.from('advertisements').select('*'),
+   db.from('product_private').select('*')
+  ]);
+  const err=[products,orders,ads,privateProducts].find(x=>x.error);
+  if(err)throw err.error;
+  let localSettings={},stockAdjustmentHistory=[];
+  try{localSettings=JSON.parse(localStorage.getItem('moryaAgencySettingsV1')||'{}')}catch(e){}
+  try{stockAdjustmentHistory=JSON.parse(localStorage.getItem('morya-agency-stock-adjustment-history-v1')||'[]')}catch(e){}
+  const payload={
+   backup_version:2,exported_at:new Date().toISOString(),
+   note:'Export-only backup. This file does not change or restore database data automatically. Keep it private because it may contain customer information.',
+   products:products.data||[],product_private:privateProducts.data||[],orders:orders.data||[],advertisements:ads.data||[],
+   local_settings:localSettings,stock_adjustment_history:stockAdjustmentHistory
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+  a.download='morya-agency-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  alert('Backup JSON तयार झाला. Downloads मध्ये तपासा आणि फाइल सुरक्षित ठेवा. हा backup आपोआप restore होत नाही.');
+ }catch(e){alert('Backup export failed: '+(e.message||e))}
+}
+async function downloadPhoto(path){
+ const r=await db.storage.from('customer-photos').createSignedUrl(path,300);
+ if(r.error){alert('❌ '+r.error.message);return}
+ const a=document.createElement('a');a.href=r.data.signedUrl;a.target='_blank';a.download=path.split('/').pop()||'original-photo';a.click();
+}
+
+function clearAdForm(){['adId','adBusiness','adDescription','adWhatsapp','adUrl'].forEach(id=>$(id).value='');$('adSort').value='1';$('adType').value='image';$('adActive').value='true';$('adFile').value='';$('adFormTitle').textContent='➕ Add Advertisement';$('adMsg').textContent='';$('adMsg').className=''}
+async function saveAd(){
+ const business=$('adBusiness').value.trim();if(!business){$('adMsg').className='msg';$('adMsg').textContent='Business name required.';return}
+ let mediaUrl=$('adUrl').value.trim();const file=$('adFile').files[0];let type=$('adType').value;
+ if(file){
+   type=file.type.startsWith('video/')?'video':'image';
+   const ext=(file.name.split('.').pop()||'bin').toLowerCase(), path='ads/'+makeId()+'.'+ext;
+   const up=await db.storage.from('ad-media').upload(path,file,{upsert:false,contentType:file.type});
+   if(up.error){$('adMsg').className='msg';$('adMsg').textContent='❌ Upload failed: '+up.error.message;return}
+   const pub=db.storage.from('ad-media').getPublicUrl(path);mediaUrl=pub.data.publicUrl;
+ }
+ if(!mediaUrl){$('adMsg').className='msg';$('adMsg').textContent='Image/video upload किंवा media URL द्या.';return}
+ const sort=Number($('adSort').value||1);if(!Number.isInteger(sort)||sort<0){$('adMsg').className='msg';$('adMsg').textContent='Sort Order हा 0 किंवा त्यापेक्षा मोठा पूर्णांक असावा.';return}
+ const row={business_name:business,description:$('adDescription').value.trim()||null,whatsapp:$('adWhatsapp').value.trim()||null,media_type:type,media_url:mediaUrl,active:$('adActive').value==='true',sort_order:sort};
+ const id=$('adId').value.trim();const r=id?await db.from('advertisements').update(row).eq('id',id):await db.from('advertisements').insert(row);
+ if(r.error){$('adMsg').className='msg';$('adMsg').textContent='❌ '+r.error.message;return}
+ $('adMsg').className='msg ok';$('adMsg').textContent='✅ Advertisement saved.';clearAdForm();loadAds();
+}
+async function loadAds(){
+ const r=await db.from('advertisements').select('id,business_name,description,whatsapp,media_type,media_url,active,sort_order').order('sort_order',{ascending:true});
+ if(r.error){$('ads').innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return}
+ $('ads').innerHTML=r.data.length?'<div class="grid">'+r.data.map(a=>`<div class="item"><b>${esc(a.business_name)}</b><div class="small">${esc(a.description||'')} • ${a.active?'ON':'OFF'}</div>${a.media_type==='video'?`<video class="admedia" controls src="${esc(a.media_url)}"></video>`:`<img class="admedia" src="${esc(a.media_url)}" alt="Advertisement">`}<p class="small">WhatsApp: ${esc(a.whatsapp||'-')}<br>Order: ${Number(a.sort_order||0)}</p><div class="actions"><button class="light" onclick='editAd(${JSON.stringify(a).replace(/'/g,"&#039;")})'>Edit</button><button class="red" onclick="deleteAd('${a.id}')">Delete</button></div></div>`).join('')+'</div>':'<p class="muted">No advertisements yet.</p>';
+}
+function editAd(a){$('adId').value=a.id;$('adFormTitle').textContent='✏️ Edit Advertisement';$('adBusiness').value=a.business_name||'';$('adDescription').value=a.description||'';$('adWhatsapp').value=a.whatsapp||'';$('adType').value=a.media_type||'image';$('adUrl').value=a.media_url||'';$('adSort').value=a.sort_order??1;$('adActive').value=String(a.active);$('adFile').value='';window.scrollTo({top:0,behavior:'smooth'})}
+async function deleteAd(id){if(!confirm('हा advertisement delete करायचा का?'))return;const r=await db.from('advertisements').delete().eq('id',id);if(r.error)alert('❌ '+r.error.message);else loadAds()}
+
+(async()=>{
+ try{const r=await db.auth.getSession();if(r.error)throw r.error;if(r.data?.session)await showDashboard();}
+ catch(e){console.warn('Session restore failed:',e.message||e);$('loginMsg').className='msg';$('loginMsg').textContent='Session restore failed. Please login again.';}
+})();
+db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){ $('dashboard').classList.add('hidden');$('loginBox').classList.remove('hidden');$('logoutBtn').classList.add('hidden');if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(false);}else if(session){if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);}});
+</script>
+
+<script>
+// Final navigation fix: one workspace, no jumping to the bottom.
+function openAdminTab(tabId){
+  const dash=document.getElementById('dashboardHome');
+  const workspace=document.getElementById('workspace');
+  if(dash) dash.classList.add('hidden');
+  if(workspace) workspace.classList.remove('hidden');
+  setWorkspaceTab(tabId);
+  const top=document.querySelector('.workspace-top');
+  if(top) window.scrollTo({top: top.getBoundingClientRect().top + window.pageYOffset - 8, behavior:'instant'});
+}
+function openProductWizard(){
+  openAdminTab('productsTab');
+  setTimeout(()=>{
+    const w=document.querySelector('#productsTab .wizard');
+    if(w) w.scrollIntoView({behavior:'instant',block:'start'});
+    document.getElementById('pName')?.focus();
+  },100);
+}
+function showAdminNotice(msg){alert(msg);}
+</script>
+<script>
+
+function previewSettingQR(sourceId,isUpi=false){const raw=document.getElementById(sourceId)?.value.trim();if(!raw){alert(isUpi?'आधी UPI ID भरा.':'आधी Customer App link भरा.');return}const value=isUpi?(raw.startsWith('upi://')?raw:'upi://pay?pa='+encodeURIComponent(raw)+'&pn='+encodeURIComponent(document.getElementById('cfgShopName')?.value||'Morya Agency')):raw;const target=document.getElementById(isUpi?'paymentQrPreview':'customerQrPreview');if(!target)return;const src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(value);target.innerHTML='<p class="small">QR preview (internet required)</p><img alt="QR Code" style="width:220px;max-width:100%;background:#fff;padding:8px;border:1px solid #ddd;border-radius:10px" src="'+src+'"><p><a href="'+src+'" target="_blank" rel="noopener">Open QR image</a></p>';}
+function loadMoryaSettings(){
+ const ids=['cfgShopName','cfgMobile','cfgWhatsapp','cfgEmail','cfgAddress','cfgOpening','cfgShopStatus','cfgOffers','cfgAppName','cfgTheme','cfgLogo','cfgCustomerLink','cfgCustomerQr','cfgInvoiceTitle','cfgTerms','cfgContact','cfgUpi','cfgPaymentQr','cfgAdminEmail'];
+ try { const data=JSON.parse(localStorage.getItem('moryaAgencySettingsV1')||'{}'); ids.forEach(id=>{const el=document.getElementById(id);if(el && data[id]!==undefined)el.value=data[id];}); } catch(e){}
+}
+function saveMoryaSettings(){
+ const ids=['cfgShopName','cfgMobile','cfgWhatsapp','cfgEmail','cfgAddress','cfgOpening','cfgShopStatus','cfgOffers','cfgAppName','cfgTheme','cfgLogo','cfgCustomerLink','cfgCustomerQr','cfgInvoiceTitle','cfgTerms','cfgContact','cfgUpi','cfgPaymentQr','cfgAdminEmail'];
+ const data={};ids.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});
+ try{localStorage.setItem('moryaAgencySettingsV1',JSON.stringify(data));document.getElementById('cfgSaveMsg').textContent='Settings या device/browser मध्ये save झाल्या.';}catch(e){document.getElementById('cfgSaveMsg').textContent='Save झाले नाही. Browser storage तपासा.';}
+}
+
+function updateSettingsAuthUI(isLoggedIn){
+ const login=document.getElementById('settingsLoginAction');
+ const logout=document.getElementById('settingsLogoutAction');
+ if(login)login.classList.toggle('hidden',!!isLoggedIn);
+ if(logout)logout.classList.toggle('hidden',!isLoggedIn);
+}
+function openSettingsWhileSignedOut(){
+ document.getElementById('dashboard').classList.remove('hidden');
+ document.getElementById('dashboardHome').classList.add('hidden');
+ openSettingsPanel(); updateSettingsAuthUI(false);
+}
+function openSettingsCategory(id){
+ document.getElementById('settingsMainMenu').classList.add('hidden');
+ document.querySelectorAll('#settingsPanel .settings-detail').forEach(el=>el.classList.add('hidden'));
+ const target=document.getElementById(id); if(target)target.classList.remove('hidden');
+ document.getElementById('settingsSaveActions').classList.remove('hidden');
+ window.scrollTo({top:0,behavior:'instant'});
+}
+function backSettingsMenu(){
+ document.querySelectorAll('#settingsPanel .settings-detail').forEach(el=>el.classList.add('hidden'));
+ document.getElementById('settingsSaveActions').classList.add('hidden');
+ document.getElementById('settingsMainMenu').classList.remove('hidden');
+ window.scrollTo({top:0,behavior:'instant'});
+}
+function settingsLoginAction(){
+ closeSettingsPanel();
+ document.getElementById('dashboard').classList.add('hidden');
+ document.getElementById('loginBox').classList.remove('hidden');
+}
+function openSettingsPanel(){
+ const home=document.getElementById('dashboardHome');
+ const panel=document.getElementById('settingsPanel');
+ const workspace=document.getElementById('workspace');
+ if(home)home.classList.add('hidden');if(workspace)workspace.classList.add('hidden');if(panel)panel.classList.remove('hidden');backSettingsMenu();
+ if(typeof loadMoryaSettings==='function')loadMoryaSettings();
+ updateSettingsAuthUI(!document.getElementById('dashboard').classList.contains('hidden'));
+ // Load summary directly from the existing Supabase tables. The old code
+ // referenced lowStock/orderValue elements that do not exist in this layout.
+ refreshSettingsSummary();
+ window.scrollTo({top:0,behavior:'instant'});
+}
+async function refreshSettingsSummary(){
+ const low=document.getElementById('settingsLowStock');
+ const val=document.getElementById('settingsOrderValue');
+ if(low) low.textContent='लोड होत आहे…';
+ if(val) val.textContent='लोड होत आहे…';
+ try{
+  const [productsResult,ordersResult]=await Promise.all([
+   db.from('products').select('stock'),
+   db.from('orders').select('total_amount')
+  ]);
+  if(productsResult.error) throw productsResult.error;
+  if(ordersResult.error) throw ordersResult.error;
+  if(low) low.textContent=(productsResult.data||[]).filter(p=>Number(p.stock||0)<=5).length;
+  if(val) val.textContent='₹'+(ordersResult.data||[]).reduce((sum,o)=>sum+Number(o.total_amount||0),0).toFixed(0);
+ }catch(err){
+  console.error('Settings summary load failed:',err);
+  if(low) low.textContent='लोड अयशस्वी';
+  if(val) val.textContent='लोड अयशस्वी';
+ }
+}
+function closeSettingsPanel(){const panel=document.getElementById('settingsPanel');const home=document.getElementById('dashboardHome');if(panel)panel.classList.add('hidden');if(home)home.classList.remove('hidden');window.scrollTo({top:0,behavior:'instant'});}
+function openSettingsSummaryTarget(which){
+ closeSettingsPanel();
+ if(which==='low'){openAdminTab('productsTab'); if(typeof loadProducts==='function')loadProducts();}
+ else {openAdminTab('ordersTab'); if(typeof loadOrders==='function')loadOrders();}
+}
+</script>
+</body>
+</html>
