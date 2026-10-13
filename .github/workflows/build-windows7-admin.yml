@@ -1,0 +1,40 @@
+name: Build Windows 7 Admin EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "desktop-admin/**"
+      - ".github/workflows/build-windows7-admin.yml"
+
+jobs:
+  build:
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: desktop-admin
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: desktop-admin/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --package-lock-only; npm ci
+        shell: pwsh
+
+      - name: Build Windows x64 installer
+        run: npm run dist
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: morya-agency-admin-windows7-x64
+          path: desktop-admin/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
