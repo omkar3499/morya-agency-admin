@@ -455,7 +455,7 @@ async function loadLiveProducts(){
       else if(/charging|battery|display|back panel|middle frame|ringer|speaker|camera glass|sim tray|cc board|network cable|on off strip|combo/.test(n)) k='parts';
       else if(/charger|headphone|earphone|power bank|memory card|otg|data cable|tempered glass|cleaning kit|mobile stand|lamination/.test(n)) k='accessories';
       if(!k)return;
-      live[k].push([p.name,'₹'+Number(p.price||0).toLocaleString('en-IN'),p.image_url||'📦',p.description||p.model||p.brand||'',p.id,p.stock||0,p.category,p.brand||'',p.model||'',!!p.is_customizable,Array.isArray(p.color_options)?p.color_options:[]]);
+      let colorList=[];if(Array.isArray(p.color_options))colorList=p.color_options;else if(typeof p.color_options==='string'&&p.color_options.trim()){try{const parsed=JSON.parse(p.color_options);colorList=Array.isArray(parsed)?parsed:p.color_options.split(/[,;|\\n]+/)}catch(e){colorList=p.color_options.split(/[,;|\\n]+/)}}if(!colorList.length&&typeof p.colors==='string'&&p.colors.trim())colorList=p.colors.split(/[,;|\\n]+/);live[k].push([p.name,'₹'+Number(p.price||0).toLocaleString('en-IN'),p.image_url||'📦',p.description||p.model||p.brand||'',p.id,p.stock||0,p.category,p.brand||'',p.model||'',!!p.is_customizable,colorList]);
     });
     // Use live Supabase products when available.
     // If a live category is empty, keep the built-in demo products so the
