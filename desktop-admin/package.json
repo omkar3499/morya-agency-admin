@@ -1,0 +1,45 @@
+{
+  "name": "morya-agency-admin-desktop",
+  "version": "1.0.0",
+  "description": "MORYA AGENCY Admin desktop wrapper for Windows 7 x64",
+  "main": "main.js",
+  "author": "MORYA AGENCY",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "22.3.27",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "in.moryaagency.admin",
+    "productName": "MORYA AGENCY Admin",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "MORYA-AGENCY-Admin-Setup-${version}-win-x64.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MORYA AGENCY Admin"
+    }
+  }
+}
