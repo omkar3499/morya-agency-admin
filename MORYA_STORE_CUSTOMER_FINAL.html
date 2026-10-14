@@ -280,6 +280,29 @@ const partTypes=[
  {id:'sim',label:'SIM Tray',icon:'▱',keys:['sim tray']},
  {id:'combo',label:'Combo',icon:'🔧',keys:['combo']}
 ];
+const accessoryTypes=[
+ {id:'glass',label:'Glass',icon:'🛡️',keys:['tempered glass','screen guard','glass']},
+ {id:'cover',label:'Cover',icon:'📱',keys:['mobile cover','phone cover','back cover','case']},
+ {id:'charger',label:'Charger',icon:'🔌',keys:['charger','charging adapter']},
+ {id:'neckband',label:'Bluetooth Neckband',icon:'🎧',keys:['neckband','bluetooth neckband']},
+ {id:'sound',label:'Bluetooth Sound',icon:'🔊',keys:['bluetooth sound','bluetooth speaker','portable speaker']},
+ {id:'stand',label:'Mobile Stand',icon:'📱',keys:['mobile stand','phone stand','holder']},
+ {id:'keyboard',label:'Keyboard',icon:'⌨️',keys:['keyboard','keybord']},
+ {id:'watch',label:'Smart Watch',icon:'⌚',keys:['smart watch','smartwatch']},
+ {id:'cbulb',label:'Charging Bulb',icon:'💡',keys:['charging bulb','rechargeable bulb']},
+ {id:'bulb',label:'Normal Bulb',icon:'💡',keys:['normal bulb','led bulb','bulb']},
+ {id:'mic',label:'Mic',icon:'🎤',keys:['mic','microphone']},
+ {id:'torch',label:'Head Torch',icon:'🔦',keys:['head torch','headlamp']},
+ {id:'other',label:'Other Electronic Accessories',icon:'🔋',keys:[]}
+];
+function renderAccessoryTypes(){
+ let el=document.getElementById('accessoryTypeFilters');
+ if(!el){el=document.createElement('div');el.id='accessoryTypeFilters';el.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;padding:2px 0';const grid=document.getElementById('products');grid.parentNode.insertBefore(el,grid);}
+ el.style.display=activeCategoryForFilters==='accessories'?'flex':'none';
+ el.innerHTML=accessoryTypes.map(t=>'<button type="button" onclick="openAccessoryType(this.dataset.type)" data-type="'+t.id+'" style="display:flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid '+(activeAccessoryType===t.id?'#d7b45d':'#373737')+';border-radius:10px;background:'+(activeAccessoryType===t.id?'#4a3b1d':'#191919')+';color:#f4efe6;font-weight:700;cursor:pointer">'+t.icon+' '+t.label+'</button>').join('');
+}
+function openAccessoryType(id){activeAccessoryType=id;render('accessories');document.getElementById('title').textContent=(accessoryTypes.find(t=>t.id===id)?.label||'Accessories')+' Models';document.getElementById('products').scrollIntoView({behavior:'smooth',block:'start'});}
+let activeAccessoryType='all';
 function renderPartTypes(){
  let el=document.getElementById('partTypeFilters');
  if(!el){el=document.createElement('div');el.id='partTypeFilters';el.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;padding:2px 0';const grid=document.getElementById('products');grid.parentNode.insertBefore(el,grid);}
@@ -292,14 +315,19 @@ function render(cat='all'){
  const productSection=document.querySelector('.section');
  if(productSection) productSection.style.display=(homeMode && cat==='all')?'none':'block';
  activeCategoryForFilters=cat;
- if(homeMode && cat==='all'){document.getElementById('products').innerHTML='';renderPartTypes();return;}
+ if(homeMode && cat==='all'){document.getElementById('products').innerHTML='';renderPartTypes();renderAccessoryTypes();return;}
  let list=cat==='all'?Object.values(products).flat():((products[cat]||[]).filter(p=>productCategory(p)===cat));
  if(cat!=='all') list=list.filter(p=>productCategory(p)===cat);
+ if(cat==='accessories'&&activeAccessoryType!=='all'){
+   const type=accessoryTypes.find(t=>t.id===activeAccessoryType);
+   if(type) list=list.filter(p=>type.keys.length ? type.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)) : !accessoryTypes.some(t=>t.id!=='other'&&t.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)));
+ }
  if(cat==='parts'&&activePartType!=='all'){
    const type=partTypes.find(t=>t.id===activePartType);
    if(type) list=list.filter(p=>!partTypes.some(t=>t.label.toLowerCase()===String(p[0]||'').trim().toLowerCase())&&type.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)));
  }
  renderPartTypes();
+ renderAccessoryTypes();
  document.getElementById('products').innerHTML=list.map((p,i)=>{
    const colors=Array.isArray(p[10])?p[10]:[];
    const colorHtml=colors.length
@@ -321,12 +349,13 @@ function render(cat='all'){
 function openCategory(cat){
  homeMode=false;
  if(cat==='parts')activePartType='all';
+ if(cat==='accessories')activeAccessoryType='all';
  document.querySelectorAll('.cat').forEach(x=>x.classList.toggle('active',x.dataset.cat===cat));
  document.getElementById('title').textContent={mobile:'Mobile Phones',custom:'Customize Products',parts:'Mobile Parts',accessories:'Mobile Accessories',skin:'Mobile Back Skin',cover:'Mobile Cover'}[cat];
  document.getElementById('back').style.display='block';render(cat);
 }
 document.querySelectorAll('.cat').forEach(c=>c.onclick=()=>openCategory(c.dataset.cat));
-document.getElementById('back').onclick=()=>{homeMode=true;activePartType='all';document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));document.getElementById('title').textContent='';document.getElementById('back').style.display='none';render()};
+document.getElementById('back').onclick=()=>{homeMode=true;activePartType='all';activeAccessoryType='all';document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));document.getElementById('title').textContent='';document.getElementById('back').style.display='none';render()};
 function add(p,color=''){cart++;document.getElementById('cartCount').textContent=cart;alert(p[0]+(color?' • '+color:'')+' added to Cart');}
 let buyAfterColor=false; let selectedColor='';
 function colorToCss(c){const m={black:'#111827',white:'#fff',blue:'#2563eb',red:'#ef4444',green:'#16a34a',yellow:'#facc15',purple:'#7c3aed',pink:'#ec4899',grey:'#9ca3af',gray:'#9ca3af',orange:'#f97316',silver:'#cbd5e1',gold:'#d4a72c'};return m[String(c||'').trim().toLowerCase()]||'#e5e7eb'}
