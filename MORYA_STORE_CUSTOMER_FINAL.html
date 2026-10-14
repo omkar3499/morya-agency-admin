@@ -313,7 +313,7 @@ function renderPartTypes(){
  el.innerHTML=partTypes.map(t=>'<button type="button" onclick="openPartType(this.dataset.type)" data-type="'+t.id+'" style="display:flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid '+(activePartType===t.id?'#d7b45d':'#373737')+';border-radius:10px;background:'+(activePartType===t.id?'#4a3b1d':'#191919')+';color:#f4efe6;font-weight:700;cursor:pointer">'+t.icon+' '+t.label+'</button>').join('');
 }
 function openPartType(id){activePartType=id;render('parts');document.getElementById('title').textContent=(partTypes.find(t=>t.id===id)?.label||'Mobile Parts')+' Models';document.getElementById('products').scrollIntoView({behavior:'smooth',block:'start'});}
-function handlePartCardClick(p){const type=activeCategoryForFilters==='parts'?partTypes.find(t=>t.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')).toLowerCase().includes(k))):null;if(type){openPartType(type.id);return;}openProduct(p);}
+function handlePartCardClick(p){openProduct(p);}
 function render(cat='all'){
  const productSection=document.querySelector('.section');
  if(productSection) productSection.style.display=(homeMode && cat==='all')?'none':'block';
