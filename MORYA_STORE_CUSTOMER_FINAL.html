@@ -517,6 +517,8 @@ async function loadLiveProducts(){
     (data||[]).forEach(p=>{
       const categoryKey=String(p.category||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
       let k=map[categoryKey]||null;
+      if(!k && categoryKey.startsWith('mobile_parts_')) k='parts';
+      if(!k && categoryKey.startsWith('mobile_accessories_')) k='accessories';
       if(!k && /(mobile|phone|smartphone|iphone|handset)/.test(categoryKey)) k='mobile';
       const n=String(p.name||'').toLowerCase();
       // Never allow a product named as a cover/skin/part/accessory to appear under another category.
