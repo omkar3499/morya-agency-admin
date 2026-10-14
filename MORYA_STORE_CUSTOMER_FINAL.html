@@ -323,7 +323,14 @@ function render(cat='all'){
  if(cat!=='all') list=list.filter(p=>productCategory(p)===cat);
  if(cat==='accessories'&&activeAccessoryType!=='all'){
    const type=accessoryTypes.find(t=>t.id===activeAccessoryType);
-   if(type) list=list.filter(p=>type.keys.length ? type.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)) : !accessoryTypes.some(t=>t.id!=='other'&&t.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)));
+   if(type) list=list.filter(p=>{
+     const name=String(p[0]||'').toLowerCase();
+     const desc=String(p[3]||'').toLowerCase();
+     const category=String(p[6]||'').toLowerCase();
+     const text=name+' '+desc+' '+category;
+     if(type.keys.length) return type.keys.some(k=>text.includes(k));
+     return !accessoryTypes.some(t=>t.id!=='other'&&t.keys.some(k=>text.includes(k)));
+   });
  }
  if(cat==='parts'&&activePartType!=='all'){
    const type=partTypes.find(t=>t.id===activePartType);
