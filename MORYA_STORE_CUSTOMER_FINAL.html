@@ -297,7 +297,7 @@ function render(cat='all'){
  if(cat!=='all') list=list.filter(p=>productCategory(p)===cat);
  if(cat==='parts'&&activePartType!=='all'){
    const type=partTypes.find(t=>t.id===activePartType);
-   if(type) list=list.filter(p=>type.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)));
+   if(type) list=list.filter(p=>!partTypes.some(t=>t.label.toLowerCase()===String(p[0]||'').trim().toLowerCase())&&type.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')+' '+String(p[6]||'')).toLowerCase().includes(k)));
  }
  renderPartTypes();
  document.getElementById('products').innerHTML=list.map((p,i)=>{
