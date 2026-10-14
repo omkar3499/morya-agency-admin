@@ -286,7 +286,8 @@ function renderPartTypes(){
  el.style.display=activeCategoryForFilters==='parts'?'flex':'none';
  el.innerHTML=partTypes.map(t=>'<button type="button" onclick="openPartType(this.dataset.type)" data-type="'+t.id+'" style="display:flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid '+(activePartType===t.id?'#d7b45d':'#373737')+';border-radius:10px;background:'+(activePartType===t.id?'#4a3b1d':'#191919')+';color:#f4efe6;font-weight:700;cursor:pointer">'+t.icon+' '+t.label+'</button>').join('');
 }
-function openPartType(id){activePartType=id;render('parts');}
+function openPartType(id){activePartType=id;render('parts');document.getElementById('title').textContent=(partTypes.find(t=>t.id===id)?.label||'Mobile Parts')+' Models';document.getElementById('products').scrollIntoView({behavior:'smooth',block:'start'});}
+function handlePartCardClick(p){const type=activeCategoryForFilters==='parts'?partTypes.find(t=>t.keys.some(k=>(String(p[0]||'')+' '+String(p[3]||'')).toLowerCase().includes(k))):null;if(type){openPartType(type.id);return;}openProduct(p);}
 function render(cat='all'){
  const productSection=document.querySelector('.section');
  if(productSection) productSection.style.display=(homeMode && cat==='all')?'none':'block';
@@ -305,7 +306,7 @@ function render(cat='all'){
      ? `<div class="colorRow">${colors.slice(0,6).map(c=>`<span class="colorDot" title="${String(c).replace(/"/g,'&quot;')}" style="background:${colorToCss(c)}"></span>`).join('')}<span class="colorName">${colors.length} color${colors.length>1?'s':''}</span></div>`
      : '';
    const safe=JSON.stringify(p);
-   return `<article class="card productBrowseCard" onclick='openProduct(${safe})' style="cursor:pointer">
+   return `<article class="card productBrowseCard" onclick='${activeCategoryForFilters==="parts"?"handlePartCardClick("+safe+")":"openProduct("+safe+")"}' style="cursor:pointer">
      <div class="pic">${/^https?:|^data:image/.test(String(p[2]||''))?`<img src="${p[2]}" alt="${String(p[0]).replace(/"/g,'&quot;')}">`:`<div style="font-size:80px">${p[2]}</div>`}</div>
      <div class="info">
        <div class="name">${p[0]}</div>
@@ -315,7 +316,7 @@ function render(cat='all'){
        <div style="margin-top:12px;font-size:13px;color:#666">Tap to view product details →</div>
      </div>
    </article>`;
- }).join('');
+ }).join('') || (cat==='parts'&&activePartType!=='all'?'<div style="grid-column:1/-1;padding:22px;border:1px dashed #665432;border-radius:12px;color:#e8d7ad;text-align:center">या प्रकारची मॉडेल्स अजून Customer Store मध्ये जोडलेली नाहीत. त्या प्रकारची उत्पादने जोडल्यावर येथे दिसतील.</div>':'<div style="padding:20px;color:#aaa">Products not available.</div>');
 }
 function openCategory(cat){
  homeMode=false;
