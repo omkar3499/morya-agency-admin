@@ -87,6 +87,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <div class="premium-menu-grid">
   <button class="premium-menu-card blue" onclick="openAdminTab('productsTab')"><span class="pm-icon">📦</span><span><b>Products</b><small><strong id="productCount">0</strong> Products</small></span><em>→</em></button>
   <button class="premium-menu-card green" onclick="openAdminTab('ordersTab')"><span class="pm-icon">🛒</span><span><b>Orders</b><small><strong id="orderCount">0</strong> Orders</small></span><em>→</em></button>
+  <button class="premium-menu-card" style="background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff" onclick="openAdminTab('salesTab');loadSaleProducts()"><span class="pm-icon">💳</span><span><b>New Sale</b><small>Shop counter billing</small></span><em>→</em></button>
   <button class="premium-menu-card pink" onclick="openAdminTab('customersTab')"><span class="pm-icon">👥</span><span><b>Customers</b><small>Customer profiles</small></span><em>→</em></button>
   <button class="premium-menu-card purple" onclick="openAdminTab('reportsTab')"><span class="pm-icon">📊</span><span><b>Reports</b><small>Sales • Stock • Profit</small></span><em>→</em></button>
 </div>
@@ -134,6 +135,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <div class="tabs workspace-tabs">
 <button class="light active" data-tab="productsTab">📦 Products</button>
 <button class="light" data-tab="ordersTab">🛒 Orders</button>
+<button class="light" data-tab="salesTab">💳 Sale</button>
 <button class="light" data-tab="customersTab">👥 Customers</button>
 <button class="light" data-tab="reportsTab">📊 Reports</button>
 <button class="light" data-tab="adsTab">📢 Advertisements</button>
@@ -276,6 +278,20 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <div id="orders">Loading...</div>
 </section>
 
+<section id="salesTab" class="tab card hidden">
+<h2>💳 New Sale / दुकानातील विक्री</h2>
+<p class="small">Product चा rate थेट shared products table मधून घेतला जातो. विक्री सेव्ह केल्यावर त्याच stock मध्ये कपात होईल, त्यामुळे Customer App मध्येही updated stock दिसेल.</p>
+<div class="card" style="background:#fafafa">
+<label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select>
+<div class="row"><div><label>Available Stock</label><input id="saleStock" readonly placeholder="Product निवडा"></div><div><label>Customer App Rate (₹)</label><input id="salePrice" readonly placeholder="Auto rate"></div></div>
+<div class="row"><div><label>Quantity</label><input id="saleQty" type="number" min="1" step="1" value="1"></div><div><label>Total Amount (₹)</label><input id="saleTotal" readonly value="0"></div></div>
+<div class="row"><div><label>Customer Name (optional)</label><input id="saleCustomer" placeholder="ग्राहकाचे नाव"></div><div><label>Mobile (optional)</label><input id="saleMobile" inputmode="numeric" placeholder="मोबाईल नंबर"></div></div>
+<div class="row"><div><label>Payment Mode</label><select id="salePayment"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option><option value="Other">Other</option></select></div><div><label>Payment Status</label><select id="salePaymentStatus"><option value="paid">Paid</option><option value="pending">Pending</option></select></div></div>
+<div id="salePreview" class="msg">Product निवडा. विक्री दर database मधील rate प्रमाणे आपोआप येईल.</div>
+<div class="actions"><button class="green" id="completeSaleBtn" onclick="completeStoreSale()">✅ Complete Sale</button><button class="light" onclick="loadSaleProducts()">↻ Refresh Products</button></div><div id="saleMsg"></div>
+</div>
+<h3>Recent Counter Sales</h3><button class="primary" onclick="loadCounterSales()">Refresh Sales</button><div id="counterSalesList">Sales लोड करण्यासाठी Refresh करा.</div>
+</section>
 <section id="customersTab" class="tab card hidden">
 <h2>👥 Customer Profiles</h2><p class="small">ग्राहक माहिती विद्यमान Orders मधून तयार होते; नवीन database table लागत नाही.</p>
 <button class="primary" onclick="loadCustomers()">Refresh Customers</button><div id="customersList">Loading...</div>
@@ -582,6 +598,65 @@ async function deleteProduct(id){
   const r=await db.from('products').delete().eq('id',id);if(r.error)throw new Error('Product delete failed: '+r.error.message);
   await loadProducts();
  }catch(e){alert('❌ Delete failed: '+e.message+'\nकाही related records आधी delete झाले असू शकतात; Supabase table permissions तपासा.')}
+}
+
+let saleProducts=[];
+function updateSalePreview(){
+ const p=saleProducts.find(x=>String(x.id)===$('saleProduct')?.value);
+ const qty=Number($('saleQty')?.value||0);
+ if(!p){$('saleStock').value='';$('salePrice').value='';$('saleTotal').value='0';$('salePreview').textContent='Product निवडा. विक्री दर database मधील rate प्रमाणे आपोआप येईल.';return;}
+ const price=Number(p.price||0),stock=Number(p.stock||0),total=price*qty;
+ $('saleStock').value=String(stock);$('salePrice').value=price.toFixed(2);$('saleTotal').value=total.toFixed(2);
+ $('salePreview').textContent=qty<1||!Number.isInteger(qty)?'Quantity ही 1 किंवा त्यापेक्षा जास्त पूर्ण संख्या असावी.':qty>stock?'❌ उपलब्ध स्टॉकपेक्षा जास्त quantity विकता येणार नाही.':`${p.name}: ${qty} × ₹${price.toFixed(2)} = ₹${total.toFixed(2)} | विक्रीनंतर stock: ${stock-qty}`;
+}
+async function loadSaleProducts(){
+ const sel=$('saleProduct');if(!sel)return;sel.innerHTML='<option value="">Loading products...</option>';
+ const r=await db.from('products').select('id,name,price,stock,available,category,brand,model').eq('available',true).order('name');
+ if(r.error){sel.innerHTML='<option value="">Products load failed</option>';$('saleMsg').className='msg';$('saleMsg').textContent='❌ '+r.error.message;return;}
+ saleProducts=r.data||[];
+ sel.innerHTML='<option value="">-- Product निवडा --</option>'+saleProducts.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ₹${Number(p.price||0).toFixed(2)} — Stock: ${Number(p.stock||0)}</option>`).join('');
+ sel.onchange=updateSalePreview;$('saleQty').oninput=updateSalePreview;updateSalePreview();await loadCounterSales();
+}
+async function completeStoreSale(){
+ const btn=$('completeSaleBtn');const p=saleProducts.find(x=>String(x.id)===$('saleProduct').value);
+ const qty=Number($('saleQty').value);
+ if(!p){alert('कृपया product निवडा.');return;}
+ if(!Number.isInteger(qty)||qty<1){alert('Quantity 1 किंवा त्यापेक्षा जास्त पूर्ण संख्या असावी.');return;}
+ const current=Number(p.stock||0),price=Number(p.price||0),total=qty*price;
+ if(qty>current){alert('❌ पुरेसा stock उपलब्ध नाही. Products refresh करा.');return;}
+ if(!Number.isFinite(price)||price<0){alert('Product rate चुकीचा आहे.');return;}
+ const customer=$('saleCustomer').value.trim()||'Walk-in Customer';
+ const mobile=$('saleMobile').value.trim();
+ const payment=$('salePayment').value,paymentStatus=$('salePaymentStatus').value;
+ if(!confirm(`MORYA AGENCY SALE\nProduct: ${p.name}\nRate: ₹${price.toFixed(2)}\nQuantity: ${qty}\nTotal: ₹${total.toFixed(2)}\nStock: ${current} → ${current-qty}\nPayment: ${payment}\n\nSale confirm करायची का?`))return;
+ btn.disabled=true;$('saleMsg').className='msg ok';$('saleMsg').textContent='⏳ Sale सेव्ह होत आहे...';
+ let stockChanged=false,orderId=null;
+ try{
+  // Compare-and-set stock update avoids selling against a stale stock value.
+  const stockResult=await db.from('products').update({stock:current-qty}).eq('id',p.id).eq('stock',current).select('id,stock');
+  if(stockResult.error)throw stockResult.error;
+  if(!stockResult.data||stockResult.data.length!==1)throw new Error('Stock बदलला आहे. कृपया products refresh करून पुन्हा प्रयत्न करा.');
+  stockChanged=true;
+  const orderPayload={customer_name:customer,customer_mobile:mobile||null,customer_address:null,address:null,total_amount:total,status:'Completed',payment_method:payment,payment_status:paymentStatus,instructions:'IN-STORE SALE | Product: '+p.name+' | Qty: '+qty+' | Rate: ₹'+price.toFixed(2)};
+  const orderResult=await db.from('orders').insert([orderPayload]).select('id').single();
+  if(orderResult.error)throw orderResult.error;orderId=orderResult.data.id;
+  const itemResult=await db.from('order_items').insert([{order_id:orderId,product_id:p.id,quantity:qty,price:price}]);
+  if(itemResult.error)throw new Error('Sale order item save failed: '+itemResult.error.message);
+  $('saleMsg').className='msg ok';$('saleMsg').textContent=`✅ Sale saved! Bill #${orderId}. Total ₹${total.toFixed(2)}. Stock ${current} → ${current-qty}. Customer App मध्ये database stock update झाला.`;
+  $('saleQty').value='1';await Promise.all([loadProducts(),loadOrders(),loadSaleProducts(),loadReports()]);
+ }catch(e){
+  let rollbackNote='';
+  if(orderId){try{const d=await db.from('order_items').delete().eq('order_id',orderId);const od=await db.from('orders').delete().eq('id',orderId);if(d.error||od.error)rollbackNote=' Order rollback पूर्ण झाला नाही; database तपासा.';}catch(_){rollbackNote=' Order rollback पूर्ण झाला नाही; database तपासा.';}}
+  if(stockChanged){try{const rb=await db.from('products').update({stock:current}).eq('id',p.id).eq('stock',current-qty);if(rb.error)rollbackNote+=' Stock rollback failed; stock manually verify करा.';}catch(_){rollbackNote+=' Stock rollback failed; stock manually verify करा.';}}
+  $('saleMsg').className='msg';$('saleMsg').textContent='❌ Sale पूर्ण झाली नाही: '+(e.message||e)+rollbackNote;await loadSaleProducts();
+ }finally{btn.disabled=false;}
+}
+async function loadCounterSales(){
+ const el=$('counterSalesList');if(!el)return;el.textContent='Loading...';
+ const r=await db.from('orders').select('id,customer_name,customer_mobile,total_amount,status,payment_method,payment_status,instructions,created_at').ilike('instructions','IN-STORE SALE%').order('created_at',{ascending:false}).limit(30);
+ if(r.error){el.innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return;}
+ const rows=r.data||[];
+ el.innerHTML=rows.length?rows.map(o=>`<div class="item"><b>Bill #${esc(o.id)}</b> — ₹${Number(o.total_amount||0).toFixed(2)}<p class="small">${new Date(o.created_at).toLocaleString()} • ${esc(o.customer_name||'Walk-in Customer')} • ${esc(o.payment_method||'-')} / ${esc(o.payment_status||'-')}</p><p class="small">${esc(o.instructions||'')}</p></div>`).join(''):'<p class="muted">अजून counter sale नोंद नाही.</p>';
 }
 
 let adjustmentProducts=[];
