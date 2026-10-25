@@ -144,6 +144,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <section id="productsTab" class="tab card">
 <h2>📦 Products</h2>
 <p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
+<label for="productSearch">🔎 Product Search</label><input id="productSearch" type="search" placeholder="नाव, ब्रँड, मॉडेल किंवा category शोधा..." oninput="renderAdminProducts()">
 
 <div class="wizard card" style="background:#fafafa">
   <div class="wizard-head">
@@ -282,7 +283,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <h2>💳 New Sale / दुकानातील विक्री</h2>
 <p class="small">Product चा rate थेट shared products table मधून घेतला जातो. विक्री सेव्ह केल्यावर त्याच stock मध्ये कपात होईल, त्यामुळे Customer App मध्येही updated stock दिसेल.</p>
 <div class="card" style="background:#fafafa">
-<label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select>
+<label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select>
 <div class="row"><div><label>Available Stock</label><input id="saleStock" readonly placeholder="Product निवडा"></div><div><label>Customer App Rate (₹)</label><input id="salePrice" readonly placeholder="Auto rate"></div></div>
 <div class="row"><div><label>Quantity</label><input id="saleQty" type="number" min="1" step="1" value="1"></div><div><label>Total Amount (₹)</label><input id="saleTotal" readonly value="0"></div></div>
 <div class="row"><div><label>Customer Name (optional)</label><input id="saleCustomer" placeholder="ग्राहकाचे नाव"></div><div><label>Mobile (optional)</label><input id="saleMobile" inputmode="numeric" placeholder="मोबाईल नंबर"></div></div>
@@ -358,7 +359,7 @@ function setWorkspaceTab(tab){
  if(tab==='reportsTab')loadReports();
  if(tab==='adsTab')loadAds();
  if(tab==='adjustTab'){loadAdjustmentProducts();renderAdjustmentHistory();}
- window.scrollTo({top:0,behavior:'smooth'});
+ // Keep viewport stable; don't auto-scroll when switching tabs.
 }
 function openAdminTab(tab){$('dashboardHome').classList.add('hidden');$('workspace').classList.remove('hidden');setWorkspaceTab(tab);window.scrollTo({top:0,behavior:'instant'});}
 function closeAdminTab(){document.querySelectorAll('#workspace .tab').forEach(x=>x.classList.add('hidden'));$('workspace').classList.add('hidden');$('dashboardHome').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}
@@ -569,15 +570,22 @@ async function saveProduct(){
  $('productMsg').className='msg ok';$('productMsg').textContent='✅ Product saved successfully.';$('saveBtn').disabled=false;clearProductForm();await loadProducts();
 }
 
+let adminProductRows=[], adminProductPrivate=new Map();
 async function loadProducts(){
  const [pr,priv]=await Promise.all([
    db.from('products').select('id,name,description,price,stock,image_url,available,category,brand,model,ram_storage,compatible_model,warranty,is_customizable').order('created_at',{ascending:false}),
    db.from('product_private').select('product_id,purchase_price,profit')
  ]);
  if(pr.error){$('products').innerHTML='<div class="msg">❌ '+esc(pr.error.message)+'</div>';return}
- const pm=new Map((priv.data||[]).map(x=>[x.product_id,x]));
- $('productCount').textContent=pr.data.length;const lowCounter=$('lowStock');if(lowCounter)lowCounter.textContent=pr.data.filter(x=>Number(x.stock)<=5).length;
- $('products').innerHTML=pr.data.length?'<div class="grid">'+pr.data.map(p=>{const x=pm.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name)}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">No products found.</p>';
+ adminProductRows=pr.data||[];adminProductPrivate=new Map((priv.data||[]).map(x=>[x.product_id,x]));
+ $('productCount').textContent=adminProductRows.length;const lowCounter=$('lowStock');if(lowCounter)lowCounter.textContent=adminProductRows.filter(x=>Number(x.stock)<=5).length;
+ renderAdminProducts();
+}
+function renderAdminProducts(){
+ const el=$('products');if(!el)return;
+ const q=($('productSearch')?.value||'').trim().toLowerCase();
+ const rows=adminProductRows.filter(p=>[p.name,p.brand,p.model,p.category,p.compatible_model,p.ram_storage].some(v=>String(v||'').toLowerCase().includes(q)));
+ el.innerHTML=rows.length?rows.map(p=>{const x=adminProductPrivate.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name)}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join(''):'<p class="muted">या शोधासाठी प्रॉडक्ट सापडला नाही.</p>';
 }
 async function editProduct(p){
  try{
@@ -614,8 +622,18 @@ async function loadSaleProducts(){
  const r=await db.from('products').select('id,name,price,stock,available,category,brand,model').eq('available',true).order('name');
  if(r.error){sel.innerHTML='<option value="">Products load failed</option>';$('saleMsg').className='msg';$('saleMsg').textContent='❌ '+r.error.message;return;}
  saleProducts=r.data||[];
- sel.innerHTML='<option value="">-- Product निवडा --</option>'+saleProducts.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ₹${Number(p.price||0).toFixed(2)} — Stock: ${Number(p.stock||0)}</option>`).join('');
- sel.onchange=updateSalePreview;$('saleQty').oninput=updateSalePreview;updateSalePreview();await loadCounterSales();
+ sel.onchange=updateSalePreview;$('saleQty').oninput=updateSalePreview;
+ renderSaleProductOptions();updateSalePreview();await loadCounterSales();
+}
+function renderSaleProductOptions(){
+ const sel=$('saleProduct');if(!sel)return;
+ const q=($('saleProductSearch')?.value||'').trim().toLowerCase();
+ const previous=sel.value;
+ const rows=saleProducts.filter(p=>[p.name,p.brand,p.model,p.category].some(v=>String(v||'').toLowerCase().includes(q)));
+ sel.innerHTML='<option value="">-- Product निवडा --</option>'+rows.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ₹${Number(p.price||0).toFixed(2)} — Stock: ${Number(p.stock||0)}</option>`).join('');
+ if(rows.some(p=>String(p.id)===previous))sel.value=previous;
+ if(!rows.length)sel.innerHTML='<option value="">या शोधासाठी प्रॉडक्ट नाही</option>';
+ updateSalePreview();
 }
 async function completeStoreSale(){
  const btn=$('completeSaleBtn');const p=saleProducts.find(x=>String(x.id)===$('saleProduct').value);
