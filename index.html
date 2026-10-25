@@ -284,7 +284,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <h2>💳 New Sale / दुकानातील विक्री</h2>
 <p class="small">Product चा rate थेट shared products table मधून घेतला जातो. विक्री सेव्ह केल्यावर त्याच stock मध्ये कपात होईल, त्यामुळे Customer App मध्येही updated stock दिसेल.</p>
 <div class="card" style="background:#fafafa">
-<label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><div id="saleSearchResults" style="display:grid;gap:8px;margin:8px 0"></div><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select>
+<label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><div id="saleSearchResults" style="display:grid;gap:8px;margin:8px 0"></div><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select><div id="saleHandsetFields" class="hidden"><label>Mobile Color निवडा</label><select id="saleColor"><option value="">Color निवडा</option></select><label>IMEI / Handset निवडा</label><select id="saleHandset"><option value="">आधी Color निवडा</option></select><div class="small" id="saleHandsetInfo"></div></div>
 <div class="row"><div><label>Available Stock</label><input id="saleStock" readonly placeholder="Product निवडा"></div><div><label>Customer App Rate (₹)</label><input id="salePrice" readonly placeholder="Auto rate"></div></div>
 <div class="row"><div><label>Quantity</label><input id="saleQty" type="number" min="1" step="1" value="1"></div><div><label>Total Amount (₹)</label><input id="saleTotal" readonly value="0"></div></div>
 <div class="row"><div><label>Customer Name (optional)</label><input id="saleCustomer" placeholder="ग्राहकाचे नाव"></div><div><label>Mobile (optional)</label><input id="saleMobile" inputmode="numeric" placeholder="मोबाईल नंबर"></div></div>
@@ -615,7 +615,7 @@ async function deleteProduct(id){
  }catch(e){alert('❌ Delete failed: '+e.message+'\nकाही related records आधी delete झाले असू शकतात; Supabase table permissions तपासा.')}
 }
 
-let saleProducts=[];
+let saleProducts=[];let saleHandsets=[];
 function updateSalePreview(){
  const p=saleProducts.find(x=>String(x.id)===$('saleProduct')?.value);
  const qty=Number($('saleQty')?.value||0);
@@ -629,8 +629,32 @@ async function loadSaleProducts(){
  const r=await db.from('products').select('id,name,price,stock,available,category,brand,model').eq('available',true).order('name');
  if(r.error){sel.innerHTML='<option value="">Products load failed</option>';$('saleMsg').className='msg';$('saleMsg').textContent='❌ '+r.error.message;return;}
  saleProducts=r.data||[];
- sel.onchange=updateSalePreview;$('saleQty').oninput=updateSalePreview;
+ sel.onchange=()=>{updateSalePreview();loadSaleHandsets()};$('saleQty').oninput=updateSalePreview;$('saleColor').onchange=renderSaleHandsetChoices;$('saleHandset').onchange=showSaleHandsetInfo;
  renderSaleProductOptions();updateSalePreview();await loadCounterSales();
+}
+async function loadSaleHandsets(){
+ const p=saleProducts.find(x=>String(x.id)===$('saleProduct')?.value);
+ const wrap=$('saleHandsetFields');if(!wrap)return;
+ saleHandsets=[];$('saleColor').innerHTML='<option value="">Loading colors...</option>';$('saleHandset').innerHTML='<option value="">Color निवडा</option>';$('saleHandsetInfo').textContent='';
+ if(!p||String(p.category||'').toLowerCase()!=='mobiles'){wrap.classList.add('hidden');return;}
+ wrap.classList.remove('hidden');
+ const r=await db.from('product_handsets').select('id,product_id,handset_no,color,imei_1,imei_2,serial_no,status').eq('product_id',p.id).eq('status','Available').order('handset_no');
+ if(r.error){$('saleColor').innerHTML='<option value="">Handset माहिती लोड झाली नाही</option>';$('saleHandsetInfo').textContent='Handset table error: '+r.error.message;return;}
+ saleHandsets=r.data||[];
+ const colors=[...new Set(saleHandsets.map(h=>h.color).filter(Boolean))];
+ $('saleColor').innerHTML='<option value="">Color निवडा</option>'+colors.map(color=>'<option value="'+esc(color)+'">'+esc(color)+' ('+saleHandsets.filter(h=>h.color===color).length+' available)</option>').join('');
+ if(!saleHandsets.length)$('saleHandsetInfo').textContent='या मोबाइलसाठी Available IMEI नोंदी सापडल्या नाहीत.';
+ renderSaleHandsetChoices();
+}
+function renderSaleHandsetChoices(){
+ const color=$('saleColor')?.value||'';
+ const rows=saleHandsets.filter(h=>h.color===color);
+ $('saleHandset').innerHTML='<option value="">IMEI निवडा</option>'+rows.map(h=>'<option value="'+esc(h.id)+'">IMEI 1: '+esc(h.imei_1||'—')+' | IMEI 2: '+esc(h.imei_2||'—')+'</option>').join('');
+ showSaleHandsetInfo();
+}
+function showSaleHandsetInfo(){
+ const h=saleHandsets.find(x=>String(x.id)===$('saleHandset')?.value);
+ $('saleHandsetInfo').textContent=h?'Serial: '+(h.serial_no||'—')+' | Handset #'+h.handset_no:'';
 }
 function renderSaleProductOptions(){
  const sel=$('saleProduct');if(!sel)return;
