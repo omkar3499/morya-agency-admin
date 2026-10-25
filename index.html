@@ -284,7 +284,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <h2>💳 New Sale / दुकानातील विक्री</h2>
 <p class="small">Product चा rate थेट shared products table मधून घेतला जातो. विक्री सेव्ह केल्यावर त्याच stock मध्ये कपात होईल, त्यामुळे Customer App मध्येही updated stock दिसेल.</p>
 <div class="card" style="background:#fafafa">
-<label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select>
+<label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><div id="saleSearchResults" style="display:grid;gap:8px;margin:8px 0"></div><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select>
 <div class="row"><div><label>Available Stock</label><input id="saleStock" readonly placeholder="Product निवडा"></div><div><label>Customer App Rate (₹)</label><input id="salePrice" readonly placeholder="Auto rate"></div></div>
 <div class="row"><div><label>Quantity</label><input id="saleQty" type="number" min="1" step="1" value="1"></div><div><label>Total Amount (₹)</label><input id="saleTotal" readonly value="0"></div></div>
 <div class="row"><div><label>Customer Name (optional)</label><input id="saleCustomer" placeholder="ग्राहकाचे नाव"></div><div><label>Mobile (optional)</label><input id="saleMobile" inputmode="numeric" placeholder="मोबाईल नंबर"></div></div>
@@ -634,14 +634,24 @@ async function loadSaleProducts(){
 }
 function renderSaleProductOptions(){
  const sel=$('saleProduct');if(!sel)return;
- const q=String($('saleProductSearch')?.value||'').trim().toLocaleLowerCase('en-IN');
+ const q=String($('saleProductSearch')?.value||'').trim();
  const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\\s+/g,' ').trim();
  const needle=norm(q), previous=sel.value;
  const rows=(saleProducts||[]).filter(p=>[p.name,p.brand,p.model,p.category].some(v=>!needle||norm(v).includes(needle)));
  sel.innerHTML='<option value="">-- Product निवडा ('+rows.length+' results) --</option>'+rows.map(p=>`<option value="${esc(p.id)}">${esc(p.name||'Unnamed product')} — ₹${Number(p.price||0).toFixed(2)} — Stock: ${Number(p.stock||0)}</option>`).join('');
  if(rows.some(p=>String(p.id)===previous))sel.value=previous;
- if(!rows.length)sel.innerHTML='<option value="">या शोधासाठी प्रॉडक्ट नाही — Refresh Products करा</option>';
+ const box=$('saleSearchResults');
+ if(box){
+   if(!needle){box.innerHTML='';}
+   else if(!rows.length){box.innerHTML='<div class="small">या नावाचा प्रॉडक्ट सापडला नाही. नाव/मॉडेल तपासा.</div>';}
+   else {box.innerHTML=rows.slice(0,20).map(p=>`<button type="button" class="btn" style="text-align:left;background:#fff;border:1px solid #ddd;padding:10px;border-radius:10px" onclick="chooseSaleSearchProduct('${String(p.id).replace(/'/g,"\\\\'")}')">📦 ${esc(p.name||'Unnamed product')} — ₹${Number(p.price||0).toFixed(2)} (Stock: ${Number(p.stock||0)})</button>`).join('');}
+ }
  updateSalePreview();
+}
+function chooseSaleSearchProduct(id){
+ const sel=$('saleProduct');if(!sel)return;
+ sel.value=String(id);updateSalePreview();
+ const box=$('saleSearchResults');if(box)box.innerHTML='';
 }
 async function completeStoreSale(){
  const btn=$('completeSaleBtn');const p=saleProducts.find(x=>String(x.id)===$('saleProduct').value);
