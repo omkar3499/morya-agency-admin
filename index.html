@@ -683,12 +683,17 @@ async function completeStoreSale(){
  if(!p){alert('कृपया product निवडा.');return;}
  if(!Number.isInteger(qty)||qty<1){alert('Quantity 1 किंवा त्यापेक्षा जास्त पूर्ण संख्या असावी.');return;}
  const current=Number(p.stock||0),price=Number(p.price||0),total=qty*price;
+ const isMobile=String(p.category||'').toLowerCase()==='mobiles';
+ const handset=isMobile?saleHandsets.find(h=>String(h.id)===$('saleHandset')?.value):null;
+ if(isMobile&&qty!==1){alert('Mobile IMEI निवडल्यावर एका वेळी एक handset विकता येईल.');return;}
+ if(isMobile&&!handset){alert('मोबाइलसाठी आधी Color आणि IMEI निवडा.');return;}
  if(qty>current){alert('❌ पुरेसा stock उपलब्ध नाही. Products refresh करा.');return;}
  if(!Number.isFinite(price)||price<0){alert('Product rate चुकीचा आहे.');return;}
  const customer=$('saleCustomer').value.trim()||'Walk-in Customer';
  const mobile=$('saleMobile').value.trim();
  const payment=$('salePayment').value,paymentStatus=$('salePaymentStatus').value;
- if(!confirm(`MORYA AGENCY SALE\nProduct: ${p.name}\nRate: ₹${price.toFixed(2)}\nQuantity: ${qty}\nTotal: ₹${total.toFixed(2)}\nStock: ${current} → ${current-qty}\nPayment: ${payment}\n\nSale confirm करायची का?`))return;
+ const handsetLine=handset?'\\nColor: '+handset.color+'\\nIMEI 1: '+handset.imei_1+'\\nIMEI 2: '+handset.imei_2:'';
+ if(!confirm(`MORYA AGENCY SALE\\nProduct: ${p.name}${handsetLine}\\nRate: ₹${price.toFixed(2)}\\nQuantity: ${qty}\\nTotal: ₹${total.toFixed(2)}\\nStock: ${current} → ${current-qty}\\nPayment: ${payment}\\n\\nSale confirm करायची का?`))return;
  btn.disabled=true;$('saleMsg').className='msg ok';$('saleMsg').textContent='⏳ Sale सेव्ह होत आहे...';
  let stockChanged=false,orderId=null;
  try{
@@ -697,13 +702,14 @@ async function completeStoreSale(){
   if(stockResult.error)throw stockResult.error;
   if(!stockResult.data||stockResult.data.length!==1)throw new Error('Stock बदलला आहे. कृपया products refresh करून पुन्हा प्रयत्न करा.');
   stockChanged=true;
-  const orderPayload={customer_name:customer,customer_mobile:mobile||null,customer_address:null,address:null,total_amount:total,status:'Completed',payment_method:payment,payment_status:paymentStatus,instructions:'IN-STORE SALE | Product: '+p.name+' | Qty: '+qty+' | Rate: ₹'+price.toFixed(2)};
+  const orderPayload={customer_name:customer,customer_mobile:mobile||null,customer_address:null,address:null,total_amount:total,status:'Completed',payment_method:payment,payment_status:paymentStatus,instructions:'IN-STORE SALE | Product: '+p.name+' | Qty: '+qty+' | Rate: ₹'+price.toFixed(2)+(handset?' | Color: '+handset.color+' | IMEI1: '+handset.imei_1+' | IMEI2: '+handset.imei_2+' | Serial: '+(handset.serial_no||''):'')};
   const orderResult=await db.from('orders').insert([orderPayload]).select('id').single();
   if(orderResult.error)throw orderResult.error;orderId=orderResult.data.id;
   const itemResult=await db.from('order_items').insert([{order_id:orderId,product_id:p.id,quantity:qty,price:price}]);
   if(itemResult.error)throw new Error('Sale order item save failed: '+itemResult.error.message);
-  $('saleMsg').className='msg ok';$('saleMsg').textContent=`✅ Sale saved! Bill #${orderId}. Total ₹${total.toFixed(2)}. Stock ${current} → ${current-qty}. Customer App मध्ये database stock update झाला.`;
-  $('saleQty').value='1';await Promise.all([loadProducts(),loadOrders(),loadSaleProducts(),loadReports()]);
+  if(handset){const hr=await db.from('product_handsets').update({status:'Sold'}).eq('id',handset.id).eq('status','Available').select('id');if(hr.error)throw new Error('Sale saved but IMEI status update failed: '+hr.error.message);if(!hr.data||hr.data.length!==1)throw new Error('Selected IMEI is no longer available. Please check sale records.');}
+  $('saleMsg').className='msg ok';$('saleMsg').textContent=`✅ Sale saved! Bill #${orderId}. Total ₹${total.toFixed(2)}. ${handset?'Color: '+handset.color+' | IMEI: '+handset.imei_1+' / '+handset.imei_2+'. ':''}Stock ${current} → ${current-qty}.`;
+  $('saleQty').value='1';$('saleProductSearch').value='';await Promise.all([loadProducts(),loadOrders(),loadSaleProducts(),loadReports()]);
  }catch(e){
   let rollbackNote='';
   if(orderId){try{const d=await db.from('order_items').delete().eq('order_id',orderId);const od=await db.from('orders').delete().eq('id',orderId);if(d.error||od.error)rollbackNote=' Order rollback पूर्ण झाला नाही; database तपासा.';}catch(_){rollbackNote=' Order rollback पूर्ण झाला नाही; database तपासा.';}}
