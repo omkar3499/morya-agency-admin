@@ -290,7 +290,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <div class="row"><div><label>Customer Name (optional)</label><input id="saleCustomer" placeholder="ग्राहकाचे नाव"></div><div><label>Mobile (optional)</label><input id="saleMobile" inputmode="numeric" placeholder="मोबाईल नंबर"></div></div>
 <div class="row"><div><label>Payment Mode</label><select id="salePayment"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option><option value="Other">Other</option></select></div><div><label>Payment Status</label><select id="salePaymentStatus"><option value="paid">Paid</option><option value="pending">Pending</option></select></div></div>
 <div id="salePreview" class="msg">Product निवडा. विक्री दर database मधील rate प्रमाणे आपोआप येईल.</div>
-<div class="actions"><button class="green" id="completeSaleBtn" onclick="completeStoreSale()">✅ Complete Sale</button><button class="light" onclick="loadSaleProducts()">↻ Refresh Products</button></div><div id="saleMsg"></div>
+<div class="actions"><button class="green" id="completeSaleBtn" onclick="completeStoreSale()">✅ Complete Sale</button><button class="light" onclick="loadSaleProducts()">↻ Refresh Products</button></div><div id="saleMsg"></div><div id="saleBillActions" class="actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button type="button" class="primary" id="printSaleBillBtn" onclick="printSaleBill()" disabled>🖨️ Print Bill</button><button type="button" class="green" id="whatsappSaleBillBtn" onclick="openSaleWhatsApp()" disabled>📲 WhatsApp Bill पाठवा</button><span class="small" id="saleBillHint">विक्री पूर्ण झाल्यावर बिलाचे पर्याय येथे सुरू होतील.</span></div>
 </div>
 <h3>Recent Counter Sales</h3><button class="primary" onclick="loadCounterSales()">Refresh Sales</button><div id="counterSalesList">Sales लोड करण्यासाठी Refresh करा.</div>
 </section>
@@ -683,6 +683,7 @@ let latestSaleBill=null;
 function makeSaleBillText(b){
  return ['MORYA AGENCY','SALE BILL','Bill No: '+b.id,'Date: '+new Date(b.date).toLocaleString('en-IN'),'Customer: '+b.customer,'Mobile: '+(b.mobile||'—'),'--------------------------------','Product: '+b.product,...(b.color?['Color: '+b.color,'IMEI 1: '+b.imei1,'IMEI 2: '+b.imei2]:[]),'Rate: ₹'+Number(b.price).toFixed(2),'Quantity: '+b.qty,'TOTAL: ₹'+Number(b.total).toFixed(2),'Payment: '+b.payment+' ('+b.paymentStatus+')','--------------------------------','Thank you for shopping with MORYA AGENCY!'].join('\\n');
 }
+function enableSaleBillActions(){const p=$('printSaleBillBtn'),w=$('whatsappSaleBillBtn'),h=$('saleBillHint');if(p)p.disabled=!latestSaleBill;if(w)w.disabled=!latestSaleBill;if(h)h.textContent=latestSaleBill?'बिल तयार आहे. Print करा किंवा WhatsApp वर पाठवा.':'विक्री पूर्ण झाल्यावर बिलाचे पर्याय येथे सुरू होतील.';}
 function openSaleWhatsApp(){
  if(!latestSaleBill){alert('Sale bill उपलब्ध नाही.');return;}
  const mobile=String(latestSaleBill.mobile||'').replace(/\\D/g,'');
@@ -729,7 +730,7 @@ async function completeStoreSale(){
   const itemResult=await db.from('order_items').insert([{order_id:orderId,product_id:p.id,quantity:qty,price:price}]);
   if(itemResult.error)throw new Error('Sale order item save failed: '+itemResult.error.message);
   if(handset){const hr=await db.from('product_handsets').update({status:'Sold'}).eq('id',handset.id).eq('status','Available').select('id');if(hr.error)throw new Error('Sale saved but IMEI status update failed: '+hr.error.message);if(!hr.data||hr.data.length!==1)throw new Error('Selected IMEI is no longer available. Please check sale records.');}
-  latestSaleBill={id:orderId,date:new Date().toISOString(),customer,mobile,product:p.name,color:handset?.color||'',imei1:handset?.imei_1||'',imei2:handset?.imei_2||'',price,qty,total,payment,paymentStatus};$('saleMsg').className='msg ok';$('saleMsg').innerHTML='✅ Sale saved! Bill #'+esc(orderId)+'. Total ₹'+total.toFixed(2)+'. <div class="actions" style="margin-top:10px"><button type="button" class="primary" onclick="printSaleBill()">🖨️ Print Bill</button><button type="button" class="green" onclick="openSaleWhatsApp()">📲 WhatsApp Bill पाठवा</button></div>';
+  latestSaleBill={id:orderId,date:new Date().toISOString(),customer,mobile,product:p.name,color:handset?.color||'',imei1:handset?.imei_1||'',imei2:handset?.imei_2||'',price,qty,total,payment,paymentStatus};enableSaleBillActions();$('saleMsg').className='msg ok';$('saleMsg').textContent='✅ Sale saved! Bill #'+esc(orderId)+'. Total ₹'+total.toFixed(2)+'. वापरासाठी खालील Print Bill किंवा WhatsApp Bill बटण वापरा.';
   $('saleQty').value='1';$('saleProductSearch').value='';await Promise.all([loadProducts(),loadOrders(),loadSaleProducts(),loadReports()]);
  }catch(e){
   let rollbackNote='';
