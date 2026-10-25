@@ -724,7 +724,7 @@ async function completeStoreSale(){
   if(stockResult.error)throw stockResult.error;
   if(!stockResult.data||stockResult.data.length!==1)throw new Error('Stock बदलला आहे. कृपया products refresh करून पुन्हा प्रयत्न करा.');
   stockChanged=true;
-  const orderPayload={customer_name:customer,customer_mobile:mobile||null,customer_address:null,address:null,total_amount:total,status:'Completed',payment_method:payment,payment_status:paymentStatus,instructions:'IN-STORE SALE | Product: '+p.name+' | Qty: '+qty+' | Rate: ₹'+price.toFixed(2)+(handset?' | Color: '+handset.color+' | IMEI1: '+handset.imei_1+' | IMEI2: '+handset.imei_2+' | Serial: '+(handset.serial_no||''):'')};
+  const orderPayload={customer_name:customer,customer_mobile:mobile||null,customer_address:null,address:null,total_amount:total,status:'Completed',instructions:'IN-STORE SALE | Product: '+p.name+' | Qty: '+qty+' | Rate: ₹'+price.toFixed(2)+' | Payment: '+payment+' ('+paymentStatus+')'+(handset?' | Color: '+handset.color+' | IMEI1: '+handset.imei_1+' | IMEI2: '+handset.imei_2+' | Serial: '+(handset.serial_no||''):'')};
   const orderResult=await db.from('orders').insert([orderPayload]).select('id').single();
   if(orderResult.error)throw orderResult.error;orderId=orderResult.data.id;
   const itemResult=await db.from('order_items').insert([{order_id:orderId,product_id:p.id,quantity:qty,price:price}]);
@@ -741,10 +741,10 @@ async function completeStoreSale(){
 }
 async function loadCounterSales(){
  const el=$('counterSalesList');if(!el)return;el.textContent='Loading...';
- const r=await db.from('orders').select('id,customer_name,customer_mobile,total_amount,status,payment_method,payment_status,instructions,created_at').ilike('instructions','IN-STORE SALE%').order('created_at',{ascending:false}).limit(30);
+ const r=await db.from('orders').select('id,customer_name,customer_mobile,total_amount,status,instructions,created_at').ilike('instructions','IN-STORE SALE%').order('created_at',{ascending:false}).limit(30);
  if(r.error){el.innerHTML='<div class="msg">❌ '+esc(r.error.message)+'</div>';return;}
  const rows=r.data||[];
- el.innerHTML=rows.length?rows.map(o=>`<div class="item"><b>Bill #${esc(o.id)}</b> — ₹${Number(o.total_amount||0).toFixed(2)}<p class="small">${new Date(o.created_at).toLocaleString()} • ${esc(o.customer_name||'Walk-in Customer')} • ${esc(o.payment_method||'-')} / ${esc(o.payment_status||'-')}</p><p class="small">${esc(o.instructions||'')}</p></div>`).join(''):'<p class="muted">अजून counter sale नोंद नाही.</p>';
+ el.innerHTML=rows.length?rows.map(o=>`<div class="item"><b>Bill #${esc(o.id)}</b> — ₹${Number(o.total_amount||0).toFixed(2)}<p class="small">${new Date(o.created_at).toLocaleString()} • ${esc(o.customer_name||'Walk-in Customer')} • ${esc((String(o.instructions||'').match(/Payment: ([^|]+)/)||[])[1]||'-')}</p><p class="small">${esc(o.instructions||'')}</p></div>`).join(''):'<p class="muted">अजून counter sale नोंद नाही.</p>';
 }
 
 let adjustmentProducts=[];
