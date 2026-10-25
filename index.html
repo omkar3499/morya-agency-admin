@@ -636,7 +636,9 @@ async function loadSaleHandsets(){
  const p=saleProducts.find(x=>String(x.id)===$('saleProduct')?.value);
  const wrap=$('saleHandsetFields');if(!wrap)return;
  saleHandsets=[];$('saleColor').innerHTML='<option value="">Loading colors...</option>';$('saleHandset').innerHTML='<option value="">Color निवडा</option>';$('saleHandsetInfo').textContent='';
- if(!p||String(p.category||'').toLowerCase()!=='mobiles'){wrap.classList.add('hidden');return;}
+ const cat=String(p?.category||'').toLocaleLowerCase('en-IN').replace(/[ _-]+/g,'');
+ const isHandset=!!p&&(/mobile|smartphone|featurephone|keypadphone|basicphone|handset/.test(cat)||cat==='mobiles');
+ if(!p||!isHandset){wrap.classList.add('hidden');return;}
  wrap.classList.remove('hidden');
  const r=await db.from('product_handsets').select('id,product_id,handset_no,color,imei_1,imei_2,serial_no,status').eq('product_id',p.id).eq('status','Available').order('handset_no');
  if(r.error){$('saleColor').innerHTML='<option value="">Handset माहिती लोड झाली नाही</option>';$('saleHandsetInfo').textContent='Handset table error: '+r.error.message;return;}
@@ -674,7 +676,7 @@ function renderSaleProductOptions(){
 }
 function chooseSaleSearchProduct(id){
  const sel=$('saleProduct');if(!sel)return;
- sel.value=String(id);updateSalePreview();
+ sel.value=String(id);sel.dispatchEvent(new Event('change'));updateSalePreview();
  const box=$('saleSearchResults');if(box)box.innerHTML='';
 }
 async function completeStoreSale(){
