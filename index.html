@@ -148,9 +148,13 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 
 <div class="card" style="border:2px solid #eab308;background:#fffdf2;margin:14px 0">
  <h3 style="margin-top:0">🎨 Bulk Mobile Skin Upload</h3>
- <p class="small">PDF मधील प्रत्येक पानाचा फोटो स्वतंत्र product बनेल. नाव एकदाच भरा; ते सर्व फोटोना लागू होईल. किंमत प्रत्येकासाठी ₹149. Stock चा पर्याय नाही.</p>
- <label for="bulkSkinProductName">📝 सर्व फोटोसाठी Product Name</label><input id="bulkSkinProductName" placeholder="उदा. Mahadev Mobile Skin">
- <label>💰 Price</label><input value="₹149" readonly>
+ <p class="small">PDF/Gallery मधील प्रत्येक फोटो स्वतंत्र product बनेल. नाव, खरेदी किंमत आणि विक्री किंमत एकदा भरा; ती सर्व फोटोना लागू होईल. Stock चा पर्याय नाही.</p>
+ <label for="bulkSkinProductName">📝 Product Name (सर्व फोटोसाठी)</label><input id="bulkSkinProductName" placeholder="उदा. Mahadev Mobile Skin">
+ <div class="row">
+  <div><label for="bulkSkinCategory">📂 Category</label><select id="bulkSkinCategory"><option value="mobile_back_skin" selected>📱 Mobile Back Skin</option></select></div>
+  <div><label for="bulkSkinPurchasePrice">💰 Purchase Price (खरेदी किंमत ₹)</label><input id="bulkSkinPurchasePrice" type="number" min="0" step="0.01" placeholder="खरेदी किंमत भरा"></div>
+  <div><label for="bulkSkinSalePrice">🏷️ Sale Price (विक्री किंमत ₹)</label><input id="bulkSkinSalePrice" type="number" min="0" step="0.01" value="149" placeholder="विक्री किंमत भरा"></div>
+ </div>
  <div class="row">
   <div><label for="bulkSkinImages">🖼️ Gallery मधील अनेक फोटो</label><input id="bulkSkinImages" type="file" accept="image/*" multiple onchange="addBulkSkinImages(this.files)"></div>
   <div><label for="bulkSkinPdfs">📄 Skin PDF (एका पानावर एक फोटो)</label><input id="bulkSkinPdfs" type="file" accept="application/pdf,.pdf" multiple onchange="addBulkSkinPdfs(this.files)"></div>
@@ -1008,7 +1012,7 @@ async function uploadBulkSkins(){
    if(result)result.textContent='Uploading '+(i+1)+' / '+bulkSkinItems.length+' Mobile Skin...';
    try{
     const compressed=await compressProductImage(it.file);
-    const product={name:sharedName,description:'Mobile Skin',price:149,stock:1,image_url:null,available:true,category:'mobile_back_skin',brand:null,model:null,ram_storage:null,compatible_model:null,warranty:null,is_customizable:false};
+    const product={name:sharedName,description:'Mobile Skin',price:salePrice,stock:1,image_url:null,available:true,category:category,brand:null,model:null,ram_storage:null,compatible_model:null,warranty:null,is_customizable:false};
     const ins=await db.from('products').insert(product).select('id').single();
     if(ins.error)throw new Error(ins.error.message);
     const pid=ins.data.id,path='products/'+pid+'/'+makeId()+'.jpg';
@@ -1017,7 +1021,7 @@ async function uploadBulkSkins(){
     const url=db.storage.from('product-images').getPublicUrl(path).data.publicUrl;
     const upd=await db.from('products').update({image_url:url}).eq('id',pid);
     if(upd.error)throw new Error('Image uploaded, product update failed: '+upd.error.message);
-    const priv=await db.from('product_private').upsert({product_id:pid,purchase_price:0,profit:149,imei_1:null,imei_2:null,serial_no:null,updated_at:new Date().toISOString()},{onConflict:'product_id'});
+    const priv=await db.from('product_private').upsert({product_id:pid,purchase_price:purchasePrice,profit:salePrice-purchasePrice,imei_1:null,imei_2:null,serial_no:null,updated_at:new Date().toISOString()},{onConflict:'product_id'});
     if(priv.error)throw new Error('Product saved; private data: '+priv.error.message);
     ok++;
    }catch(e){failed.push('फोटो '+(i+1)+': '+(e.message||String(e)));}
