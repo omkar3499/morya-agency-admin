@@ -1,18 +1,21 @@
--- MORYA AGENCY: Mobile Skin integration policies
--- Run only after confirming the correct Admin Auth user UUID.
--- Public customers can view in-stock active designs and create pending bookings.
--- Admin write policies are intentionally omitted until the owner's Auth UID is verified.
+-- MORYA AGENCY Mobile Skin Shop: safe customer-side policies
+-- These policies only affect the NEW skin_shop_* tables.
+-- Admin write/accept actions remain disabled until the admin Auth UID is verified.
+
+alter table public.skin_shop_bookings
+  add column if not exists quantity integer not null default 1
+  check (quantity = 1);
 
 drop policy if exists "skin shop customers view in-stock designs" on public.skin_shop_products;
 create policy "skin shop customers view in-stock designs"
-on public.skin_shop_products for select
-to anon, authenticated
+on public.skin_shop_products
+for select to anon, authenticated
 using (active = true and stock > 0);
 
 drop policy if exists "skin shop customers create pending booking" on public.skin_shop_bookings;
 create policy "skin shop customers create pending booking"
-on public.skin_shop_bookings for insert
-to anon, authenticated
+on public.skin_shop_bookings
+for insert to anon, authenticated
 with check (
   status = 'pending'
   and quantity = 1
@@ -24,5 +27,7 @@ with check (
   )
 );
 
--- Do NOT add public UPDATE policies. Admin actions need a verified Auth UID
--- and a secure policy/RPC that decrements stock atomically on acceptance.
+-- No public UPDATE/DELETE policies are created.
+-- Do not expose service_role keys in browser code.
+-- Next step: verify the owner's Supabase Auth UID, then add admin-only policies
+-- and an atomic server-side accept-booking function to decrement stock exactly once.
