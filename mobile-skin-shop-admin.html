@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MORYA AGENCY | MOBILE SKIN SHOP — Admin</title>
+<style>
+:root{--yellow:#ffd400;--ink:#171717;--muted:#666;--line:#e8e8e8;--bg:#f5f5f5}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--yellow);padding:18px 16px;box-shadow:0 2px 8px #0001}header h1{font-size:20px;margin:0 0 5px}header p{margin:0;font-size:13px}
+main{max-width:1000px;margin:auto;padding:16px}.notice{background:#fff8d5;border:1px solid #f0d85b;padding:12px;border-radius:12px;font-size:13px;line-height:1.5;margin-bottom:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.stat,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:14px}.stat b{display:block;font-size:24px;margin-top:5px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel h2{font-size:17px;margin:0 0 12px}label{font-size:13px;display:block;margin:10px 0 5px}input,button{font:inherit}input[type=text],input[type=number],input[type=file]{width:100%;padding:11px;border:1px solid #ccc;border-radius:9px;background:white}button{border:0;border-radius:9px;background:var(--ink);color:white;padding:11px 14px;font-weight:700;cursor:pointer}button.primary{background:var(--yellow);color:#111}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.item{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;display:flex;justify-content:space-between;gap:8px;align-items:center}.item small{display:block;color:var(--muted);margin-top:4px}.tag{font-size:11px;background:#eee;border-radius:20px;padding:5px 8px}.empty{color:var(--muted);font-size:13px;padding:14px 0}.wide{width:100%;margin-top:10px}.footer{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
+@media(max-width:650px){.layout{grid-template-columns:1fr}.stats{gap:7px}.stat{padding:10px}.stat b{font-size:20px}}
+</style>
+</head>
+<body>
+<header><h1>MORYA AGENCY</h1><p>MOBILE SKIN SHOP · स्वतंत्र स्टॉक व्यवस्थापन</p></header>
+<main>
+<div class="notice"><b>नवीन स्वतंत्र अॅपचा प्रारंभिक डेमो</b><br>हा पेज तुमच्या जुन्या Admin आणि Customer App च्या फाइल्सपासून वेगळा आहे. सध्या माहिती या ब्राउझरमध्येच साठते; ऑनलाइन ग्राहक स्टॉक, सुरक्षित लॉगिन आणि खऱ्या PDF मधून डिझाइन आयात करण्यासाठी डेटाबेस जोडणे बाकी आहे. त्यामुळे हा डेमो अजून लाइव्ह स्टॉकसाठी वापरू नका.</div>
+<section class="stats">
+<div class="stat">डिझाइन्स <b id="total">0</b></div><div class="stat">उपलब्ध स्टॉक <b id="stock">0</b></div><div class="stat">प्रलंबित बुकिंग <b id="pending">0</b></div>
+</section>
+<div class="layout">
+<section class="panel"><h2>➕ नवीन डिझाइन / स्टॉक जोडा</h2>
+<form id="addForm">
+<label>डिझाइनचे नाव / कोड</label><input id="name" type="text" placeholder="उदा. Skin 001" required>
+<div class="row"><div><label>स्टॉक संख्या</label><input id="qty" type="number" min="1" value="1" required></div><div><label>प्रति स्किन किंमत (₹)</label><input id="price" type="number" min="1" value="149" required></div></div>
+<button class="primary wide" type="submit">डिझाइन जोडा</button></form>
+<hr style="border:0;border-top:1px solid #eee;margin:18px 0">
+<h2>📄 PDF मधून डिझाइन्स</h2><label>PDF फाइल निवडा</label><input type="file" id="pdf" accept="application/pdf">
+<div id="pdfInfo" class="empty">PDF निवडल्यावर फाइलचे नाव दिसेल. स्वयंचलित पेज-इमेज आयात अद्याप जोडलेली नाही.</div>
+</section>
+<section class="panel"><h2>📦 डिझाइन स्टॉक</h2><div id="products" class="empty">अद्याप डिझाइन नाही.</div></section>
+<section class="panel" style="grid-column:1/-1"><h2>🧾 बुकिंग व्यवस्थापन (डेमो)</h2><div id="bookings" class="empty">अद्याप बुकिंग नाही.</div><div class="footer">डेमो तपासण्यासाठी एखाद्या डिझाइनवर “डेमो बुकिंग” करा. बुकिंग स्वीकारल्यावरच स्टॉक एकाने कमी होतो. ही चाचणी माहिती फक्त याच ब्राउझरमध्ये राहते.</div></section>
+</div>
+<div class="footer">सुरक्षा: या पेजमध्ये कोणतीही Supabase Secret Key ठेवलेली नाही. हा स्वतंत्र UI प्रोटोटाइप आहे; सार्वजनिक ग्राहक वेबसाइटशी जोडलेला नाही.</div>
+</main>
+<script>
+const KEY='morya_skin_admin_demo_v1';
+let state;try{state=JSON.parse(localStorage.getItem(KEY))||{products:[],bookings:[]}}catch(e){state={products:[],bookings:[]}}
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function render(){
+$('total').textContent=state.products.length;
+$('stock').textContent=state.products.reduce((s,p)=>s+p.stock,0);
+$('pending').textContent=state.bookings.filter(b=>b.status==='Pending').length;
+$('products').innerHTML=state.products.length?state.products.map(p=>'<div class="item"><div><b>'+esc(p.name)+'</b><small>₹'+p.price+' · स्टॉक: '+p.stock+'</small></div><div style="display:flex;gap:5px;flex-wrap:wrap"><button onclick="book('+p.id+')">डेमो बुकिंग</button><button onclick="addStock('+p.id+')">+ स्टॉक</button></div></div>').join(''):'<div class="empty">अद्याप डिझाइन नाही.</div>';
+$('bookings').innerHTML=state.bookings.length?state.bookings.map(b=>'<div class="item"><div><b>'+esc(b.productName)+'</b><small>'+b.date+' · '+b.status+'</small></div>'+(b.status==='Pending'?'<button class="primary" onclick="accept('+b.id+')">Accept</button>':'<span class="tag">पूर्ण</span>')+'</div>').join(''):'<div class="empty">अद्याप बुकिंग नाही.</div>';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('addForm').addEventListener('submit',e=>{e.preventDefault();state.products.push({id:Date.now(),name:$('name').value.trim(),stock:Number($('qty').value),price:Number($('price').value)});$('name').value='';$('qty').value=1;$('price').value=149;save()});
+window.book=id=>{const p=state.products.find(x=>x.id===id);if(!p||p.stock<1){alert('स्टॉक उपलब्ध नाही.');return}state.bookings.push({id:Date.now(),productId:id,productName:p.name,status:'Pending',date:new Date().toLocaleString('mr-IN')});save()};
+window.accept=id=>{const b=state.bookings.find(x=>x.id===id);if(!b||b.status!=='Pending')return;const p=state.products.find(x=>x.id===b.productId);if(!p||p.stock<1){alert('स्टॉक उपलब्ध नाही; बुकिंग स्वीकारता येणार नाही.');return}p.stock-=1;b.status='Accepted';save()};
+window.addStock=id=>{const p=state.products.find(x=>x.id===id);if(!p)return;const n=Number(prompt('किती स्टॉक जोडायचा?', '1'));if(Number.isInteger(n)&&n>0){p.stock+=n;save()}};
+$('pdf').addEventListener('change',e=>{$('pdfInfo').textContent=e.target.files[0]?'निवडलेली फाइल: '+e.target.files[0].name+' — या डेमोमध्ये PDF पेजेस अजून आपोआप डिझाइन्समध्ये बदलत नाहीत.':'PDF निवडा.'});
+render();
+</script>
+</body></html>
