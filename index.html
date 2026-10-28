@@ -284,7 +284,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <h2>💳 New Sale / दुकानातील विक्री</h2>
 <p class="small">Product चा rate थेट shared products table मधून घेतला जातो. विक्री सेव्ह केल्यावर त्याच stock मध्ये कपात होईल, त्यामुळे Customer App मध्येही updated stock दिसेल.</p>
 <div class="card" style="background:#fafafa">
-<label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><div id="saleSearchResults" style="display:grid;gap:8px;margin:8px 0"></div><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select><div id="saleHandsetFields" class="hidden"><label>Mobile Color निवडा</label><select id="saleColor"><option value="">Color निवडा</option></select><label>IMEI / Handset निवडा</label><select id="saleHandset"><option value="">आधी Color निवडा</option></select><div class="small" id="saleHandsetInfo"></div></div>
+<label for="saleCategoryFilter">📂 प्रॉडक्ट प्रकार वेगळा निवडा</label><select id="saleCategoryFilter" onchange="renderSaleProductOptions()"><option value="all">सर्व प्रॉडक्ट्स</option><option value="skin">🎨 Mobile Skin</option><option value="cover">📱 Mobile Cover</option><option value="glass">🛡️ Tempered Glass</option><option value="parts">🔧 Mobile Parts</option><option value="accessories">🔌 Chargers & Accessories</option><option value="other">इतर प्रॉडक्ट्स</option></select><label for="saleProductSearch">🔎 Product Search</label><input id="saleProductSearch" type="search" placeholder="प्रॉडक्ट नाव, ब्रँड किंवा मॉडेल शोधा..." oninput="renderSaleProductOptions()"><div id="saleSearchResults" style="display:grid;gap:8px;margin:8px 0"></div><label>Product निवडा</label><select id="saleProduct"><option value="">Products लोड होत आहेत...</option></select><div id="saleHandsetFields" class="hidden"><label>Mobile Color निवडा</label><select id="saleColor"><option value="">Color निवडा</option></select><label>IMEI / Handset निवडा</label><select id="saleHandset"><option value="">आधी Color निवडा</option></select><div class="small" id="saleHandsetInfo"></div></div>
 <div class="row"><div><label>Available Stock</label><input id="saleStock" readonly placeholder="Product निवडा"></div><div><label>Customer App Rate (₹)</label><input id="salePrice" readonly placeholder="Auto rate"></div></div>
 <div class="row"><div><label>Quantity</label><input id="saleQty" type="number" min="1" step="1" value="1"></div><div><label>Total Amount (₹)</label><input id="saleTotal" readonly value="0"></div></div>
 <div class="row"><div><label>Customer Name (optional)</label><input id="saleCustomer" placeholder="ग्राहकाचे नाव"></div><div><label>Mobile (optional)</label><input id="saleMobile" inputmode="numeric" placeholder="मोबाईल नंबर"></div></div>
@@ -658,24 +658,34 @@ function showSaleHandsetInfo(){
  const h=saleHandsets.find(x=>String(x.id)===$('saleHandset')?.value);
  $('saleHandsetInfo').textContent=h?'Serial: '+(h.serial_no||'—')+' | Handset #'+h.handset_no:'';
 }
+function getSaleProductGroup(p){
+ const info=[p.category,p.name,p.brand,p.model].map(v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN')).join(' ');
+ if(/mobile.?skin|skin|back.?skin/.test(info))return 'skin';
+ if(/tempered|screen.?guard|guard glass|glass protector/.test(info))return 'glass';
+ if(/cover|back.?case|mobile.?case|case for/.test(info))return 'cover';
+ if(/charger|cable|earphone|headphone|bluetooth|speaker|tempered|adapter|power.?bank|accessor/.test(info))return 'accessories';
+ if(/spare.?part|charging.?board|cc.?board|display|battery|touch|flex|camera|speaker.?part|network.?cable|back.?panel|connector/.test(info))return 'parts';
+ return 'other';
+}
 function renderSaleProductOptions(){
  const sel=$('saleProduct');if(!sel)return;
  const q=String($('saleProductSearch')?.value||'').trim();
+ const group=String($('saleCategoryFilter')?.value||'all');
  const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\\s+/g,' ').trim();
  const needle=norm(q), previous=sel.value;
- const rows=(saleProducts||[]).filter(p=>[p.name,p.brand,p.model,p.category].some(v=>!needle||norm(v).includes(needle)));
+ const rows=(saleProducts||[]).filter(p=>(group==='all'||getSaleProductGroup(p)===group)&&[p.name,p.brand,p.model,p.category].some(v=>!needle||norm(v).includes(needle)));
  sel.innerHTML='<option value="">-- Product निवडा ('+rows.length+' results) --</option>'+rows.map(p=>`<option value="${esc(p.id)}">${esc(p.name||'Unnamed product')} — ₹${Number(p.price||0).toFixed(2)} — Stock: ${Number(p.stock||0)}</option>`).join('');
  if(rows.some(p=>String(p.id)===previous))sel.value=previous;
  const box=$('saleSearchResults');
  if(box){
-   if(!rows.length){box.innerHTML='<div class="small">या नावाचा प्रॉडक्ट सापडला नाही. नाव/मॉडेल तपासा.</div>';}
+   if(!rows.length){box.innerHTML='<div class="small">या प्रकारात प्रॉडक्ट सापडला नाही. प्रॉडक्टची Category तपासा किंवा सर्व प्रॉडक्ट्स निवडा.</div>';}
    else {
      box.style.gridTemplateColumns='repeat(auto-fit,minmax(135px,1fr))';
      box.innerHTML=rows.slice(0,60).map(p=>{
-       const isSkin=/skin/i.test(String(p.category||'')+' '+String(p.name||''));
+       const isSkin=getSaleProductGroup(p)==='skin';
        const selected=String(p.id)===String(sel.value);
        const img=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name||'Product')+'" style="width:100%;height:118px;object-fit:contain;background:#fff;border-radius:10px;border:1px solid #eee;margin-bottom:8px" loading="lazy">':'<div style="height:118px;display:grid;place-items:center;background:#f7f7f7;border-radius:10px;margin-bottom:8px;font-size:38px">📦</div>';
-       return '<button type="button" style="min-width:0;text-align:left;background:'+(selected?'#fff7d6':'#fff')+';border:1px solid '+(selected?'#b48b2c':'#ddd')+';padding:9px;border-radius:12px;white-space:normal" onclick="chooseSaleSearchProduct(\''+String(p.id).replace(/'/g,"\\\\'")+'\')">'+img+'<b style="display:block;font-size:13px;line-height:1.3">'+(isSkin?'🎨 ':'')+esc(p.name||'Unnamed product')+'</b><span style="display:block;margin-top:6px;font-weight:800;color:#8a6410">₹'+Number(p.price||0).toFixed(2)+'</span><small style="display:block;margin-top:4px;color:#667085">Stock: '+Number(p.stock||0)+'</small></button>';
+       return '<button type="button" style="min-width:0;text-align:left;background:'+(selected?'#fff7d6':'#fff')+';border:1px solid '+(selected?'#b48b2c':'#ddd')+';padding:9px;border-radius:12px;white-space:normal" onclick="chooseSaleSearchProduct(\\''+String(p.id).replace(/'/g,"\\\\'")+'\\')">'+img+'<b style="display:block;font-size:13px;line-height:1.3">'+(isSkin?'🎨 ':'')+esc(p.name||'Unnamed product')+'</b><span style="display:block;margin-top:6px;font-weight:800;color:#8a6410">₹'+Number(p.price||0).toFixed(2)+'</span><small style="display:block;margin-top:4px;color:#667085">Stock: '+Number(p.stock||0)+'</small></button>';
      }).join('');
    }
  }
