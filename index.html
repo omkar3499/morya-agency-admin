@@ -146,6 +146,22 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
 
 
+<div class="card" style="border:2px solid #eab308;background:#fffdf2;margin:14px 0">
+ <h3 style="margin-top:0">🎨 Bulk Mobile Skin Upload</h3>
+ <p class="small">Gallery मधून अनेक फोटो किंवा प्रत्येक पानावर एक skin असलेली PDF निवडा. प्रत्येक skin स्वतंत्र product म्हणून ₹149 किमतीत आणि स्वतंत्र stock 1 सह add होईल. Upload करण्याआधी नाव व stock बदलू शकता.</p>
+ <div class="row">
+  <div><label for="bulkSkinImages">🖼️ Gallery मधील अनेक फोटो</label><input id="bulkSkinImages" type="file" accept="image/*" multiple onchange="addBulkSkinImages(this.files)"></div>
+  <div><label for="bulkSkinPdfs">📄 Skin PDF (एका पानावर एक फोटो)</label><input id="bulkSkinPdfs" type="file" accept="application/pdf,.pdf" multiple onchange="addBulkSkinPdfs(this.files)"></div>
+ </div>
+ <div id="bulkSkinStatus" class="small" style="margin:8px 0">अजून फोटो निवडलेले नाहीत.</div>
+ <div id="bulkSkinList" style="display:grid;gap:8px"></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+  <button type="button" class="primary" id="bulkSkinUploadBtn" onclick="uploadBulkSkins()">⬆️ Add All Mobile Skins</button>
+  <button type="button" class="light" onclick="clearBulkSkins()">Clear List</button>
+ </div>
+ <div id="bulkSkinResult" class="small" style="margin-top:10px"></div>
+</div>
+
 <div class="wizard card" style="background:#fafafa">
   <div class="wizard-head">
     <div><h3 id="formTitle" style="margin:0">➕ Add Product</h3><div id="stepTitle" class="small">Step 1 of 5</div></div>
@@ -920,6 +936,98 @@ function openAdminTab(tabId){
   const top=document.querySelector('.workspace-top');
   if(top) window.scrollTo({top: top.getBoundingClientRect().top + window.pageYOffset - 8, behavior:'instant'});
 }
+
+// Bulk Mobile Skin uploader: each image/PDF page becomes its own product.
+let bulkSkinItems=[];
+let bulkSkinBusy=false;
+function safeSkinBase(name){return String(name||'Mobile Skin').replace(/\\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/\\s+/g,' ').trim()||'Mobile Skin'}
+function renderBulkSkinList(){
+ const box=document.getElementById('bulkSkinList'),status=document.getElementById('bulkSkinStatus');
+ if(!box||!status)return;
+ status.textContent=bulkSkinItems.length?bulkSkinItems.length+' skin फोटो तयार आहेत. प्रत्येकाचा stock वेगळा ठेवा.':'अजून फोटो निवडलेले नाहीत.';
+ box.innerHTML=bulkSkinItems.map((it,i)=>'<div style="display:grid;grid-template-columns:64px minmax(0,1fr) 86px;gap:8px;align-items:center;border:1px solid #e5e7eb;border-radius:10px;padding:8px;background:white"><img src="'+it.preview+'" alt="" style="width:64px;height:64px;object-fit:contain;background:#f8fafc;border-radius:6px"><div><label style="margin:0 0 4px">Skin '+(i+1)+' नाव</label><input data-skin-name="'+i+'" value="'+esc(it.name)+'" style="width:100%;min-width:0" aria-label="Skin name '+(i+1)+'"><small class="small">'+esc(it.source||'Gallery')+'</small></div><div><label style="margin:0 0 4px">Stock</label><input data-skin-stock="'+i+'" type="number" min="0" step="1" value="'+Number(it.stock||1)+'" style="width:100%" aria-label="Stock '+(i+1)+'"></div></div>').join('');
+}
+function addBulkSkinImages(files){
+ const list=[...(files||[])].filter(f=>f.type.startsWith('image/'));
+ list.forEach(f=>bulkSkinItems.push({file:f,name:safeSkinBase(f.name),stock:1,source:'Gallery',preview:URL.createObjectURL(f)}));
+ renderBulkSkinList();const input=document.getElementById('bulkSkinImages');if(input)input.value='';
+}
+async function loadPdfJs(){
+ if(window.pdfjsLib)return window.pdfjsLib;
+ await new Promise((resolve,reject)=>{
+  const script=document.createElement('script');script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';script.onload=resolve;script.onerror=()=>reject(new Error('PDF reader load झाला नाही. Internet तपासा किंवा PDF pages चे JPG फोटो निवडा.'));
+  document.head.appendChild(script);
+ });
+ if(!window.pdfjsLib)throw new Error('PDF reader उपलब्ध नाही.');
+ window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ return window.pdfjsLib;
+}
+async function addBulkSkinPdfs(files){
+ const pdfs=[...(files||[])].filter(f=>f.type==='application/pdf'||/\\.pdf$/i.test(f.name));
+ const status=document.getElementById('bulkSkinStatus'),result=document.getElementById('bulkSkinResult');
+ try{
+  if(status)status.textContent='PDF pages वाचत आहे...';
+  const pdfjs=await loadPdfJs();
+  for(const file of pdfs){
+   const data=await file.arrayBuffer(),doc=await pdfjs.getDocument({data}).promise;
+   for(let n=1;n<=doc.numPages;n++){
+    const page=await doc.getPage(n),viewport=page.getViewport({scale:1.6}),canvas=document.createElement('canvas');
+    canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+    const ctx=canvas.getContext('2d');await page.render({canvasContext:ctx,viewport}).promise;
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PDF page image बनवता आला नाही.')),'image/jpeg',0.88));
+    const base=safeSkinBase(file.name)+' page '+n;
+    const imageFile=new File([blob],base+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
+    bulkSkinItems.push({file:imageFile,name:base,stock:1,source:file.name+' — Page '+n,preview:URL.createObjectURL(blob)});
+    page.cleanup();canvas.width=0;canvas.height=0;
+   }
+   doc.destroy();
+  }
+  renderBulkSkinList();if(result)result.textContent='PDF मधील प्रत्येक पान वेगळ्या skin फोटोमध्ये बदलले.';
+ }catch(e){if(status)status.textContent='❌ '+(e.message||String(e));}
+ finally{const input=document.getElementById('bulkSkinPdfs');if(input)input.value='';}
+}
+function clearBulkSkins(){
+ bulkSkinItems.forEach(it=>{try{URL.revokeObjectURL(it.preview)}catch(e){}});
+ bulkSkinItems=[];renderBulkSkinList();
+ const r=document.getElementById('bulkSkinResult');if(r)r.textContent='';
+}
+async function uploadBulkSkins(){
+ if(bulkSkinBusy)return;
+ if(!bulkSkinItems.length){alert('आधी Gallery फोटो किंवा PDF निवडा.');return}
+ const names=[...document.querySelectorAll('[data-skin-name]')],stocks=[...document.querySelectorAll('[data-skin-stock]')];
+ bulkSkinItems=bulkSkinItems.map((it,i)=>({...it,name:(names[i]?.value||'').trim(),stock:Number(stocks[i]?.value)}));
+ if(bulkSkinItems.some(it=>!it.name)){alert('प्रत्येक Mobile Skin चे नाव भरा.');return}
+ if(bulkSkinItems.some(it=>!Number.isInteger(it.stock)||it.stock<0)){alert('प्रत्येक stock 0 किंवा त्यापेक्षा मोठा पूर्णांक असावा.');return}
+ if(!confirm(bulkSkinItems.length+' Mobile Skin products ₹149 किमतीत add करायचे? प्रत्येकाचा stock स्वतंत्र असेल.'))return;
+ bulkSkinBusy=true;const btn=document.getElementById('bulkSkinUploadBtn'),result=document.getElementById('bulkSkinResult');if(btn)btn.disabled=true;
+ let ok=0,failed=[];
+ try{
+  for(let i=0;i<bulkSkinItems.length;i++){
+   const it=bulkSkinItems[i];
+   if(result)result.textContent='Uploading '+(i+1)+' / '+bulkSkinItems.length+': '+it.name;
+   try{
+    const compressed=await compressProductImage(it.file);
+    const product={name:it.name,description:'Mobile Skin',price:149,stock:it.stock,image_url:null,available:true,category:'mobile_back_skin',brand:null,model:null,ram_storage:null,compatible_model:null,warranty:null,is_customizable:false};
+    const ins=await db.from('products').insert(product).select('id').single();
+    if(ins.error)throw new Error(ins.error.message);
+    const pid=ins.data.id,path='products/'+pid+'/'+makeId()+'.jpg';
+    const up=await db.storage.from('product-images').upload(path,compressed,{upsert:false,contentType:'image/jpeg'});
+    if(up.error)throw new Error('Product created, image upload failed: '+up.error.message);
+    const url=db.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+    const upd=await db.from('products').update({image_url:url}).eq('id',pid);
+    if(upd.error)throw new Error('Image uploaded, product update failed: '+upd.error.message);
+    const priv=await db.from('product_private').upsert({product_id:pid,purchase_price:0,profit:149,imei_1:null,imei_2:null,serial_no:null,updated_at:new Date().toISOString()},{onConflict:'product_id'});
+    if(priv.error)throw new Error('Product saved; private data: '+priv.error.message);
+    ok++;
+   }catch(e){failed.push(it.name+': '+(e.message||String(e)));}
+  }
+  if(result)result.textContent='✅ '+ok+' / '+bulkSkinItems.length+' skins add झाल्या.'+(failed.length?' त्रुटी: '+failed.join(' | '):'');
+  if(ok&&typeof loadProducts==='function'){try{await loadProducts()}catch(e){}}
+  if(ok===bulkSkinItems.length)clearBulkSkins();
+ }catch(e){if(result)result.textContent='❌ '+(e.message||String(e));}
+ finally{bulkSkinBusy=false;if(btn)btn.disabled=false;}
+}
+
 function openProductWizard(){
   openAdminTab('productsTab');
   setTimeout(()=>{
