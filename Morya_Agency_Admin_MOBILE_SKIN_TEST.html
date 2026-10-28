@@ -322,24 +322,33 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
    skinAdminRefresh();
  };
  window.skinAdminRefresh=async function(){
-   const box=$s('skinAdminList');box.textContent='लोड होत आहे…';
+   const box=$s('skinAdminList'), bookings=$s('skinAdminBookings');
+   box.textContent='लोड होत आहे…'; bookings.textContent='बुकिंग लोड होत आहे…';
    try{
     const {data,error}=await db.from('skin_shop_products').select('id,design_name,image_url,price,stock,active,created_at').order('created_at',{ascending:false});
     if(error)throw error;
-    if(!data.length){box.textContent='अजून Mobile Skin स्टॉक नाही.';return;}
-    box.innerHTML=data.map(p=>'<div class="skin-item"><b>'+safeSkinText(p.design_name)+'</b> — ₹'+Number(p.price).toFixed(0)+' | स्टॉक: '+p.stock+' <button type="button" onclick="skinAdminRestock(\''+p.id+'\')">+1 स्टॉक</button></div>').join('');
-   }catch(e){box.textContent='डेटाबेस परवानगी/कनेक्शन त्रुटी: '+(e.message||e);$s('skinAdminMsg').textContent='Admin-only RLS policy जोडल्याशिवाय stock बदलता येणार नाही.';}
+    box.innerHTML=data.length?data.map(p=>'<div class="skin-item"><b>'+safeSkinText(p.design_name)+'</b> — ₹'+Number(p.price).toFixed(0)+' | स्टॉक: '+p.stock+' <button type="button" onclick="skinAdminRestock(\\''+p.id+'\\')">स्टॉक वाढवा</button></div>').join(''):'अजून Mobile Skin स्टॉक नाही.';
+    const q=await db.from('skin_shop_bookings').select('id,product_id,customer_name,customer_phone,status,created_at,skin_shop_products(design_name)').order('created_at',{ascending:false}).limit(100);
+    if(q.error)throw q.error;
+    bookings.innerHTML=q.data.length?q.data.map(b=>'<div class="skin-item"><b>'+safeSkinText(b.customer_name)+'</b> ('+safeSkinText(b.customer_phone)+')<br>'+safeSkinText(b.skin_shop_products?.design_name||'Mobile Skin')+' — '+safeSkinText(b.status)+'<br>'+(b.status==='pending'?'<button type="button" onclick="skinAdminReview(\\''+b.id+'\\',\\'accepted\\')">Accept</button> <button type="button" onclick="skinAdminReview(\\''+b.id+'\\',\\'rejected\\')">Reject</button>':'')+'</div>').join(''):'बुकिंग नाही.';
+   }catch(e){box.textContent='डेटाबेस परवानगी/कनेक्शन त्रुटी: '+(e.message||e);bookings.textContent='Admin login/RLS policy तपासा.';$s('skinAdminMsg').textContent='Supabase मध्ये secure admin setup SQL चालवणे आवश्यक आहे.';}
  };
  window.skinAdminAdd=async function(){
    const name=$s('skinAdminName').value.trim(),stock=Number($s('skinAdminStock').value),price=Number($s('skinAdminPrice').value);
    if(!name||!Number.isInteger(stock)||stock<0||!Number.isFinite(price)||price<0){alert('नाव, योग्य किंमत आणि स्टॉक भरा.');return;}
-   try{const {error}=await db.from('skin_shop_products').insert({design_name:name,image_url:$s('skinAdminImage').value.trim()||null,price,stock,active:true});if(error)throw error;$s('skinAdminMsg').textContent='स्टॉक जोडला.';skinAdminRefresh();}
-   catch(e){$s('skinAdminMsg').textContent='स्टॉक जोडता आला नाही: '+(e.message||e)+' — Admin-only RLS policy आवश्यक आहे.';}
+   try{const {error}=await db.from('skin_shop_products').insert({design_name:name,image_url:$s('skinAdminImage').value.trim()||null,price,stock,active:stock>0});if(error)throw error;$s('skinAdminMsg').textContent='स्टॉक जोडला.';skinAdminRefresh();}
+   catch(e){$s('skinAdminMsg').textContent='स्टॉक जोडता आला नाही: '+(e.message||e)+' — आधी secure admin SQL setup करा.';}
  };
  window.skinAdminRestock=async function(id){
   const raw=prompt('किती नग वाढवायचे?', '1');if(raw===null)return;const n=Number(raw);if(!Number.isInteger(n)||n<1){alert('1 किंवा अधिक पूर्ण संख्या द्या.');return;}
   try{const {data,error}=await db.from('skin_shop_products').select('stock').eq('id',id).single();if(error)throw error;const upd=await db.from('skin_shop_products').update({stock:Number(data.stock)+n,active:true}).eq('id',id);if(upd.error)throw upd.error;skinAdminRefresh();}
-  catch(e){alert('स्टॉक बदलता आला नाही: '+(e.message||e)+'; Admin-only RLS policy तपासा.');}
+  catch(e){alert('स्टॉक बदलता आला नाही: '+(e.message||e)+'; secure admin SQL setup तपासा.');}
+ };
+ window.skinAdminReview=async function(id,decision){
+  const label=decision==='accepted'?'बुकिंग स्वीकारायची? स्टॉक 1 ने कमी होईल.':'बुकिंग नाकारायची?';
+  if(!confirm(label))return;
+  try{const {data,error}=await db.rpc('skin_shop_review_booking',{p_booking_id:id,p_decision:decision});if(error)throw error;alert(decision==='accepted'?'बुकिंग स्वीकारली; स्टॉक कमी केला.':'बुकिंग नाकारली.');skinAdminRefresh();}
+  catch(e){alert('बुकिंग बदलता आली नाही: '+(e.message||e)+' — secure admin SQL setup व Admin UID तपासा.');}
  };
  window.safeSkinText=function(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));};
 })();
