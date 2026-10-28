@@ -601,7 +601,7 @@ async function loadProducts(){
 function renderAdminProducts(){
  const el=$('products');if(!el)return;
  const q=String($('productSearch')?.value||'').trim().toLocaleLowerCase('en-IN');
- const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\\s+/g,' ').trim();
+ const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\s+/g,' ').trim();
  const needle=norm(q);
  const rows=(adminProductRows||[]).filter(p=>{
    const hay=[p.name,p.description,p.brand,p.model,p.category,p.compatible_model,p.ram_storage].map(norm);
@@ -687,7 +687,7 @@ function renderSaleProductOptions(){
  const sel=$('saleProduct');if(!sel)return;
  const q=String($('saleProductSearch')?.value||'').trim();
  const group=String($('saleCategoryFilter')?.value||'all');
- const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\\s+/g,' ').trim();
+ const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\s+/g,' ').trim();
  const needle=norm(q), previous=sel.value;
  const rows=(saleProducts||[]).filter(p=>(group==='all'||getSaleProductGroup(p)===group)&&[p.name,p.brand,p.model,p.category].some(v=>!needle||norm(v).includes(needle)));
  sel.innerHTML='<option value="">-- Product निवडा ('+rows.length+' results) --</option>'+rows.map(p=>`<option value="${esc(p.id)}">${esc(p.name||'Unnamed product')} — ₹${Number(p.price||0).toFixed(2)} — Stock: ${Number(p.stock||0)}</option>`).join('');
@@ -940,7 +940,7 @@ function openAdminTab(tabId){
 // Bulk Mobile Skin uploader: each image/PDF page becomes its own product.
 let bulkSkinItems=[];
 let bulkSkinBusy=false;
-function safeSkinBase(name){return String(name||'Mobile Skin').replace(/\\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/\\s+/g,' ').trim()||'Mobile Skin'}
+function safeSkinBase(name){return String(name||'Mobile Skin').replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim()||'Mobile Skin'}
 function renderBulkSkinList(){
  const box=document.getElementById('bulkSkinList'),status=document.getElementById('bulkSkinStatus');
  if(!box||!status)return;
@@ -963,7 +963,7 @@ async function loadPdfJs(){
  return window.pdfjsLib;
 }
 async function addBulkSkinPdfs(files){
- const pdfs=[...(files||[])].filter(f=>f.type==='application/pdf'||/\\.pdf$/i.test(f.name));
+ const pdfs=[...(files||[])].filter(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name));
  const status=document.getElementById('bulkSkinStatus'),result=document.getElementById('bulkSkinResult');
  try{
   if(status)status.textContent='PDF pages वाचत आहे...';
