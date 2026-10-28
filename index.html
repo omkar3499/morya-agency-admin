@@ -1003,7 +1003,13 @@ async function uploadBulkSkins(){
  if(!bulkSkinItems.length){alert('आधी Gallery फोटो किंवा PDF निवडा.');return}
  const sharedName=(document.getElementById('bulkSkinProductName')?.value||'').trim();
  if(!sharedName){alert('सर्व Mobile Skin साठी Product Name भरा.');return}
- if(!confirm(bulkSkinItems.length+' Mobile Skin फोटो "'+sharedName+'" नावाने ₹149 किमतीत add करायचे? Stock चा पर्याय दाखवला जाणार नाही.'))return;
+ const category=document.getElementById('bulkSkinCategory')?.value||'mobile_back_skin';
+ const purchaseRaw=document.getElementById('bulkSkinPurchasePrice')?.value;
+ const saleRaw=document.getElementById('bulkSkinSalePrice')?.value;
+ const purchasePrice=Number(purchaseRaw),salePrice=Number(saleRaw);
+ if(purchaseRaw===''||purchaseRaw==null||!Number.isFinite(purchasePrice)||purchasePrice<0){alert('Purchase Price योग्य भरा.');return}
+ if(saleRaw===''||saleRaw==null||!Number.isFinite(salePrice)||salePrice<0){alert('Sale Price योग्य भरा.');return}
+ if(!confirm(bulkSkinItems.length+' Mobile Skin फोटो "'+sharedName+'" नावाने खरेदी ₹'+purchasePrice+' आणि विक्री ₹'+salePrice+' किमतीत add करायचे?'))return;
  bulkSkinBusy=true;const btn=document.getElementById('bulkSkinUploadBtn'),result=document.getElementById('bulkSkinResult');if(btn)btn.disabled=true;
  let ok=0,failed=[];
  try{
