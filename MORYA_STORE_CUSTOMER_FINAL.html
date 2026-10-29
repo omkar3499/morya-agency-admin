@@ -773,12 +773,15 @@ renderW();
 </style>
 
 <script id="morya-live-fireworks">
-(function(){
+(async function(){
  try{
+  var settings={enabled:true,theme:'diwali',intensity:'normal'};
+  try{var saved=JSON.parse(localStorage.getItem('moryaAnimationSettingsV1')||'null');if(saved)settings=Object.assign(settings,saved);}catch(e){}
+  // Read the shop-wide animation preferences from Supabase so every customer's device gets the same settings.
+  try{var response=await fetch('https://glmdkfwxedxyhhmdetzh.supabase.co/rest/v1/morya_app_settings?id=eq.1&select=enabled,theme,intensity,updated_at',{headers:{'apikey':'sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz','Authorization':'Bearer sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz'}});if(response.ok){var rows=await response.json();if(rows&&rows[0])settings=Object.assign(settings,{enabled:rows[0].enabled!==false,theme:rows[0].theme||'diwali',intensity:rows[0].intensity||'normal'});}}catch(cloudError){console.log('Using local animation defaults; cloud settings unavailable',cloudError);}
   var canvas=document.getElementById('morya-fireworks-canvas'); if(!canvas)return;
   var ctx=canvas.getContext('2d'); if(!ctx)return;
-  var w=0,h=0,particles=[],last=0,settings={enabled:true,theme:'diwali',intensity:'normal'};
-  try{var saved=JSON.parse(localStorage.getItem('moryaAnimationSettingsV1')||'null');if(saved)settings=Object.assign(settings,saved);}catch(e){}
+  var w=0,h=0,particles=[],last=0;
   if(settings.enabled===false){canvas.style.display='none';var bg=document.getElementById('morya-ambient-bg');if(bg)bg.style.display='none';return;}
   var themeHues={diwali:[42,190,285,330,10],daily:[42,48,55,180],birthday:[320,190,42,275],love:[330,345,300],ganpati:[20,35,8,48],khandoba:[35,25,45,10]};
   var hues=themeHues[settings.theme]||themeHues.diwali;
