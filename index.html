@@ -134,6 +134,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <div class="workspace-top"><button class="light" onclick="closeAdminTab()">← Dashboard</button><div id="workspaceTitle">Admin</div></div>
 <div class="tabs workspace-tabs">
 <button class="light active" data-tab="productsTab">📦 Products</button>
+<button class="light" data-tab="mobileSkinTab">🎨 Mobile Skin Stock</button>
 <button class="light" data-tab="ordersTab">🛒 Orders</button>
 <button class="light" data-tab="salesTab">💳 Sale</button>
 <button class="light" data-tab="customersTab">👥 Customers</button>
@@ -141,11 +142,9 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <button class="light" data-tab="adsTab">📢 Advertisements</button>
 <button class="light" data-tab="adjustTab">⚖️ Product Adjust</button>
 </div>
-<section id="productsTab" class="tab card">
-<h2>📦 Products</h2>
-<p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
-
-
+<section id="mobileSkinTab" class="tab card hidden">
+<h2>🎨 Mobile Skin Stock</h2>
+<p class="small">हा विभाग Product Add पासून स्वतंत्र आहे. Gallery किंवा PDF मधील प्रत्येक फोटो स्वतंत्र Mobile Skin product म्हणून जोडला जाईल.</p>
 <div class="card" style="border:2px solid #eab308;background:#fffdf2;margin:14px 0">
  <h3 style="margin-top:0">🎨 Bulk Mobile Skin Upload</h3>
  <p class="small">PDF/Gallery मधील प्रत्येक फोटो स्वतंत्र product बनेल. नाव, खरेदी किंमत आणि विक्री किंमत एकदा भरा; ती सर्व फोटोना लागू होईल. Stock चा पर्याय नाही.</p>
@@ -167,6 +166,12 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
  </div>
  <div id="bulkSkinResult" class="small" style="margin-top:10px"></div>
 </div>
+
+</section>
+<section id="productsTab" class="tab card">
+<h2>📦 Products</h2>
+<p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
+
 
 <div class="wizard card" style="background:#fafafa">
   <div class="wizard-head">
