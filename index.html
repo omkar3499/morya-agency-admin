@@ -396,7 +396,7 @@ function setWorkspaceTab(tab){
  document.querySelectorAll('.workspace-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));
  document.querySelectorAll('#workspace .tab').forEach(x=>x.classList.add('hidden'));
  const el=$(tab); if(el)el.classList.remove('hidden');
- $('workspaceTitle').textContent=tab==='productsTab'?'Products':tab==='ordersTab'?'Customer Orders':tab==='customersTab'?'Customers':tab==='registeredCustomersTab'?'Registered Customers':tab==='reportsTab'?'Reports':tab==='adsTab'?'Advertisements':'Product Adjust';
+ $('workspaceTitle').textContent=tab==='productsTab'?'Products':tab==='addProductTab'?'Add Product':tab==='mobileSkinTab'?'Mobile Skin Stock':tab==='ordersTab'?'Customer Orders':tab==='salesTab'?'Sale':tab==='customersTab'?'Customers':tab==='registeredCustomersTab'?'Registered Customers':tab==='reportsTab'?'Reports':tab==='adsTab'?'Advertisements':tab==='adjustTab'?'Product Adjust':'Admin';
  if(tab==='productsTab')loadProducts();
  if(tab==='ordersTab')loadOrders();
  if(tab==='customersTab')loadCustomers();
