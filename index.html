@@ -1198,5 +1198,45 @@ function openSettingsSummaryTarget(which){
  else {openAdminTab('ordersTab'); if(typeof loadOrders==='function')loadOrders();}
 }
 </script>
+<script>
+/* User-added product categories (stored on this admin device) */
+(function(){
+ const select=document.getElementById('pCategory');
+ if(!select||document.getElementById('addCustomCategoryBtn'))return;
+ const host=select.parentElement;
+ const btn=document.createElement('button');
+ btn.type='button';btn.id='addCustomCategoryBtn';btn.className='light';
+ btn.style.cssText='width:100%;margin-top:8px;border:1px dashed #b18a30';
+ btn.textContent='＋ Add New Category';
+ host.appendChild(btn);
+ const key='moryaCustomProductCategoriesV1';
+ function read(){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+ function addOption(label,save){
+  label=String(label||'').trim();if(!label)return;
+  const found=Array.from(select.options).find(o=>o.value.toLowerCase()===label.toLowerCase()||o.textContent.trim().toLowerCase()===label.toLowerCase());
+  if(found){select.value=found.value;return}
+  const opt=document.createElement('option');opt.value=label;opt.textContent='🗂️ '+label;opt.dataset.customCategory='true';select.appendChild(opt);select.value=label;
+  if(save){const list=read();if(!list.some(x=>String(x).toLowerCase()===label.toLowerCase())){list.push(label);localStorage.setItem(key,JSON.stringify(list))}}
+ }
+ read().forEach(x=>addOption(x,false));
+ const originalLoadProducts=window.loadProducts;
+ if(typeof originalLoadProducts==='function'&&!originalLoadProducts.__customCategoryWrapped){
+  const wrappedLoad=async function(){const result=await originalLoadProducts.apply(this,arguments);try{(window.adminProductRows||[]).forEach(p=>{const cat=String(p.category||'').trim();if(cat&&!Array.from(select.options).some(o=>o.value===cat))addOption(cat,false)});}catch(e){}return result};
+  wrappedLoad.__customCategoryWrapped=true;window.loadProducts=wrappedLoad;
+ }
+ btn.addEventListener('click',()=>{
+  const label=prompt('Navin category che naav taka:');
+  if(label===null)return;
+  if(!label.trim()){alert('Category che naav taka.');return}
+  addOption(label,true);
+  if(typeof updateCategoryFields==='function')updateCategoryFields();
+ });
+ const originalClear=window.clearProductForm;
+ if(typeof originalClear==='function'&&!originalClear.__customCategoryWrapped){
+  const wrapped=function(){const result=originalClear.apply(this,arguments);read().forEach(x=>addOption(x,false));return result};
+  wrapped.__customCategoryWrapped=true;window.clearProductForm=wrapped;
+ }
+})();
+</script>
 </body>
 </html>
