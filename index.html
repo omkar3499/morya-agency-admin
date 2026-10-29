@@ -407,14 +407,17 @@ document.addEventListener('DOMContentLoaded',function(){
  if(!form||!btn||!msg)return;
  form.addEventListener('submit',async function(e){
   e.preventDefault();e.stopImmediatePropagation();btn.disabled=true;msg.className='msg ok';msg.textContent='Login checking...';
+  let timer;
   try{
-   if(!window.supabase||!window.supabase.createClient)throw new Error('Login service load nahi zali. Page refresh kara / internet tapasa.');
+   if(!navigator.onLine)throw new Error('Internet connection nahi. Mobile data/Wi-Fi tapasa.');
+   if(!window.supabase||!window.supabase.createClient)throw new Error('Login service load nahi zali. Browser refresh kara.');
    const client=window.supabase.createClient('https://glmdkfwxedxyhhmdetzh.supabase.co','sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:window.localStorage,storageKey:'morya-agency-admin-auth-v1'}});
-   const result=await client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});
+   const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('12 second madhye Supabase response nahi. Internet/VPN tapasa; punha try kara.')),12000)});
+   const result=await Promise.race([client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value}),timeout]);
    if(result.error)throw result.error;
    msg.textContent='Login successful. Dashboard reload hot aahe...';location.reload();
   }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err&&err.message?err.message:'Unknown error');}
-  finally{btn.disabled=false;}
+  finally{clearTimeout(timer);btn.disabled=false;}
  },true);
 });
 </script>
