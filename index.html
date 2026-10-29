@@ -790,7 +790,7 @@ function printSaleBill(){
  if(!w){alert('Print साठी popup allow करा.');return;}
  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Bill '+esc(b.id)+'</title><style>body{font:16px Arial,sans-serif;padding:20px;color:#111}h2{text-align:center;margin:0}pre{white-space:pre-wrap;font:14px monospace;line-height:1.5}button{padding:10px 18px}@media print{button{display:none}body{padding:0}}</style></head><body><h2>MORYA AGENCY</h2><p style="text-align:center">SALE BILL</p><pre>'+esc(txt)+'</pre><button onclick="window.print()">🖨️ Print Bill</button>\n</body></html>'); w.document.close(); }
 
-</script>
+
 <script id="morya-animation-settings-functions">
 (function(){
  const KEY='moryaAnimationSettingsV1',defaults={enabled:true,theme:'diwali',intensity:'normal'};
@@ -803,13 +803,8 @@ function printSaleBill(){
  document.addEventListener('DOMContentLoaded',function(){window.loadMoryaAnimationSettings();['moryaAnimEnabled','moryaAnimTheme','moryaAnimIntensity'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>window.saveMoryaAnimationSettings());});});
  const oldOpen=window.openSettingsCategory;window.openSettingsCategory=function(id){if(typeof oldOpen==='function')oldOpen(id);if(id==='settingsAnimation')window.loadMoryaAnimationSettings();};
 })();
-</script>
 
 
-
-</body></html>');
- w.document.close();
-}
 
 async function completeStoreSale(){
  const btn=$('completeSaleBtn');const p=saleProducts.find(x=>String(x.id)===$('saleProduct').value);
@@ -1039,6 +1034,20 @@ async function deleteAd(id){if(!confirm('हा advertisement delete करा�
  catch(e){console.warn('Session restore failed:',e.message||e);$('loginMsg').className='msg';$('loginMsg').textContent='Session restore failed. Please login again.';}
 })();
 db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){ $('dashboard').classList.add('hidden');$('loginBox').classList.remove('hidden');$('logoutBtn').classList.add('hidden');if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(false);}else if(session){if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);}});
+</script>
+
+<script id="morya-animation-settings-functions">
+(function(){
+ const KEY='moryaAnimationSettingsV1',defaults={enabled:true,theme:'diwali',intensity:'normal'};
+ let saving=false,queued=false;
+ function localRead(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return {...defaults}}}
+ async function remoteRead(){try{const r=await db.from('morya_app_settings').select('enabled,theme,intensity,updated_at').eq('id',1).maybeSingle();if(r.error)throw r.error;if(!r.data)return null;return {enabled:r.data.enabled!==false,theme:r.data.theme||'diwali',intensity:r.data.intensity||'normal',updatedAt:r.data.updated_at};}catch(e){console.warn(e);return null;}}
+ window.loadMoryaAnimationSettings=async function(){const msg=document.getElementById('moryaAnimSaveMsg'),s=await remoteRead()||localRead();const en=document.getElementById('moryaAnimEnabled'),th=document.getElementById('moryaAnimTheme'),it=document.getElementById('moryaAnimIntensity');if(en)en.checked=s.enabled!==false;if(th)th.value=s.theme||'diwali';if(it)it.value=s.intensity||'normal';if(msg)msg.textContent=s.updatedAt?'🟢 Cloud settings loaded':'⚪ Settings ready — option बदला की auto-save होईल.';};
+ window.saveMoryaAnimationSettings=async function(){if(saving){queued=true;return;}saving=true;const s={enabled:!!document.getElementById('moryaAnimEnabled')?.checked,theme:document.getElementById('moryaAnimTheme')?.value||'diwali',intensity:document.getElementById('moryaAnimIntensity')?.value||'normal',updatedAt:new Date().toISOString()};const msg=document.getElementById('moryaAnimSaveMsg'),btn=document.querySelector('#settingsAnimation button[onclick="saveMoryaAnimationSettings()"]');if(btn){btn.disabled=true;btn.textContent='⏳ Saving...';}if(msg)msg.textContent='⏳ Saving to Cloud...';try{const r=await db.from('morya_app_settings').upsert({id:1,enabled:s.enabled,theme:s.theme,intensity:s.intensity,updated_at:s.updatedAt},{onConflict:'id'}).select('id,enabled,theme,intensity,updated_at').single();if(r.error)throw r.error;localStorage.setItem(KEY,JSON.stringify(s));if(msg)msg.textContent='🟢 SAVED · Customer App मध्ये 3–5 सेकंदांत अपडेट होईल.';}catch(e){console.error(e);if(msg)msg.textContent='🔴 SAVE FAILED · '+(e.message||'Supabase SQL policy तपासा.');}finally{saving=false;if(btn){btn.disabled=false;btn.textContent='💾 Save Now';}if(queued){queued=false;window.saveMoryaAnimationSettings();}}};
+ window.previewMoryaAnimationSettings=function(){window.saveMoryaAnimationSettings();};
+ document.addEventListener('DOMContentLoaded',function(){window.loadMoryaAnimationSettings();['moryaAnimEnabled','moryaAnimTheme','moryaAnimIntensity'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>window.saveMoryaAnimationSettings());});});
+ const oldOpen=window.openSettingsCategory;window.openSettingsCategory=function(id){if(typeof oldOpen==='function')oldOpen(id);if(id==='settingsAnimation')window.loadMoryaAnimationSettings();};
+})();
 </script>
 
 <script>
