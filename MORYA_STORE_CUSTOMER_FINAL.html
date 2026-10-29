@@ -800,7 +800,7 @@ renderW();
 
 
 <style id="morya-welcome-overlay-style">
-#moryaWelcome{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;z-index:2147483647;background:transparent!important;color:#fff;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Arial,sans-serif;overflow:hidden;opacity:1;transition:opacity .45s;pointer-events:none}
+#moryaWelcome{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100vh!important;min-height:100dvh!important;margin:0!important;z-index:2147483647!important;background:transparent!important;color:#fff;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Arial,sans-serif;overflow:hidden;opacity:1;transition:opacity .45s;pointer-events:none}
 #moryaWelcome.night{background:transparent!important}
 #moryaWelcome .mw-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;width:100%;height:100%;pointer-events:none}
 #moryaWelcome .mw-celestial{width:clamp(125px,34vw,190px);height:clamp(125px,34vw,190px);position:relative;flex-shrink:0}
@@ -836,6 +836,8 @@ renderW();
 <script id="morya-welcome-overlay-script">
 (function(){
  const overlay=document.getElementById('moryaWelcome');if(!overlay)return;
+ /* Move overlay directly under body so transformed app containers cannot limit its fixed viewport. */
+ if(overlay.parentElement!==document.body)document.body.appendChild(overlay);
  const celestial=document.getElementById('mwCelestial'),title=document.getElementById('mwTitle');
  const isNight=new Date().getHours()>=19;
  if(isNight){overlay.classList.add('night');celestial.className='mw-celestial mw-moon';celestial.innerHTML='';title.textContent='GOOD EVENING';}
