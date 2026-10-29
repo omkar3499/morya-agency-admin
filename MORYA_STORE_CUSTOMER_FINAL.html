@@ -772,31 +772,7 @@ renderW();
 #dColors .colorDot.active{outline:3px solid #d4a72c!important;outline-offset:2px!important;transform:scale(1.05)}
 </style>
 
-<script id="morya-live-fireworks">
-(async function(){
- try{
-  var settings={enabled:true,theme:'diwali',intensity:'normal'};
-  try{var saved=JSON.parse(localStorage.getItem('moryaAnimationSettingsV1')||'null');if(saved)settings=Object.assign(settings,saved);}catch(e){}
-  // Read the shop-wide animation preferences from Supabase so every customer's device gets the same settings.
-  try{var response=await fetch('https://glmdkfwxedxyhhmdetzh.supabase.co/rest/v1/morya_app_settings?id=eq.1&select=enabled,theme,intensity,updated_at',{headers:{'apikey':'sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz','Authorization':'Bearer sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz'}});if(response.ok){var rows=await response.json();if(rows&&rows[0])settings=Object.assign(settings,{enabled:rows[0].enabled!==false,theme:rows[0].theme||'diwali',intensity:rows[0].intensity||'normal'});}}catch(cloudError){console.log('Using local animation defaults; cloud settings unavailable',cloudError);}
-  var canvas=document.getElementById('morya-fireworks-canvas'); if(!canvas)return;
-  var ctx=canvas.getContext('2d'); if(!ctx)return;
-  var w=0,h=0,particles=[],last=0,themeHues={diwali:[42,190,285,330,10],daily:[42,48,55,180],birthday:[320,190,42,275],love:[330,345,300],ganpati:[20,35,8,48],khandoba:[35,25,45,10],neon:[190,210,230],gold:[38,43,48],rainbow:[0,45,120,190,260,310],stars:[45,55,210]},hues=[],intensity='normal',interval=850,count=65,opacity=.8;
-  function applySettings(next){settings=Object.assign({},settings,next||{});hues=themeHues[settings.theme]||themeHues.diwali;intensity=settings.intensity||'normal';interval=intensity==='soft'?1700:(intensity==='strong'?450:850);count=intensity==='soft'?30:(intensity==='strong'?100:65);opacity=intensity==='soft'?.45:(intensity==='strong'?1:.8);canvas.style.display=settings.enabled===false?'none':'block';var bg=document.getElementById('morya-ambient-bg');if(bg)bg.style.display=settings.enabled===false?'none':'block';if(settings.enabled!==false&&w&&h)burst();}
-  applySettings(settings);
-  async function refreshCloudSettings(){try{var response=await fetch('https://glmdkfwxedxyhhmdetzh.supabase.co/rest/v1/morya_app_settings?id=eq.1&select=enabled,theme,intensity,updated_at',{headers:{'apikey':'sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz','Authorization':'Bearer sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz'}});if(!response.ok)return;var rows=await response.json();if(rows&&rows[0]){var next={enabled:rows[0].enabled!==false,theme:rows[0].theme||'diwali',intensity:rows[0].intensity||'normal',updatedAt:rows[0].updated_at};if(next.updatedAt!==settings.updatedAt||next.enabled!==settings.enabled||next.theme!==settings.theme||next.intensity!==settings.intensity){applySettings(next);}}}catch(e){console.log('Animation cloud refresh failed',e);}}
-  if(settings.enabled===false){canvas.style.display='none';var bg=document.getElementById('morya-ambient-bg');if(bg)bg.style.display='none';}
-  setInterval(refreshCloudSettings,4000);
-  function resize(){var d=Math.min(window.devicePixelRatio||1,1.5);w=window.innerWidth;h=window.innerHeight;canvas.width=Math.floor(w*d);canvas.height=Math.floor(h*d);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(d,0,0,d,0,0);}
-  function burst(){var x=w*(.10+Math.random()*.80),y=h*(.08+Math.random()*.58),n=count+Math.floor(Math.random()*25),hue=hues[Math.floor(Math.random()*hues.length)],speed=1.1+Math.random()*2.7;for(var i=0;i<n;i++){var a=Math.PI*2*i/n,sp=(.45+Math.random()*.85)*speed;particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:55+Math.random()*45,max:100,size:1.5+Math.random()*2.4,hue:hue,shape:settings.theme==='love'?'heart':(settings.theme==='stars'?'star':'dot')});}}
-  function frame(t){if(!w||!h)resize();ctx.clearRect(0,0,w,h);if(settings.enabled!==false&&t-last>interval){burst();if(intensity!=='soft'&&Math.random()>.38)burst();last=t;}
-   for(var i=particles.length-1;i>=0;i--){var p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.018;p.vx*=.986;p.vy*=.986;p.life--;if(p.life<=0){particles.splice(i,1);continue;}var alpha=Math.min(1,p.life/22)*opacity;ctx.beginPath();ctx.fillStyle='hsla('+p.hue+',100%,65%,'+alpha+')';ctx.shadowBlur=14;ctx.shadowColor='hsla('+p.hue+',100%,65%,'+alpha+')';if(p.shape==='heart'){var z=p.size*2;ctx.moveTo(p.x,p.y+z*.35);ctx.bezierCurveTo(p.x-z,p.y-z*.35,p.x-z*.5,p.y-z,p.x,p.y-z*.35);ctx.bezierCurveTo(p.x+z*.5,p.y-z,p.x+z,p.y-z*.35,p.x,p.y+z*.35);ctx.fill();}else if(p.shape==='star'){var r=p.size*2;for(var k=0;k<10;k++){var rr=k%2?r*.45:r,aa=-Math.PI/2+k*Math.PI/5,px=p.x+Math.cos(aa)*rr,py=p.y+Math.sin(aa)*rr;if(k===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.closePath();ctx.fill();}else{ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}if(p.life%3===0){ctx.beginPath();ctx.strokeStyle='hsla('+p.hue+',100%,75%,'+(alpha*.7)+')';ctx.lineWidth=1.5;ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-p.vx*2.5,p.y-p.vy*2.5);ctx.stroke();}}
-   ctx.shadowBlur=0;requestAnimationFrame(frame);
-  }
-  resize();window.addEventListener('resize',resize,{passive:true});burst();burst();last=performance.now();requestAnimationFrame(frame);
- }catch(e){console.log('Morya animation unavailable',e);}
-})();
-</script>
+
 
 
 
