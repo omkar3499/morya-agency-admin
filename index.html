@@ -773,6 +773,12 @@ function printSaleBill(){
   if(save){const list=read();if(!list.some(x=>String(x).toLowerCase()===label.toLowerCase())){list.push(label);localStorage.setItem(key,JSON.stringify(list))}}
  }
  read().forEach(x=>addOption(x,false));
+ // Also discover custom categories already used by products in Supabase.
+ const originalLoadProducts=window.loadProducts;
+ if(typeof originalLoadProducts==='function'&&!originalLoadProducts.__customCategoryWrapped){
+  const wrappedLoad=async function(){const result=await originalLoadProducts.apply(this,arguments);try{(window.adminProductRows||[]).forEach(p=>{const cat=String(p.category||'').trim();if(cat&&!Array.from(select.options).some(o=>o.value===cat))addOption(cat,false)});}catch(e){}return result};
+  wrappedLoad.__customCategoryWrapped=true;window.loadProducts=wrappedLoad;
+ }
  btn.addEventListener('click',()=>{
   const label=prompt('Navin category che naav taka:');
   if(label===null)return;
