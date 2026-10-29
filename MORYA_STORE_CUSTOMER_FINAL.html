@@ -800,9 +800,9 @@ renderW();
 
 
 <style id="morya-welcome-overlay-style">
-#moryaWelcome{position:fixed;inset:0;z-index:999999;background:radial-gradient(ellipse at 50% 48%,#243d63 0%,#111b32 48%,#080b16 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font-family:Arial,sans-serif;overflow:hidden;opacity:1;transition:opacity .45s}
-#moryaWelcome.night{background:radial-gradient(ellipse at 50% 42%,#292852 0%,#11152e 48%,#070914 100%)}
-#moryaWelcome .mw-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;width:100%;height:100%}
+#moryaWelcome{position:fixed;inset:0;z-index:999999;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font-family:Arial,sans-serif;overflow:hidden;opacity:1;transition:opacity .45s;pointer-events:auto}
+#moryaWelcome.night{background:transparent}
+#moryaWelcome .mw-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;width:100%;height:100%;pointer-events:none}
 #moryaWelcome .mw-celestial{width:clamp(125px,34vw,190px);height:clamp(125px,34vw,190px);position:relative;flex-shrink:0}
 #moryaWelcome .mw-sun{border-radius:50%;background:radial-gradient(circle at 32% 27%,#fffbd1 0%,#ffe45c 29%,#ffb52b 64%,#ff7b24 100%);box-shadow:0 0 28px #ffdf5c,0 0 75px #ffb52b99,0 0 150px #ff9e2455;animation:mwRise 2.3s cubic-bezier(.2,.8,.2,1) both,mwPulse 3s ease-in-out 2.3s infinite}
 #moryaWelcome .mw-sun:before{content:"";position:absolute;inset:-23px;border:4px solid #ffcd4d88;border-radius:50%;border-top-color:#fff1a8;border-bottom-color:#ff9b27;animation:mwRotate 12s linear infinite}
@@ -811,19 +811,19 @@ renderW();
 #moryaWelcome .mw-eye{position:absolute;top:41%;width:7%;height:11%;border-radius:50%;background:#704019}
 #moryaWelcome .mw-eye.l{left:31%}#moryaWelcome .mw-eye.r{right:31%}
 #moryaWelcome .mw-smile{position:absolute;left:37%;top:48%;width:26%;height:17%;border-bottom:4px solid #704019;border-radius:0 0 24px 24px}
-#moryaWelcome .mw-cheek{position:absolute;top:53%;width:11%;height:6%;border-radius:50%;background:#ff875d88}
-#moryaWelcome .mw-cheek.l{left:19%}#moryaWelcome .mw-cheek.r{right:19%}
-#moryaWelcome .mw-moon{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffef1,#e4e7f9 60%,#aab8df);box-shadow:0 0 30px #e9edff,0 0 75px #9fafff66;animation:mwMoonRise 2.2s cubic-bezier(.2,.8,.2,1) both,mwFloat 4s ease-in-out 2.2s infinite}
-#moryaWelcome .mw-moon:after{content:"";position:absolute;inset:7% -8% -3% 28%;background:#171b39;border-radius:50%;box-shadow:-9px -5px 0 #171b39}
-#moryaWelcome .mw-title{font-weight:900;font-size:clamp(28px,8vw,48px);letter-spacing:3px;text-shadow:0 3px 24px #0008;animation:mwPop .7s ease-out 2.05s both;color:#ffe69a}
-#moryaWelcome.night .mw-title{color:#e2e7ff}
-#moryaWelcome .mw-brand{font-size:12px;letter-spacing:5px;opacity:.72;margin-top:-18px}
-#moryaWelcome .mw-hint{position:absolute;bottom:7%;left:0;right:0;font-size:11px;letter-spacing:1px;opacity:.42;text-align:center}
+#moryaWelcome .mw-cheek{position:absolute;top:53%;width:13%;height:7%;border-radius:50%;background:#ff927c}
+#moryaWelcome .mw-cheek.l{left:17%}#moryaWelcome .mw-cheek.r{right:17%}
+#moryaWelcome .mw-moon{width:clamp(130px,35vw,195px);height:clamp(130px,35vw,195px);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffde1 0%,#f7df8b 48%,#d9a943 100%);box-shadow:0 0 25px #ffe8a0,0 0 70px #f4d16b99;position:relative;animation:mwMoonRise 2.2s cubic-bezier(.2,.8,.2,1) both}
+#moryaWelcome .mw-moon:after{content:"";position:absolute;right:-19%;top:-10%;width:82%;height:82%;border-radius:50%;background:#fff;box-shadow:inset -8px -4px 15px #f0dca1}
+#moryaWelcome.night .mw-moon:after{background:transparent;box-shadow:none}
+#moryaWelcome .mw-moon:before{content:"☺";position:absolute;z-index:3;left:27%;top:27%;font-size:clamp(48px,13vw,70px);font-weight:bold;color:#76501c;transform:rotate(-18deg)}
+#moryaWelcome .mw-title{font-weight:900;letter-spacing:1px;font-size:clamp(30px,8vw,48px);line-height:1.05;color:#ffcf45;text-shadow:0 2px 0 #8b510c,0 0 20px #ffb52b;animation:mwPop .7s .65s both}
+#moryaWelcome.night .mw-title{color:#fff0b3;text-shadow:0 2px 0 #72501c,0 0 20px #ffe8a0}
+#moryaWelcome .mw-brand{font-size:12px;letter-spacing:4px;font-weight:900;color:#fff;text-shadow:0 1px 5px #000;animation:mwPop .6s .9s both}
 @keyframes mwRise{0%{transform:translateY(48vh) scale(.42);opacity:0}15%{opacity:1}70%{transform:translateY(-8px) scale(1.08)}100%{transform:translateY(0) scale(1);opacity:1}}
 @keyframes mwMoonRise{0%{transform:translateY(43vh) scale(.45) rotate(-18deg);opacity:0}100%{transform:translateY(0) scale(1) rotate(0);opacity:1}}
 @keyframes mwPop{0%{opacity:0;transform:translateY(18px) scale(.55)}75%{opacity:1;transform:translateY(0) scale(1.08)}100%{opacity:1;transform:scale(1)}}
 @keyframes mwPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.13)}}
-@keyframes mwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes mwRotate{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#moryaWelcome *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 </style>
@@ -832,16 +832,34 @@ renderW();
   <div class="mw-celestial mw-sun" id="mwCelestial"><span class="mw-face"><i class="mw-eye l"></i><i class="mw-eye r"></i><i class="mw-smile"></i><i class="mw-cheek l"></i><i class="mw-cheek r"></i></span></div>
   <div class="mw-title" id="mwTitle">GOOD MORNING</div><div class="mw-brand">MORYA AGENCY</div>
  </div>
- <div class="mw-hint">पुढे जाण्यासाठी स्क्रीनवर टॅप करा</div>
 </div>
 <script id="morya-welcome-overlay-script">
 (function(){
  const overlay=document.getElementById('moryaWelcome');if(!overlay)return;
  const celestial=document.getElementById('mwCelestial'),title=document.getElementById('mwTitle');
- const hour=new Date().getHours(),isNight=hour>=19;
+ const isNight=new Date().getHours()>=19;
  if(isNight){overlay.classList.add('night');celestial.className='mw-celestial mw-moon';celestial.innerHTML='';title.textContent='GOOD EVENING';}
  else{celestial.className='mw-celestial mw-sun';title.textContent='GOOD MORNING';}
- overlay.addEventListener('click',()=>{overlay.style.opacity='0';setTimeout(()=>overlay.remove(),460)},{once:true});
+ let audio=null;
+ function playNatureLikeSound(){
+   try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+    audio=new Ctx();if(audio.state==='suspended')audio.resume().catch(()=>{});
+    const start=audio.currentTime+.15;
+    for(let rep=0;rep<3;rep++){
+      if(isNight){
+        [[520,.38,0,360],[420,.42,.45,295]].forEach(([freq,dur,offset,end])=>{
+          const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,start+rep*1.15+offset);o.frequency.exponentialRampToValueAtTime(end,start+rep*1.15+offset+dur);g.gain.setValueAtTime(.0001,start+rep*1.15+offset);g.gain.linearRampToValueAtTime(.045,start+rep*1.15+offset+.04);g.gain.exponentialRampToValueAtTime(.0001,start+rep*1.15+offset+dur);o.connect(g);g.connect(audio.destination);o.start(start+rep*1.15+offset);o.stop(start+rep*1.15+offset+dur+.02);
+        });
+      }else{
+        [0,.18,.4].forEach((offset,i)=>{const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(1900+i*230,start+rep*1.05+offset);o.frequency.exponentialRampToValueAtTime(2600+i*160,start+rep*1.05+offset+.12);g.gain.setValueAtTime(.0001,start+rep*1.05+offset);g.gain.linearRampToValueAtTime(.018,start+rep*1.05+offset+.025);g.gain.exponentialRampToValueAtTime(.0001,start+rep*1.05+offset+.15);o.connect(g);g.connect(audio.destination);o.start(start+rep*1.05+offset);o.stop(start+rep*1.05+offset+.17);});
+      }
+    }
+   }catch(e){}
+ }
+ function finish(){overlay.style.opacity='0';if(audio){audio.close().catch(()=>{});audio=null;}setTimeout(()=>overlay.remove(),470);}
+ playNatureLikeSound();
+ setTimeout(finish,5200);
 })();
 </script>
 
