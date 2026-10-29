@@ -300,7 +300,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 </div>
 
 <div class="products-head"><h3>Product List</h3><button class="light" onclick="loadProducts()">↻ Refresh</button></div>
-<label for="productSearch">🔎 Product Search</label><input id="productSearch" type="search" placeholder="नाव, ब्रँड, मॉडेल किंवा category शोधा..." oninput="renderAdminProducts()">
+<label for="productCategoryFilter">📂 Category नुसार Product पाहा</label><select id="productCategoryFilter" onchange="renderAdminProducts()"><option value="all">सर्व Categories</option></select><label for="productSearch">🔎 Product Search</label><input id="productSearch" type="search" placeholder="नाव, ब्रँड, मॉडेल किंवा category शोधा..." oninput="renderAdminProducts()">
 <div id="products">Loading...</div>
 </section>
 
@@ -623,15 +623,27 @@ async function loadProducts(){
 }
 function renderAdminProducts(){
  const el=$('products');if(!el)return;
- const q=String($('productSearch')?.value||'').trim().toLocaleLowerCase('en-IN');
- const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\s+/g,' ').trim();
- const needle=norm(q);
+ const q=String($('productSearch')?.value||'').trim();
+ const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/\\s+/g,' ').trim();
+ const needle=norm(q), filter=$('productCategoryFilter');
+ const current=filter?.value||'all';
+ const cats=[...new Set((adminProductRows||[]).map(p=>String(p.category||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'en'));
+ if(filter){
+  const labels={'mobiles':'📱 Mobile Phones','mobile_parts':'🔧 Mobile Parts — General','mobile_accessories':'📦 Mobile Accessories — General','mobile_back_skin':'📱 Mobile Back Skin','mobile_cover':'📱 Mobile Cover','custom_printing':'🎨 Customize Products'};
+  const opts=['<option value="all">सर्व Categories</option>',...cats.map(cat=>'<option value="'+esc(cat)+'">'+esc(labels[cat]||cat.replace(/_/g,' '))+'</option>')].join('');
+  if(filter.dataset.categories!==cats.join('|')){
+   filter.innerHTML=opts;filter.dataset.categories=cats.join('|');
+   if(cats.includes(current)||current==='all')filter.value=current;else filter.value='all';
+  }
+ }
+ const selected=filter?.value||'all';
  const rows=(adminProductRows||[]).filter(p=>{
+   if(selected!=='all'&&String(p.category||'')!==selected)return false;
    const hay=[p.name,p.description,p.brand,p.model,p.category,p.compatible_model,p.ram_storage].map(norm);
    return !needle||hay.some(v=>v.includes(needle));
  });
- const countNote='<p class="small" style="margin:8px 0">'+(needle?('Search results: '+rows.length):('Total products: '+rows.length))+'</p>';
- el.innerHTML=countNote+(rows.length?'<div class="grid">'+rows.map(p=>{const x=adminProductPrivate.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name||'Unnamed product')}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">या नावाचा प्रॉडक्ट सापडला नाही. Spelling किंवा model तपासा.</p>');
+ const countNote='<p class="small" style="margin:8px 0">'+(needle||selected!=='all'?('Products found: '+rows.length):('Total products: '+rows.length))+'</p>';
+ el.innerHTML=countNote+(rows.length?'<div class="grid">'+rows.map(p=>{const x=adminProductPrivate.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name||'Unnamed product')}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">या category/search मध्ये प्रॉडक्ट सापडला नाही. Category किंवा spelling तपासा.</p>');
 }
 async function editProduct(p){
  try{
