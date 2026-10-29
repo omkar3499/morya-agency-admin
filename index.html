@@ -401,6 +401,23 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 </section>
 </main>
 
+<script id="morya-login-fallback">
+document.addEventListener('DOMContentLoaded',function(){
+ const form=document.getElementById('loginForm'),btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
+ if(!form||!btn||!msg)return;
+ form.addEventListener('submit',async function(e){
+  e.preventDefault();e.stopImmediatePropagation();btn.disabled=true;msg.className='msg ok';msg.textContent='Login checking...';
+  try{
+   if(!window.supabase||!window.supabase.createClient)throw new Error('Login service load nahi zali. Page refresh kara / internet tapasa.');
+   const client=window.supabase.createClient('https://glmdkfwxedxyhhmdetzh.supabase.co','sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:window.localStorage,storageKey:'morya-agency-admin-auth-v1'}});
+   const result=await client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});
+   if(result.error)throw result.error;
+   msg.textContent='Login successful. Dashboard reload hot aahe...';location.reload();
+  }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err&&err.message?err.message:'Unknown error');}
+  finally{btn.disabled=false;}
+ },true);
+});
+</script>
 <script>
 const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
 const SUPABASE_KEY="sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz";
