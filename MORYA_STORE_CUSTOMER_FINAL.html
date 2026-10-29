@@ -523,6 +523,12 @@ async function loadLiveProducts(){
       ({data,error}=await sb.from('products').select('id,name,price,stock,available,category,brand,model,description,image_url,is_customizable,color_options').order('name'));
     }
     if(error) throw error;
+    // Admin stores handset colours in product_handsets, so merge them into product colour options.
+    let handsetColorsByProduct={};
+    const hc=await sb.from('product_handsets').select('product_id,color,status');
+    if(!hc.error){
+      (hc.data||[]).forEach(h=>{const c=String(h.color||'').trim();if(!c)return;if(!handsetColorsByProduct[h.product_id])handsetColorsByProduct[h.product_id]=[];if(!handsetColorsByProduct[h.product_id].includes(c))handsetColorsByProduct[h.product_id].push(c);});
+    }
     const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phone:'mobile',phones:'mobile',smartphone:'mobile',smartphones:'mobile',handset:'mobile',handsets:'mobile',mobile_device:'mobile',mobile_devices:'mobile',iphone:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
     const live={mobile:[],custom:[],parts:[],accessories:[],skin:[],cover:[]};
     (data||[]).forEach(p=>{
@@ -539,7 +545,7 @@ async function loadLiveProducts(){
       else if(/charging|battery|display|back panel|middle frame|ringer|speaker|camera glass|sim tray|cc board|network cable|on off strip|combo/.test(n)) k='parts';
       else if(/charger|headphone|earphone|power bank|memory card|otg|data cable|tempered glass|cleaning kit|mobile stand|lamination/.test(n)) k='accessories';
       if(!k)return;
-      let colorList=[];if(Array.isArray(p.color_options))colorList=p.color_options;else if(typeof p.color_options==='string'&&p.color_options.trim()){try{const parsed=JSON.parse(p.color_options);colorList=Array.isArray(parsed)?parsed:p.color_options.split(/[,;|\\n]+/)}catch(e){colorList=p.color_options.split(/[,;|\\n]+/)}}if(!colorList.length&&typeof p.colors==='string'&&p.colors.trim())colorList=p.colors.split(/[,;|\\n]+/);const gallery=Array.isArray(p.image_gallery)?p.image_gallery.filter(u=>typeof u==='string'&&u.trim()):[];if(p.image_url&&!gallery.includes(p.image_url))gallery.unshift(p.image_url);live[k].push([p.name,'₹'+Number(p.price||0).toLocaleString('en-IN'),p.image_url||gallery[0]||'📦',p.description||p.model||p.brand||'',p.id,p.stock||0,p.category,p.brand||'',p.model||'',!!p.is_customizable,colorList,gallery]);
+      let colorList=[];if(Array.isArray(p.color_options))colorList=p.color_options;else if(typeof p.color_options==='string'&&p.color_options.trim()){try{const parsed=JSON.parse(p.color_options);colorList=Array.isArray(parsed)?parsed:p.color_options.split(/[,;|\\n]+/)}catch(e){colorList=p.color_options.split(/[,;|\\n]+/)}}if(!colorList.length&&typeof p.colors==='string'&&p.colors.trim())colorList=p.colors.split(/[,;|\\n]+/);if(!colorList.length&&handsetColorsByProduct[p.id])colorList=handsetColorsByProduct[p.id];const gallery=Array.isArray(p.image_gallery)?p.image_gallery.filter(u=>typeof u==='string'&&u.trim()):[];if(p.image_url&&!gallery.includes(p.image_url))gallery.unshift(p.image_url);live[k].push([p.name,'₹'+Number(p.price||0).toLocaleString('en-IN'),p.image_url||gallery[0]||'📦',p.description||p.model||p.brand||'',p.id,p.stock||0,p.category,p.brand||'',p.model||'',!!p.is_customizable,colorList,gallery]);
     });
     // Use live Supabase products when available.
     // If a live category is empty, keep the built-in demo products so the
