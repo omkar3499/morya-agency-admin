@@ -542,7 +542,7 @@ function buildHandsets(){
  if(!isMobileProduct())return;
  const count=Math.max(1,Number($('pStock').value||1));
  $('handsetCountText').textContent=count;
- const old=[...document.querySelectorAll('.handset-card')].map(c=>({color:c.querySelector('.hs-color')?.value||'',i1:c.querySelector('.hs-imei1')?.value||'',i2:c.querySelector('.hs-imei2')?.value||'',serial:c.querySelector('.hs-serial')?.value||''}));
+ const old=[...document.querySelectorAll('.handset-card')].map(c=>({color:c.querySelector('.hs-color')?.value||'',i1:c.querySelector('.hs-imei1')?.value||'',i2:c.querySelector('.hs-imei2')?.value||'',serial:c.querySelector('.hs-serial')?.value||'',selling_price:c.querySelector('.hs-selling')?.value||'',purchase_price:c.querySelector('.hs-purchase')?.value||'',box_price:c.querySelector('.hs-box')?.value||''}));
  const list=$('handsetList');list.innerHTML='';
  for(let i=0;i<count;i++){
    const x=old[i]||handsetDraft[i]||{};
@@ -550,11 +550,11 @@ function buildHandsets(){
    card.innerHTML=`<div class="handset-top"><b>Handset ${i+1}</b><span class="status-pill">Available</span></div>
    <div class="row"><div><label>Color *</label><input class="hs-color" value="${esc(x.color||'')}" placeholder="Red / Yellow"></div><div><label>IMEI 1 *</label><input class="hs-imei1" inputmode="numeric" value="${esc(x.i1||'')}" placeholder="15 digit IMEI"></div></div>
    <div class="row"><div><label>IMEI 2 *</label><input class="hs-imei2" inputmode="numeric" value="${esc(x.i2||'')}" placeholder="15 digit IMEI"></div><div><label>Serial No.</label><input class="hs-serial" value="${esc(x.serial||'')}" placeholder="Serial number"></div></div>
-   <div class="row"><div><label>Purchase Price ₹ *</label><input class="hs-purchase" type="number" min="0" step="0.01" value="${esc(x.purchase_price??$('pPurchase').value??'')}" placeholder="या फोनची खरेदी किंमत"></div><div><label>Box Price ₹</label><input class="hs-box" type="number" min="0" step="0.01" value="${esc(x.box_price??'0')}" placeholder="बॉक्सची किंमत"></div></div>`;
+   <div class="row"><div><label>Selling Price ₹ *</label><input class="hs-selling" type="number" min="0" step="0.01" value="${esc(x.selling_price??$('pPrice').value??'')}" placeholder="या फोनची विक्री किंमत"></div><div><label>Purchase Price ₹ *</label><input class="hs-purchase" type="number" min="0" step="0.01" value="${esc(x.purchase_price??$('pPurchase').value??'')}" placeholder="या फोनची खरेदी किंमत"></div></div><div><label>Box Price ₹</label><input class="hs-box" type="number" min="0" step="0.01" value="${esc(x.box_price??'0')}" placeholder="बॉक्सची किंमत"></div>`;
    list.appendChild(card);
  }
 }
-function collectHandsets(){return [...document.querySelectorAll('.handset-card')].map((c,i)=>({handset_no:i+1,color:c.querySelector('.hs-color').value.trim(),imei_1:c.querySelector('.hs-imei1').value.replace(/\s/g,'').trim(),imei_2:c.querySelector('.hs-imei2').value.replace(/\s/g,'').trim(),serial_no:c.querySelector('.hs-serial').value.trim(),purchase_price:Number(c.querySelector('.hs-purchase')?.value||0),box_price:Number(c.querySelector('.hs-box')?.value||0),status:'Available'}))}
+function collectHandsets(){return [...document.querySelectorAll('.handset-card')].map((c,i)=>({handset_no:i+1,color:c.querySelector('.hs-color').value.trim(),imei_1:c.querySelector('.hs-imei1').value.replace(/\s/g,'').trim(),imei_2:c.querySelector('.hs-imei2').value.replace(/\s/g,'').trim(),serial_no:c.querySelector('.hs-serial').value.trim(),selling_price:Number(c.querySelector('.hs-selling')?.value||$('pPrice').value||0),purchase_price:Number(c.querySelector('.hs-purchase')?.value||0),box_price:Number(c.querySelector('.hs-box')?.value||0),status:'Available'}))}
 
 function buildReview(){
  const mobile=isMobileProduct(), imgs=selectedImageFiles.length?URL.createObjectURL(selectedImageFiles[0]):$('pImage').value;
@@ -601,7 +601,7 @@ async function saveProduct(){
  if(q.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but private data error: '+q.error.message;return}
  if(isMobileProduct()){
    const del=await db.from('product_handsets').delete().eq('product_id',pid);if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but old handset cleanup failed: '+del.error.message;return}
-   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,purchase_price:x.purchase_price,box_price:x.box_price,status:'Available'}));
+   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,selling_price:x.selling_price,purchase_price:x.purchase_price,box_price:x.box_price,status:'Available'}));
    const ins=await db.from('product_handsets').insert(rows);if(ins.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but handset details error: '+ins.error.message;return}
  }else{
    const del=await db.from('product_handsets').delete().eq('product_id',pid);
@@ -639,7 +639,7 @@ async function editProduct(p){
   if(privR.error)console.warn('Private product details unavailable:',privR.error.message);
   $('productId').value=p.id;$('formTitle').textContent='✏️ Edit Product';$('pName').value=p.name||'';$('pDescription').value=p.description||'';$('pPrice').value=p.price??'';$('pStock').value=p.stock??1;$('pImage').value=p.image_url||'';$('pAvailable').value=String(p.available);$('pCategory').value=p.category||'custom_printing';$('pBrand').value=p.brand||'';$('pModel').value=p.model||'';$('pRam').value=p.ram_storage||'';$('pCompatible').value=p.compatible_model||'';$('pWarranty').value=p.warranty||'';$('pCustom').checked=!!p.is_customizable;$('pPurchase').value=privR.data?.purchase_price??'';
   selectedImageFiles=[];$('pImageFiles').value='';$('pCameraFile').value='';handsetDraft=[];renderImagePreview();updateCategoryFields();
-  if(isMobileProduct()){const h=await db.from('product_handsets').select('handset_no,color,imei_1,imei_2,serial_no,status').eq('product_id',p.id).order('handset_no');if(h.error)throw h.error;handsetDraft=(h.data||[]).map(x=>({color:x.color||'',i1:x.imei_1||'',i2:x.imei_2||'',serial:x.serial_no||''}));}
+  if(isMobileProduct()){const h=await db.from('product_handsets').select('handset_no,color,imei_1,imei_2,serial_no,status,selling_price,purchase_price,box_price').eq('product_id',p.id).order('handset_no');if(h.error)throw h.error;handsetDraft=(h.data||[]).map(x=>({color:x.color||'',i1:x.imei_1||'',i2:x.imei_2||'',serial:x.serial_no||'',selling_price:x.selling_price??p.price,purchase_price:x.purchase_price??'',box_price:x.box_price??0}));}
   $('handsetList').innerHTML='';setProductStep(1);calculateProfit();
  }catch(err){alert('Product edit load failed: '+(err.message||err))}
 }
