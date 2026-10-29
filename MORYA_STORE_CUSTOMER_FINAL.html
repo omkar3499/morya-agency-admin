@@ -159,8 +159,9 @@ button{cursor:pointer}
 
 <style id="morya-ambient-animation">
 /* Subtle animated ambient background; decoration never blocks shopping controls */
-#morya-ambient-bg{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden;opacity:.72;mix-blend-mode:screen}
-#morya-ambient-bg::before,#morya-ambient-bg::after{content:"";position:absolute;inset:-12%;background-image:none!important}
+#morya-ambient-bg{display:none!important}
+#morya-ambient-bg::before,#morya-ambient-bg::after,#morya-ambient-bg .morya-burst{display:none!important;content:none!important;background:none!important}
+#morya-fireworks-canvas{opacity:1!important}
 #morya-ambient-bg .morya-burst{position:absolute;width:150px;height:150px;border-radius:50%;opacity:0;background:repeating-conic-gradient(from 0deg,rgba(255,210,70,0) 0deg 7deg,rgba(255,196,60,.85) 7.5deg 8.5deg,rgba(255,210,70,0) 9deg 15deg);mask-image:radial-gradient(circle,transparent 0 8%,#000 10% 35%,transparent 67%);-webkit-mask-image:radial-gradient(circle,transparent 0 8%,#000 10% 35%,transparent 67%);animation:moryaFirework 5.8s ease-out infinite}
 #morya-ambient-bg .morya-burst:nth-child(1){top:7%;left:8%;animation-delay:0s}
 #morya-ambient-bg .morya-burst:nth-child(2){top:20%;right:8%;width:110px;height:110px;animation-delay:2.1s;filter:hue-rotate(80deg)}
