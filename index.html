@@ -801,6 +801,29 @@ function printSaleBill(){
  window.openSettingsCategory=function(id){if(typeof oldOpen==='function')oldOpen(id);if(id==='settingsAnimation')window.loadMoryaAnimationSettings();};
 })();
 <\/script>
+
+<script id="morya-login-recovery">
+(function(){
+ const form=document.getElementById('loginForm');
+ if(!form)return;
+ form.addEventListener('submit',async function(e){
+  e.preventDefault();
+  const btn=document.getElementById('loginBtn');
+  const msg=document.getElementById('loginMsg');
+  btn.disabled=true; msg.className='msg ok'; msg.textContent='Login checking...';
+  try{
+   if(!window.supabase) throw new Error('Login service load nahi zali. Internet refresh kara.');
+   const client=window.supabase.createClient('https://glmdkfwxedxyhhmdetzh.supabase.co','sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',{auth:{persistSession:true,autoRefreshToken:true,storageKey:'morya-agency-admin-auth-v1'}});
+   const result=await client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});
+   if(result.error) throw result.error;
+   msg.textContent='Login successful. Dashboard reload hot aahe...';
+   location.reload();
+  }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err.message||'Please check internet and login details.');}
+  finally{btn.disabled=false;}
+ },true);
+})();
+</script>
+
 </body></html>');
  w.document.close();
 }
