@@ -173,6 +173,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 </style>
 </head>
 <body>
+<canvas id="morya-fireworks-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:.9"></canvas>
 <div id="morya-ambient-bg" aria-hidden="true"><span class="morya-burst"></span><span class="morya-burst"></span><span class="morya-burst"></span></div>
 <div class="topStrip"><span>✨ PREMIUM SHOPPING EXPERIENCE</span><span>•</span><span>Mobile • Accessories • Custom Products</span></div>
 <header class="header">
@@ -770,6 +771,24 @@ renderW();
 #customerPointsValue{display:block;min-width:18px;text-align:center;color:#ffd700!important;-webkit-text-fill-color:#ffd700!important;font-weight:950!important}
 #dColors .colorDot.active{outline:3px solid #d4a72c!important;outline-offset:2px!important;transform:scale(1.05)}
 </style>
+
+<script id="morya-live-fireworks">
+(function(){
+ try{
+  var canvas=document.getElementById('morya-fireworks-canvas'); if(!canvas)return;
+  var ctx=canvas.getContext('2d'); if(!ctx)return;
+  var w=0,h=0,particles=[],last=0;
+  function resize(){var d=Math.min(window.devicePixelRatio||1,2);w=window.innerWidth;h=window.innerHeight;canvas.width=Math.floor(w*d);canvas.height=Math.floor(h*d);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(d,0,0,d,0,0);}
+  function burst(){var x=w*(.12+Math.random()*.76),y=h*(.12+Math.random()*.48),n=34+Math.floor(Math.random()*18),hue=Math.floor(Math.random()*360);for(var i=0;i<n;i++){var a=Math.PI*2*i/n,sp=.6+Math.random()*2.3;particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:45+Math.random()*30,max:75,size:1+Math.random()*1.5,hue:hue});}}
+  function frame(t){if(!w||!h)resize();ctx.clearRect(0,0,w,h);if(t-last>1900){burst();last=t;}
+   for(var i=particles.length-1;i>=0;i--){var p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.012;p.vx*=.992;p.vy*=.992;p.life--;if(p.life<=0){particles.splice(i,1);continue;}ctx.beginPath();ctx.fillStyle='hsla('+p.hue+',100%,68%,'+(p.life/p.max*.85)+')';ctx.shadowBlur=8;ctx.shadowColor=ctx.fillStyle;ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}
+   ctx.shadowBlur=0;requestAnimationFrame(frame);
+  }
+  resize();window.addEventListener('resize',resize,{passive:true});requestAnimationFrame(frame);
+ }catch(e){console.log('Morya animation unavailable',e);}
+})();
+</script>
+
 </body>
 </html>
 <style>
