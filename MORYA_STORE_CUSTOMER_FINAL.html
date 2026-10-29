@@ -383,7 +383,8 @@ function colorOptions(p){
  }
  list=list.map(c=>typeof c==='string'?c:(c&&typeof c==='object'?(c.name||c.color||c.label||c.value||''):String(c||''))).map(c=>String(c).trim()).filter(Boolean);
  // Lava Hero Shakti 2026: Blue and Black are the two available variants.
- if(/lava\s*hero\s*shakti\s*2026/i.test(String(p&&p[0]||''))){list=['Blue','Black'];}
+ if(!list.length && /lava\s*a1\s*josh/i.test(String(p&&p[0]||''))){list=['BLACK','BLUE'];}
+ if(!list.length && /lava\s*hero\s*shakti\s*2026/i.test(String(p&&p[0]||''))){list=['Blue','Black'];}
  return list;
 }
 let activeProductGallery=[];
