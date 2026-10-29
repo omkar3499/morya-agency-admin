@@ -790,7 +790,6 @@ function printSaleBill(){
  if(!w){alert('Print साठी popup allow करा.');return;}
  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Bill '+esc(b.id)+'</title><style>body{font:16px Arial,sans-serif;padding:20px;color:#111}h2{text-align:center;margin:0}pre{white-space:pre-wrap;font:14px monospace;line-height:1.5}button{padding:10px 18px}@media print{button{display:none}body{padding:0}}</style></head><body><h2>MORYA AGENCY</h2><p style="text-align:center">SALE BILL</p><pre>'+esc(txt)+'</pre><button onclick="window.print()">🖨️ Print Bill</button>
 </body></html>'); w.document.close(); }
-</script>
 <script id="morya-animation-settings-functions">
 (function(){
  const KEY='moryaAnimationSettingsV1';
@@ -1038,7 +1037,7 @@ async function deleteAd(id){if(!confirm('हा advertisement delete करा�
  catch(e){console.warn('Session restore failed:',e.message||e);$('loginMsg').className='msg';$('loginMsg').textContent='Session restore failed. Please login again.';}
 })();
 db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){ $('dashboard').classList.add('hidden');$('loginBox').classList.remove('hidden');$('logoutBtn').classList.add('hidden');if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(false);}else if(session){if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);}});
-<\/script>
+</script>
 
 <script>
 // Final navigation fix: one workspace, no jumping to the bottom.
