@@ -136,6 +136,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <div class="workspace-top"><button class="light" onclick="closeAdminTab()">← Dashboard</button><div id="workspaceTitle">Admin</div></div>
 <div class="tabs workspace-tabs">
 <button class="light active" data-tab="productsTab">📦 Products</button>
+<button class="light" data-tab="addProductTab">➕ Add Product</button>
 <button class="light" data-tab="mobileSkinTab">🎨 Mobile Skin Stock</button>
 <button class="light" data-tab="ordersTab">🛒 Orders</button>
 <button class="light" data-tab="salesTab">💳 Sale</button>
@@ -171,11 +172,9 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 </div>
 
 </section>
-<section id="productsTab" class="tab card">
-<h2>📦 Products</h2>
-<p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
-
-
+<section id="addProductTab" class="tab card hidden">
+<h2>➕ Add Product</h2>
+<p class="small">नवीन Product येथे जोडा. आधीचे Products पाहण्यासाठी Products विभाग वापरा.</p>
 <div class="wizard card" style="background:#fafafa">
   <div class="wizard-head">
     <div><h3 id="formTitle" style="margin:0">➕ Add Product</h3><div id="stepTitle" class="small">Step 1 of 5</div></div>
@@ -298,6 +297,14 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
   </div>
   <div id="productMsg"></div>
 </div>
+
+
+</section>
+
+<section id="productsTab" class="tab card">
+<h2>📦 Products</h2>
+<p class="small">Product Add आता 5-step wizard मध्ये आहे. Mobile Phone साठी stock प्रमाणे प्रत्येक handset चे Color, IMEI आणि Serial वेगळे भरता येतील.</p>
+
 
 <div class="products-head"><h3>Product List</h3><button class="light" onclick="loadProducts()">↻ Refresh</button></div>
 <label for="productCategoryFilter">📂 Category नुसार Product पाहा</label><select id="productCategoryFilter" onchange="renderAdminProducts()"><option value="all">सर्व Categories</option></select><label for="productSearch">🔎 Product Search</label><input id="productSearch" type="search" placeholder="नाव, ब्रँड, मॉडेल किंवा category शोधा..." oninput="renderAdminProducts()">
@@ -486,7 +493,7 @@ function setProductStep(n){
  if(productStep===4)buildHandsets();
  if(productStep===5)buildReview();
  /* Keep the wizard anchored; only the active step content may scroll. */
- const wizard=document.querySelector('#productsTab .wizard');
+ const wizard=document.querySelector('#addProductTab .wizard');
  if(wizard){const y=wizard.getBoundingClientRect().top+window.pageYOffset-8;window.scrollTo({top:Math.max(0,y),behavior:'instant'});}
  const activePanel=document.querySelector('.wizard-step:not(.hidden)');
  if(activePanel)activePanel.scrollTop=0;
@@ -646,6 +653,7 @@ function renderAdminProducts(){
  el.innerHTML=countNote+(rows.length?'<div class="grid">'+rows.map(p=>{const x=adminProductPrivate.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name||'Unnamed product')}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">या category/search मध्ये प्रॉडक्ट सापडला नाही. Category किंवा spelling तपासा.</p>');
 }
 async function editProduct(p){
+ openAdminTab('addProductTab');
  try{
   const privR=await db.from('product_private').select('purchase_price').eq('product_id',p.id).maybeSingle();
   if(privR.error)console.warn('Private product details unavailable:',privR.error.message);
@@ -1078,9 +1086,9 @@ async function uploadBulkSkins(){
 }
 
 function openProductWizard(){
-  openAdminTab('productsTab');
+  openAdminTab('addProductTab');
   setTimeout(()=>{
-    const w=document.querySelector('#productsTab .wizard');
+    const w=document.querySelector('#addProductTab .wizard');
     if(w) w.scrollIntoView({behavior:'instant',block:'start'});
     document.getElementById('pName')?.focus();
   },100);
