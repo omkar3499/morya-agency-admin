@@ -89,6 +89,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
   <button class="premium-menu-card green" onclick="openAdminTab('ordersTab')"><span class="pm-icon">🛒</span><span><b>Orders</b><small><strong id="orderCount">0</strong> Orders</small></span><em>→</em></button>
   <button class="premium-menu-card" style="background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff" onclick="openAdminTab('salesTab');loadSaleProducts()"><span class="pm-icon">💳</span><span><b>New Sale</b><small>Shop counter billing</small></span><em>→</em></button>
   <button class="premium-menu-card pink" onclick="openAdminTab('customersTab')"><span class="pm-icon">👥</span><span><b>Customers</b><small>Customer profiles</small></span><em>→</em></button>
+  <button class="premium-menu-card" style="background:linear-gradient(135deg,#dbeafe,#93c5fd);color:#10233f" onclick="openAdminTab('registeredCustomersTab')"><span class="pm-icon">🪪</span><span><b>Registered Customers</b><small>Login / Registration details</small></span><em>→</em></button>
   <button class="premium-menu-card" style="background:linear-gradient(135deg,#fef3c7,#facc15);color:#29210a" onclick="openAdminTab('mobileSkinTab')"><span class="pm-icon">🎨</span><span><b>Mobile Skin Stock</b><small>Bulk Upload • Stock</small></span><em>→</em></button>
   <button class="premium-menu-card purple" onclick="openAdminTab('reportsTab')"><span class="pm-icon">📊</span><span><b>Reports</b><small>Sales • Stock • Profit</small></span><em>→</em></button>
 </div>
@@ -139,6 +140,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <button class="light" data-tab="ordersTab">🛒 Orders</button>
 <button class="light" data-tab="salesTab">💳 Sale</button>
 <button class="light" data-tab="customersTab">👥 Customers</button>
+<button class="light" data-tab="registeredCustomersTab">🪪 Registered Customers</button>
 <button class="light" data-tab="reportsTab">📊 Reports</button>
 <button class="light" data-tab="adsTab">📢 Advertisements</button>
 <button class="light" data-tab="adjustTab">⚖️ Product Adjust</button>
@@ -326,6 +328,12 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 <h2>👥 Customer Profiles</h2><p class="small">ग्राहक माहिती विद्यमान Orders मधून तयार होते; नवीन database table लागत नाही.</p>
 <button class="primary" onclick="loadCustomers()">Refresh Customers</button><div id="customersList">Loading...</div>
 </section>
+<section id="registeredCustomersTab" class="tab card hidden">
+<h2>🪪 Registered Customers</h2>
+<p class="small">Login/Register केलेल्या ग्राहकांची माहिती. Customer App मध्ये registration data save होत असेल तर येथे दिसेल.</p>
+<div class="actions"><button class="primary" onclick="loadRegisteredCustomers()">↻ Refresh Registered Customers</button></div>
+<div id="registeredCustomersList">माहिती पाहण्यासाठी Refresh करा.</div>
+</section>
 <section id="reportsTab" class="tab card hidden">
 <h2>📊 Sales & Stock Reports</h2><p class="small">Reports विद्यमान Products आणि Orders मधून मोजले जातात.</p>
 <div class="actions"><button class="primary" onclick="loadReports()">Refresh Reports</button><button class="light" onclick="exportReportsCSV()">⬇️ Export Reports CSV</button></div><div id="reportsContent">Load report to view summary.</div>
@@ -381,7 +389,7 @@ function setWorkspaceTab(tab){
  document.querySelectorAll('.workspace-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));
  document.querySelectorAll('#workspace .tab').forEach(x=>x.classList.add('hidden'));
  const el=$(tab); if(el)el.classList.remove('hidden');
- $('workspaceTitle').textContent=tab==='productsTab'?'Products':tab==='ordersTab'?'Customer Orders':tab==='customersTab'?'Customers':tab==='reportsTab'?'Reports':tab==='adsTab'?'Advertisements':'Product Adjust';
+ $('workspaceTitle').textContent=tab==='productsTab'?'Products':tab==='ordersTab'?'Customer Orders':tab==='customersTab'?'Customers':tab==='registeredCustomersTab'?'Registered Customers':tab==='reportsTab'?'Reports':tab==='adsTab'?'Advertisements':'Product Adjust';
  if(tab==='productsTab')loadProducts();
  if(tab==='ordersTab')loadOrders();
  if(tab==='customersTab')loadCustomers();
@@ -841,6 +849,15 @@ async function quickCancelOrder(id,desired='Cancelled'){
  const old=await db.from('orders').select('instructions').eq('id',id).maybeSingle();if(old.error){alert('Order माहिती मिळाली नाही: '+old.error.message);return}
  const existing=old.data?.instructions||'';const note=`\n[Admin ${desired} reason: ${reason.trim()}]`;const update={status:desired,instructions:(existing+note).trim()};
  const r=await db.from('orders').update(update).eq('id',id);if(r.error){alert('❌ Order update failed: '+r.error.message);return}alert('Order status आणि कारण सेव्ह केले.');loadOrders();
+}
+async function loadRegisteredCustomers(){
+ const el=$('registeredCustomersList');if(!el)return;el.textContent='Loading registered customers...';
+ const r=await db.from('customer_profiles').select('*').limit(1000);
+ if(r.error){el.innerHTML='<div class="msg">❌ '+esc(r.error.message)+'<br><span class="small">customer_profiles table permission किंवा column access तपासा.</span></div>';return}
+ const rows=r.data||[];
+ if(!rows.length){el.innerHTML='<p>अजून नोंदणीकृत ग्राहकांची नोंद सापडली नाही. Customer App मधील Register/Login माहिती customer_profiles मध्ये save होणे आवश्यक आहे.</p>';return}
+ const pick=(o,keys)=>{for(const k of keys){if(o[k]!==undefined&&o[k]!==null&&String(o[k]).trim()!=='')return String(o[k])}return '-'};
+ el.innerHTML='<p class="small">एकूण नोंदी: '+rows.length+'</p>'+rows.map((o,i)=>'<div class="item"><b>'+esc(pick(o,['full_name','customer_name','name','display_name']))+'</b><p class="small">📞 '+esc(pick(o,['phone','mobile','phone_number','customer_mobile']))+'<br>✉️ '+esc(pick(o,['email','email_address']))+'</p><p class="small">नोंदणी तारीख: '+esc(pick(o,['created_at','registered_at','updated_at']))+'</p></div>').join('');
 }
 async function loadCustomers(){
  const el=$('customersList');if(!el)return;el.textContent='Loading customers...';
