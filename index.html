@@ -498,6 +498,8 @@ function validateProductStep(){
    const i1=(c.querySelector('.hs-imei1')?.value||'').replace(/\s/g,'');
    const i2=(c.querySelector('.hs-imei2')?.value||'').replace(/\s/g,'');
    if(!color||!i1||!i2){alert('प्रत्येक handset साठी Color, IMEI 1 आणि IMEI 2 भरा.');return false}
+   const hp=Number(c.querySelector('.hs-purchase')?.value), hb=Number(c.querySelector('.hs-box')?.value||0);
+   if(c.querySelector('.hs-purchase')?.value===''||!Number.isFinite(hp)||hp<0||!Number.isFinite(hb)||hb<0){alert('प्रत्येक फोनची Purchase Price आणि Box Price योग्य भरा.');return false}
    if(!/^\d{15}$/.test(i1)||!/^\d{15}$/.test(i2)){alert('प्रत्येक IMEI मध्ये नेमके 15 अंक असावेत.');return false}
    allImeis.push(i1,i2);
   }
@@ -533,18 +535,19 @@ function buildHandsets(){
    const card=document.createElement('div');card.className='handset-card';
    card.innerHTML=`<div class="handset-top"><b>Handset ${i+1}</b><span class="status-pill">Available</span></div>
    <div class="row"><div><label>Color *</label><input class="hs-color" value="${esc(x.color||'')}" placeholder="Red / Yellow"></div><div><label>IMEI 1 *</label><input class="hs-imei1" inputmode="numeric" value="${esc(x.i1||'')}" placeholder="15 digit IMEI"></div></div>
-   <div class="row"><div><label>IMEI 2 *</label><input class="hs-imei2" inputmode="numeric" value="${esc(x.i2||'')}" placeholder="15 digit IMEI"></div><div><label>Serial No.</label><input class="hs-serial" value="${esc(x.serial||'')}" placeholder="Serial number"></div></div>`;
+   <div class="row"><div><label>IMEI 2 *</label><input class="hs-imei2" inputmode="numeric" value="${esc(x.i2||'')}" placeholder="15 digit IMEI"></div><div><label>Serial No.</label><input class="hs-serial" value="${esc(x.serial||'')}" placeholder="Serial number"></div></div>
+   <div class="row"><div><label>Purchase Price ₹ *</label><input class="hs-purchase" type="number" min="0" step="0.01" value="${esc(x.purchase_price??$('pPurchase').value??'')}" placeholder="या फोनची खरेदी किंमत"></div><div><label>Box Price ₹</label><input class="hs-box" type="number" min="0" step="0.01" value="${esc(x.box_price??'0')}" placeholder="बॉक्सची किंमत"></div></div>`;
    list.appendChild(card);
  }
 }
-function collectHandsets(){return [...document.querySelectorAll('.handset-card')].map((c,i)=>({handset_no:i+1,color:c.querySelector('.hs-color').value.trim(),imei_1:c.querySelector('.hs-imei1').value.replace(/\s/g,'').trim(),imei_2:c.querySelector('.hs-imei2').value.replace(/\s/g,'').trim(),serial_no:c.querySelector('.hs-serial').value.trim(),status:'Available'}))}
+function collectHandsets(){return [...document.querySelectorAll('.handset-card')].map((c,i)=>({handset_no:i+1,color:c.querySelector('.hs-color').value.trim(),imei_1:c.querySelector('.hs-imei1').value.replace(/\s/g,'').trim(),imei_2:c.querySelector('.hs-imei2').value.replace(/\s/g,'').trim(),serial_no:c.querySelector('.hs-serial').value.trim(),purchase_price:Number(c.querySelector('.hs-purchase')?.value||0),box_price:Number(c.querySelector('.hs-box')?.value||0),status:'Available'}))}
 
 function buildReview(){
  const mobile=isMobileProduct(), imgs=selectedImageFiles.length?URL.createObjectURL(selectedImageFiles[0]):$('pImage').value;
  const hs=mobile?collectHandsets():[];
  $('reviewBox').innerHTML=`<div class="review-row">${imgs?`<img class="review-image" src="${esc(imgs)}">`:''}<div><h3 style="margin:0">${esc($('pName').value||'Product')}</h3><div class="small">${esc($('pBrand').value)} ${mobile?'• '+esc($('pModel').value):''}</div><p>Sale Price: <b>₹${Number($('pPrice').value||0).toFixed(0)}</b><br>Stock: <b>${Number($('pStock').value||0)}</b><br>Warranty: ${esc($('pWarranty').value||'-')}</p></div></div>
  <hr><p><b>Purchase Price:</b> ₹${Number($('pPurchase').value||0).toFixed(0)} &nbsp; <b>Profit:</b> ₹${Number($('pPrice').value||0)-Number($('pPurchase').value||0)}</p>
- ${mobile?`<h4>Handset Details</h4><table class="review-table"><tr><th>#</th><th>Color</th><th>IMEI 1</th><th>IMEI 2</th><th>Serial</th></tr>${hs.map(x=>`<tr><td>${x.handset_no}</td><td>${esc(x.color)}</td><td>${esc(x.imei_1)}</td><td>${esc(x.imei_2)}</td><td>${esc(x.serial_no||'-')}</td></tr>`).join('')}</table>`:''}`;
+ ${mobile?`<h4>Handset Details</h4><table class="review-table"><tr><th>#</th><th>Color</th><th>IMEI 1</th><th>IMEI 2</th><th>Serial</th><th>Purchase ₹</th><th>Box ₹</th></tr>${hs.map(x=>`<tr><td>${x.handset_no}</td><td>${esc(x.color)}</td><td>${esc(x.imei_1)}</td><td>${esc(x.imei_2)}</td><td>${esc(x.serial_no||'-')}</td><td>₹${Number(x.purchase_price||0)}</td><td>₹${Number(x.box_price||0)}</td></tr>`).join('')}</table>`:''}`;
 }
 
 async function uploadProductImages(productId){
@@ -584,7 +587,7 @@ async function saveProduct(){
  if(q.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but private data error: '+q.error.message;return}
  if(isMobileProduct()){
    const del=await db.from('product_handsets').delete().eq('product_id',pid);if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but old handset cleanup failed: '+del.error.message;return}
-   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,status:'Available'}));
+   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,purchase_price:x.purchase_price,box_price:x.box_price,status:'Available'}));
    const ins=await db.from('product_handsets').insert(rows);if(ins.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but handset details error: '+ins.error.message;return}
  }else{
    const del=await db.from('product_handsets').delete().eq('product_id',pid);
