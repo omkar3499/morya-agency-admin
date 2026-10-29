@@ -838,6 +838,8 @@ renderW();
  const overlay=document.getElementById('moryaWelcome');if(!overlay)return;
  /* Move overlay directly under body so transformed app containers cannot limit its fixed viewport. */
  if(overlay.parentElement!==document.body)document.body.appendChild(overlay);
+ /* Force viewport overlay inline to defeat app/page layout styles. */
+ ['position','fixed','top','0','left','0','right','0','bottom','0','width','100vw','height','100dvh','min-height','100dvh','z-index','2147483647','background','transparent','margin','0','padding','16px','box-sizing','border-box','pointer-events','none'].reduce((_,v,i,a)=>{if(i%2===0)overlay.style.setProperty(v,a[i+1], 'important');},null);
  const celestial=document.getElementById('mwCelestial'),title=document.getElementById('mwTitle');
  const isNight=new Date().getHours()>=19;
  if(isNight){overlay.classList.add('night');celestial.className='mw-celestial mw-moon';celestial.innerHTML='';title.textContent='GOOD EVENING';}
