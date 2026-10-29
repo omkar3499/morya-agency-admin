@@ -840,6 +840,9 @@ renderW();
  if(overlay.parentElement!==document.body)document.body.appendChild(overlay);
  /* Force viewport overlay inline to defeat app/page layout styles. */
  ['position','fixed','top','0','left','0','right','0','bottom','0','width','100vw','height','100dvh','min-height','100dvh','z-index','2147483647','background','transparent','margin','0','padding','16px','box-sizing','border-box','pointer-events','none'].reduce((_,v,i,a)=>{if(i%2===0)overlay.style.setProperty(v,a[i+1], 'important');},null);
+ /* Never let the welcome animation or its children intercept app taps. */
+ overlay.querySelectorAll('*').forEach(el=>el.style.setProperty('pointer-events','none','important'));
+ overlay.style.setProperty('pointer-events','none','important');
  const celestial=document.getElementById('mwCelestial'),title=document.getElementById('mwTitle');
  const hour=Number(new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',hourCycle:'h23'}).format(new Date())),isNight=hour>=19||hour<5;
  if(isNight){overlay.classList.add('night');celestial.className='mw-celestial mw-moon';celestial.innerHTML='';title.textContent='GOOD EVENING';}
