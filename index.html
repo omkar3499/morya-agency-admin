@@ -802,29 +802,7 @@ function printSaleBill(){
 })();
 <\/script>
 
-<script id="morya-login-recovery">
-(function(){
- const btn=document.getElementById('loginBtn');
- if(!btn)return;
- btn.addEventListener('click',async function(e){
-  e.preventDefault(); e.stopImmediatePropagation();
-  const msg=document.getElementById('loginMsg');
-  const email=document.getElementById('email');
-  const password=document.getElementById('password');
-  btn.disabled=true; msg.className='msg ok'; msg.textContent='Login checking...';
-  try{
-   if(!email.value.trim()||!password.value)throw new Error('Email ani password bhara.');
-   if(!window.supabase)throw new Error('Login service load zali nahi. Internet refresh kara.');
-   const client=window.supabase.createClient('https://glmdkfwxedxyhhmdetzh.supabase.co','sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',{auth:{persistSession:true,autoRefreshToken:true,storageKey:'morya-agency-admin-auth-v1'}});
-   const result=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});
-   if(result.error)throw result.error;
-   msg.textContent='Login successful. Dashboard reload hot aahe...';
-   location.reload();
-  }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err.message||'Internet/login details tapasa.');}
-  finally{btn.disabled=false;}
- },true);
-})();
-</script>
+
 
 </body></html>');
  w.document.close();
