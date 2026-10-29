@@ -517,13 +517,14 @@ document.getElementById('adNext').onclick=()=>{if(!ads.length)return;adIndex=(ad
 
 async function loadLiveProducts(){
   try{
-    const {data,error}=await sb.from('products').select('id,name,price,stock,available,category,brand,model,description,image_url,image_gallery,is_customizable,color_options').eq('available',true).order('name');
+    const {data,error}=await sb.from('products').select('id,name,price,stock,available,category,brand,model,description,image_url,image_gallery,is_customizable,color_options').order('name');
     if(error) throw error;
     const map={mobile:'mobile',mobiles:'mobile',mobile_phone:'mobile',mobile_phones:'mobile',mobilephones:'mobile',phone:'mobile',phones:'mobile',smartphone:'mobile',smartphones:'mobile',handset:'mobile',handsets:'mobile',mobile_device:'mobile',mobile_devices:'mobile',iphone:'mobile',custom:'custom',custom_printing:'custom',custom_products:'custom',parts:'parts',mobile_parts:'parts',mobileparts:'parts',accessories:'accessories',mobile_accessories:'accessories',mobileaccessories:'accessories',skin:'skin',mobile_back_skin:'skin',mobile_skin:'skin',cover:'cover',mobile_cover:'cover',mobile_covers:'cover'};
     const live={mobile:[],custom:[],parts:[],accessories:[],skin:[],cover:[]};
     (data||[]).forEach(p=>{
       const categoryKey=String(p.category||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
       let k=map[categoryKey]||null;
+      if(!k && /^(mobile|mobiles|phone|phones|smartphone|smartphones|handset|handsets|mobile_phone|mobile_phones|mobilephones|mobile_device|mobile_devices)$/.test(categoryKey)) k='mobile';
       if(!k && categoryKey.startsWith('mobile_parts_')) k='parts';
       if(!k && categoryKey.startsWith('mobile_accessories_')) k='accessories';
       if(!k && /(mobile|phone|smartphone|iphone|handset)/.test(categoryKey)) k='mobile';
