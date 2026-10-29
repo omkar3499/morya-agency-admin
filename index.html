@@ -402,7 +402,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 </main>
 
 <script id="morya-login-fallback">
-document.addEventListener('DOMContentLoaded',function(){
+function initMoryaLoginFallback(){
  const form=document.getElementById('loginForm'),btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
  if(!form||!btn||!msg)return;
  form.addEventListener('submit',async function(e){
@@ -419,7 +419,8 @@ document.addEventListener('DOMContentLoaded',function(){
   }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err&&err.message?err.message:'Unknown error');}
   finally{clearTimeout(timer);btn.disabled=false;}
  },true);
-});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initMoryaLoginFallback);else initMoryaLoginFallback();
 </script>
 <script>
 const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
