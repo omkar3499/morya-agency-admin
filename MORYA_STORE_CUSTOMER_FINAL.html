@@ -741,3 +741,9 @@ renderW();
 </style>
 </body>
 </html>
+<style>
+/* Show full product images without cropping on every product card */
+.productBrowseCard .pic{height:220px!important;min-height:220px!important;overflow:hidden!important;background:#111!important;}
+.productBrowseCard .pic img{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important;display:block!important;}
+@media(max-width:800px){.productBrowseCard .pic{height:190px!important;min-height:190px!important;}}
+</style>
