@@ -159,7 +159,7 @@ button{cursor:pointer}
 
 <style id="morya-ambient-animation">
 /* Subtle animated ambient background; decoration never blocks shopping controls */
-#morya-ambient-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.5}
+#morya-ambient-bg{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden;opacity:.72;mix-blend-mode:screen}
 #morya-ambient-bg::before,#morya-ambient-bg::after{content:"";position:absolute;inset:-12%;background-image:radial-gradient(circle,rgba(255,200,55,.9) 0 1px,transparent 2px),radial-gradient(circle,rgba(255,255,255,.8) 0 1px,transparent 2px),radial-gradient(circle,rgba(255,110,45,.8) 0 1.5px,transparent 2.5px);background-size:83px 97px,127px 113px,173px 151px;background-position:0 0,38px 51px,79px 22px;animation:moryaSparkleDrift 24s linear infinite}
 #morya-ambient-bg::after{opacity:.6;background-size:109px 121px,157px 139px,191px 173px;background-position:21px 41px,73px 19px,9px 87px;animation-duration:34s;animation-direction:reverse}
 #morya-ambient-bg .morya-burst{position:absolute;width:150px;height:150px;border-radius:50%;opacity:0;background:repeating-conic-gradient(from 0deg,rgba(255,210,70,0) 0deg 7deg,rgba(255,196,60,.85) 7.5deg 8.5deg,rgba(255,210,70,0) 9deg 15deg);mask-image:radial-gradient(circle,transparent 0 8%,#000 10% 35%,transparent 67%);-webkit-mask-image:radial-gradient(circle,transparent 0 8%,#000 10% 35%,transparent 67%);animation:moryaFirework 5.8s ease-out infinite}
@@ -169,7 +169,7 @@ button{cursor:pointer}
 @keyframes moryaSparkleDrift{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(1.5%,-1%,0)}100%{transform:translate3d(0,0,0)}}
 @keyframes moryaFirework{0%,8%{opacity:0;transform:scale(.15) rotate(0deg)}15%{opacity:.45}45%{opacity:0;transform:scale(1.2) rotate(35deg)}100%{opacity:0;transform:scale(1.2) rotate(35deg)}}
 body>*:not(#morya-ambient-bg){position:relative;z-index:1}
-@media(prefers-reduced-motion:reduce){#morya-ambient-bg::before,#morya-ambient-bg::after,#morya-ambient-bg .morya-burst{animation:none!important}}
+@media(prefers-reduced-motion:reduce){#morya-ambient-bg::before,#morya-ambient-bg::after{animation-duration:40s!important}#morya-ambient-bg .morya-burst{animation-duration:8s!important}}
 </style>
 </head>
 <body>
