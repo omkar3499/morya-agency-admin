@@ -847,21 +847,25 @@ renderW();
  let audio=null;
  function playNatureLikeSound(){
    try{
-    const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
-    audio=new Ctx();if(audio.state==='suspended')audio.resume().catch(()=>{});
-    const start=audio.currentTime+.15;
-    for(let rep=0;rep<3;rep++){
-      if(isNight){
-        [[520,.38,0,360],[420,.42,.45,295]].forEach(([freq,dur,offset,end])=>{
-          const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,start+rep*1.15+offset);o.frequency.exponentialRampToValueAtTime(end,start+rep*1.15+offset+dur);g.gain.setValueAtTime(.0001,start+rep*1.15+offset);g.gain.linearRampToValueAtTime(.045,start+rep*1.15+offset+.04);g.gain.exponentialRampToValueAtTime(.0001,start+rep*1.15+offset+dur);o.connect(g);g.connect(audio.destination);o.start(start+rep*1.15+offset);o.stop(start+rep*1.15+offset+dur+.02);
-        });
-      }else{
-        [0,.18,.4].forEach((offset,i)=>{const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(1900+i*230,start+rep*1.05+offset);o.frequency.exponentialRampToValueAtTime(2600+i*160,start+rep*1.05+offset+.12);g.gain.setValueAtTime(.0001,start+rep*1.05+offset);g.gain.linearRampToValueAtTime(.018,start+rep*1.05+offset+.025);g.gain.exponentialRampToValueAtTime(.0001,start+rep*1.05+offset+.15);o.connect(g);g.connect(audio.destination);o.start(start+rep*1.05+offset);o.stop(start+rep*1.05+offset+.17);});
-      }
-    }
+    const sound=new Audio(isNight
+      ? 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Owlcall.ogg'
+      : 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Bird_singing.ogg');
+    audio=sound;
+    sound.preload='auto';
+    sound.volume=0.75;
+    let plays=0;
+    const playOnce=()=>{
+      if(plays>=3||!overlay.isConnected)return;
+      plays++;
+      sound.currentTime=0;
+      sound.play().then(()=>{
+        sound.onended=()=>{if(plays<3)setTimeout(playOnce,180);};
+      }).catch(()=>{});
+    };
+    playOnce();
    }catch(e){}
  }
- function finish(){overlay.style.opacity='0';if(audio){audio.close().catch(()=>{});audio=null;}setTimeout(()=>overlay.remove(),470);}
+ function finish(){overlay.style.opacity='0';if(audio){audio.pause();audio.currentTime=0;audio=null;}setTimeout(()=>overlay.remove(),470);}
  playNatureLikeSound();
  setTimeout(finish,5200);
 })();
