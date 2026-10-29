@@ -800,71 +800,48 @@ renderW();
 
 
 <style id="morya-welcome-overlay-style">
-#moryaWelcome{position:fixed;inset:0;z-index:999999;background:radial-gradient(ellipse at 50% 42%,#243d63 0%,#111b32 48%,#080b16 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:22px 16px;font-family:Arial,sans-serif;overflow:auto}
-#moryaWelcome.night{background:radial-gradient(ellipse at 50% 35%,#292852 0%,#11152e 48%,#070914 100%)}
-#moryaWelcome .mw-wrap{width:min(100%,440px);display:flex;flex-direction:column;align-items:center;gap:20px}
-#moryaWelcome .mw-scene{width:100%;height:min(58vh,440px);min-height:330px;border:1px solid #ffffff20;border-radius:30px;background:linear-gradient(150deg,#ffffff0c,#ffffff03);box-shadow:0 20px 80px #0005,inset 0 1px #ffffff10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:25px;position:relative;overflow:hidden;cursor:pointer}
-#moryaWelcome .mw-orbit{position:absolute;width:280px;height:280px;border:1px solid #ffffff10;border-radius:50%}
-#moryaWelcome .mw-orbit:after{content:"";position:absolute;inset:28px;border:1px dashed #ffffff28;border-radius:50%;animation:mwRotate 18s linear infinite}
-#moryaWelcome .mw-celestial{width:122px;height:122px;position:relative;flex-shrink:0;z-index:1}
-#moryaWelcome .mw-sun{border-radius:50%;background:radial-gradient(circle at 32% 27%,#fffbd1 0%,#ffe45c 29%,#ffb52b 64%,#ff7b24 100%);box-shadow:0 0 22px #ffdf5c,0 0 58px #ffb52b99,0 0 110px #ff9e2455;animation:mwRise 2.2s cubic-bezier(.2,.8,.2,1) both,mwPulse 3s ease-in-out 2.2s infinite}
-#moryaWelcome .mw-sun:before{content:"";position:absolute;inset:-22px;border:3px solid #ffcd4d88;border-radius:50%;border-top-color:#fff1a8;border-bottom-color:#ff9b27;animation:mwRotate 12s linear infinite}
-#moryaWelcome .mw-sun:after{content:"";position:absolute;inset:-12px;border:1px dashed #ffe9a8bb;border-radius:50%;animation:mwRotate 20s linear infinite reverse}
+#moryaWelcome{position:fixed;inset:0;z-index:999999;background:radial-gradient(ellipse at 50% 48%,#243d63 0%,#111b32 48%,#080b16 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font-family:Arial,sans-serif;overflow:hidden;opacity:1;transition:opacity .45s}
+#moryaWelcome.night{background:radial-gradient(ellipse at 50% 42%,#292852 0%,#11152e 48%,#070914 100%)}
+#moryaWelcome .mw-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;width:100%;height:100%}
+#moryaWelcome .mw-celestial{width:clamp(125px,34vw,190px);height:clamp(125px,34vw,190px);position:relative;flex-shrink:0}
+#moryaWelcome .mw-sun{border-radius:50%;background:radial-gradient(circle at 32% 27%,#fffbd1 0%,#ffe45c 29%,#ffb52b 64%,#ff7b24 100%);box-shadow:0 0 28px #ffdf5c,0 0 75px #ffb52b99,0 0 150px #ff9e2455;animation:mwRise 2.3s cubic-bezier(.2,.8,.2,1) both,mwPulse 3s ease-in-out 2.3s infinite}
+#moryaWelcome .mw-sun:before{content:"";position:absolute;inset:-23px;border:4px solid #ffcd4d88;border-radius:50%;border-top-color:#fff1a8;border-bottom-color:#ff9b27;animation:mwRotate 12s linear infinite}
+#moryaWelcome .mw-sun:after{content:"";position:absolute;inset:-13px;border:1px dashed #ffe9a8bb;border-radius:50%;animation:mwRotate 20s linear infinite reverse}
 #moryaWelcome .mw-face{position:absolute;inset:0;z-index:2}
-#moryaWelcome .mw-eye{position:absolute;top:41%;width:8px;height:13px;border-radius:50%;background:#704019}
+#moryaWelcome .mw-eye{position:absolute;top:41%;width:7%;height:11%;border-radius:50%;background:#704019}
 #moryaWelcome .mw-eye.l{left:31%}#moryaWelcome .mw-eye.r{right:31%}
 #moryaWelcome .mw-smile{position:absolute;left:37%;top:48%;width:26%;height:17%;border-bottom:4px solid #704019;border-radius:0 0 24px 24px}
-#moryaWelcome .mw-cheek{position:absolute;top:53%;width:13px;height:7px;border-radius:50%;background:#ff875d88}
+#moryaWelcome .mw-cheek{position:absolute;top:53%;width:11%;height:6%;border-radius:50%;background:#ff875d88}
 #moryaWelcome .mw-cheek.l{left:19%}#moryaWelcome .mw-cheek.r{right:19%}
-#moryaWelcome .mw-moon{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffef1,#e4e7f9 60%,#aab8df);box-shadow:0 0 24px #e9edff,0 0 62px #9fafff66;animation:mwRise 2s cubic-bezier(.2,.8,.2,1) both,mwFloat 4s ease-in-out 2s infinite}
-#moryaWelcome .mw-moon:after{content:"";position:absolute;inset:8px 0 0 28px;background:#171b39;border-radius:50%;box-shadow:-7px -4px 0 #171b39}
-#moryaWelcome .mw-title{z-index:1;font-weight:900;font-size:clamp(25px,7vw,40px);letter-spacing:3px;text-align:center;text-shadow:0 3px 22px #0008;animation:mwPop .7s ease-out 2.05s both;color:#ffe69a}
+#moryaWelcome .mw-moon{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffef1,#e4e7f9 60%,#aab8df);box-shadow:0 0 30px #e9edff,0 0 75px #9fafff66;animation:mwMoonRise 2.2s cubic-bezier(.2,.8,.2,1) both,mwFloat 4s ease-in-out 2.2s infinite}
+#moryaWelcome .mw-moon:after{content:"";position:absolute;inset:7% -8% -3% 28%;background:#171b39;border-radius:50%;box-shadow:-9px -5px 0 #171b39}
+#moryaWelcome .mw-title{font-weight:900;font-size:clamp(28px,8vw,48px);letter-spacing:3px;text-shadow:0 3px 24px #0008;animation:mwPop .7s ease-out 2.05s both;color:#ffe69a}
 #moryaWelcome.night .mw-title{color:#e2e7ff}
-#moryaWelcome .mw-sub{z-index:1;font-size:12px;letter-spacing:4px;opacity:.72;text-align:center;margin-top:-14px}
-#moryaWelcome .mw-choices{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-#moryaWelcome .mw-choice{border:1px solid #ffffff25;background:#ffffff09;color:white;border-radius:18px;padding:13px 10px;display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;font:inherit}
-#moryaWelcome .mw-choice.active{border-color:#ffd56b;background:#ffca4920}
-#moryaWelcome .mw-choice .mw-icon{font-size:28px}
-#moryaWelcome .mw-choice b{display:block;font-size:13px;margin-bottom:4px}
-#moryaWelcome .mw-choice small{font-size:10px;opacity:.65}
-#moryaWelcome .mw-sound{border:1px solid #ffffff30;background:#ffffff0b;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;cursor:pointer}
-#moryaWelcome .mw-hint{font-size:11px;opacity:.55;text-align:center}
-@keyframes mwRise{0%{transform:translateY(40vh) scale(.45);opacity:0}15%{opacity:1}70%{transform:translateY(-8px) scale(1.08)}100%{transform:translateY(0) scale(1);opacity:1}}
-@keyframes mwPop{0%{opacity:0;transform:translateY(15px) scale(.55)}75%{opacity:1;transform:translateY(0) scale(1.08)}100%{opacity:1;transform:scale(1)}}
-@keyframes mwPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)}}
-@keyframes mwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#moryaWelcome .mw-brand{font-size:12px;letter-spacing:5px;opacity:.72;margin-top:-18px}
+#moryaWelcome .mw-hint{position:absolute;bottom:7%;left:0;right:0;font-size:11px;letter-spacing:1px;opacity:.42;text-align:center}
+@keyframes mwRise{0%{transform:translateY(48vh) scale(.42);opacity:0}15%{opacity:1}70%{transform:translateY(-8px) scale(1.08)}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes mwMoonRise{0%{transform:translateY(43vh) scale(.45) rotate(-18deg);opacity:0}100%{transform:translateY(0) scale(1) rotate(0);opacity:1}}
+@keyframes mwPop{0%{opacity:0;transform:translateY(18px) scale(.55)}75%{opacity:1;transform:translateY(0) scale(1.08)}100%{opacity:1;transform:scale(1)}}
+@keyframes mwPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.13)}}
+@keyframes mwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes mwRotate{to{transform:rotate(360deg)}}
-@media(max-height:650px){#moryaWelcome .mw-scene{height:48vh;min-height:280px}#moryaWelcome .mw-celestial{width:96px;height:96px}#moryaWelcome .mw-wrap{gap:12px}}
 @media(prefers-reduced-motion:reduce){#moryaWelcome *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 </style>
 <div id="moryaWelcome" aria-label="Morya Agency welcome animation">
- <div class="mw-wrap">
-  <div class="mw-scene" id="mwScene">
-   <div class="mw-orbit"></div>
-   <div class="mw-celestial mw-sun" id="mwCelestial"><span class="mw-face"><i class="mw-eye l"></i><i class="mw-eye r"></i><i class="mw-smile"></i><i class="mw-cheek l"></i><i class="mw-cheek r"></i></span></div>
-   <div class="mw-title" id="mwTitle">GOOD MORNING</div><div class="mw-sub">MORYA AGENCY</div>
-  </div>
-  <div class="mw-choices">
-   <button type="button" class="mw-choice active" id="mwMorning"><span class="mw-icon">🌞</span><span><b>Sun Animation</b><small>Morning welcome</small></span></button>
-   <button type="button" class="mw-choice" id="mwNight"><span class="mw-icon">🌙</span><span><b>Moon Animation</b><small>Evening welcome</small></span></button>
-  </div>
-  <button type="button" class="mw-sound" id="mwSound">🔊 Sound Effects: ON</button>
-  <div class="mw-hint">Sun / Moon निवडा • पुढे जाण्यासाठी animation वर tap करा</div>
+ <div class="mw-content">
+  <div class="mw-celestial mw-sun" id="mwCelestial"><span class="mw-face"><i class="mw-eye l"></i><i class="mw-eye r"></i><i class="mw-smile"></i><i class="mw-cheek l"></i><i class="mw-cheek r"></i></span></div>
+  <div class="mw-title" id="mwTitle">GOOD MORNING</div><div class="mw-brand">MORYA AGENCY</div>
  </div>
+ <div class="mw-hint">पुढे जाण्यासाठी स्क्रीनवर टॅप करा</div>
 </div>
 <script id="morya-welcome-overlay-script">
 (function(){
  const overlay=document.getElementById('moryaWelcome');if(!overlay)return;
- const celestial=document.getElementById('mwCelestial'),title=document.getElementById('mwTitle'),morning=document.getElementById('mwMorning'),night=document.getElementById('mwNight'),sound=document.getElementById('mwSound');
- let soundOn=true,ctx=null,mode='sun';
- function tone(freq,delay,duration,volume){if(!soundOn)return;try{ctx=ctx||new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+delay;o.type='sine';o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(volume||.03,t+.04);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+duration+.03)}catch(e){}}
- function chime(n){if(!soundOn)return;if(n==='moon'){tone(659,0,.5,.028);tone(784,.2,.6,.025);tone(988,.4,.7,.02)}else{tone(523,0,.35,.03);tone(659,.16,.4,.03);tone(784,.32,.5,.025);tone(1047,.5,.65,.02)}}
- function replay(){celestial.style.animation='none';title.style.animation='none';void celestial.offsetWidth;celestial.style.animation='';title.style.animation=''}
- function setMode(n){mode=n;overlay.classList.toggle('night',n==='moon');celestial.className='mw-celestial '+(n==='moon'?'mw-moon':'mw-sun');celestial.innerHTML=n==='moon'?'':'<span class="mw-face"><i class="mw-eye l"></i><i class="mw-eye r"></i><i class="mw-smile"></i><i class="mw-cheek l"></i><i class="mw-cheek r"></i></span>';title.textContent=n==='moon'?'GOOD EVENING':'GOOD MORNING';morning.classList.toggle('active',n==='sun');night.classList.toggle('active',n==='moon');replay();chime(n)}
- morning.addEventListener('click',e=>{e.stopPropagation();setMode('sun')});night.addEventListener('click',e=>{e.stopPropagation();setMode('moon')});
- sound.addEventListener('click',e=>{e.stopPropagation();soundOn=!soundOn;sound.textContent=soundOn?'🔊 Sound Effects: ON':'🔇 Sound Effects: OFF';if(soundOn)chime(mode)});
- overlay.addEventListener('click',e=>{if(e.target.closest('button'))return;overlay.style.opacity='0';overlay.style.transition='opacity .35s';setTimeout(()=>overlay.remove(),360)});
- const h=new Date().getHours();setMode(h>=18||h<5?'moon':'sun');
+ const celestial=document.getElementById('mwCelestial'),title=document.getElementById('mwTitle');
+ const hour=new Date().getHours(),isNight=hour>=19;
+ if(isNight){overlay.classList.add('night');celestial.className='mw-celestial mw-moon';celestial.innerHTML='';title.textContent='GOOD EVENING';}
+ else{celestial.className='mw-celestial mw-sun';title.textContent='GOOD MORNING';}
+ overlay.addEventListener('click',()=>{overlay.style.opacity='0';setTimeout(()=>overlay.remove(),460)},{once:true});
 })();
 </script>
 
