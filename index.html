@@ -402,25 +402,30 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 </main>
 
 <script id="morya-login-fallback">
-function initMoryaLoginFallback(){
- const form=document.getElementById('loginForm'),btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
- if(!form||!btn||!msg)return;
- form.addEventListener('submit',async function(e){
-  e.preventDefault();e.stopImmediatePropagation();btn.disabled=true;msg.className='msg ok';msg.textContent='Login checking...';
-  let timer;
-  try{
-   if(!navigator.onLine)throw new Error('Internet connection nahi. Mobile data/Wi-Fi tapasa.');
-   if(!window.supabase||!window.supabase.createClient)throw new Error('Login service load nahi zali. Browser refresh kara.');
-   const client=window.supabase.createClient('https://glmdkfwxedxyhhmdetzh.supabase.co','sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:window.localStorage,storageKey:'morya-agency-admin-auth-v1'}});
-   const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('12 second madhye Supabase response nahi. Internet/VPN tapasa; punha try kara.')),12000)});
-   const result=await Promise.race([client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value}),timeout]);
-   if(result.error)throw result.error;
-   msg.textContent='Login successful. Dashboard reload hot aahe...';location.reload();
-  }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err&&err.message?err.message:'Unknown error');}
-  finally{clearTimeout(timer);btn.disabled=false;}
- },true);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initMoryaLoginFallback);else initMoryaLoginFallback();
+(function(){
+ function bindLogin(){
+  const form=document.getElementById('loginForm'),btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
+  if(!form||!btn||!msg||form.dataset.moryaFallbackBound==='1')return;
+  form.dataset.moryaFallbackBound='1';
+  form.addEventListener('submit',async function(e){
+   e.preventDefault();e.stopImmediatePropagation();
+   btn.disabled=true;msg.className='msg ok';msg.textContent='Login checking...';
+   let timer=null;
+   try{
+    if(!navigator.onLine)throw new Error('Internet connection nahi. Internet tapasa.');
+    if(!window.db && typeof db==='undefined')throw new Error('Admin database initialize zala nahi. Page reload kara.');
+    const client=(typeof db!=='undefined')?db:window.db;
+    const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('10 second madhye server response nahi. Connection / Supabase service tapasa.')),10000);});
+    const result=await Promise.race([client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value}),timeout]);
+    if(result.error)throw result.error;
+    msg.className='msg ok';msg.textContent='Login successful. Dashboard ughadat aahe...';
+    if(typeof showDashboard==='function')await showDashboard();else location.reload();
+   }catch(err){msg.className='msg';msg.textContent='Login failed: '+(err&&err.message?err.message:String(err));}
+   finally{if(timer)clearTimeout(timer);btn.disabled=false;}
+  },true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindLogin);else bindLogin();
+})();
 </script>
 <script>
 const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
