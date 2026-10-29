@@ -888,10 +888,36 @@ async function loadCustomers(){
 }
 async function loadReports(){
  const el=$('reportsContent');if(!el)return;el.textContent='Loading reports...';
- const [pr,orr]=await Promise.all([db.from('products').select('id,name,stock,price,purchase_price,category'),db.from('orders').select('id,total_amount,status,created_at')]);
- if(pr.error||orr.error){el.innerHTML='<div class="msg">❌ '+esc(pr.error?.message||orr.error?.message)+'</div>';return}
- const products=pr.data||[],orders=orr.data||[];const sales=orders.reduce((s,o)=>s+Number(o.total_amount||0),0);const low=products.filter(p=>Number(p.stock||0)<=5);const stockValue=products.reduce((s,p)=>s+Number(p.stock||0)*Number(p.price||0),0);const byStatus={};orders.forEach(o=>{const st=o.status||'Pending';byStatus[st]=(byStatus[st]||0)+1});
- el.innerHTML=`<div class="stats"><div class="stat"><small>Total Orders</small><strong>${orders.length}</strong></div><div class="stat"><small>Order Value</small><strong>₹${sales.toFixed(0)}</strong></div><div class="stat"><small>Products</small><strong>${products.length}</strong></div><div class="stat"><small>Low Stock</small><strong>${low.length}</strong></div></div><div class="item"><h3>Order Status</h3>${Object.entries(byStatus).map(([k,v])=>`<p>${esc(k)}: <b>${v}</b></p>`).join('')||'<p>No orders</p>'}</div><div class="item"><h3>Low Stock Products (≤ 5)</h3>${low.map(p=>`<p>${esc(p.name)} — ${Number(p.stock||0)} in stock</p>`).join('')||'<p>None</p>'}</div><p class="small">Approximate stock retail value: ₹${stockValue.toFixed(2)}. Profit and customer purchase totals depend on available database fields and are not claimed here.</p>`;
+ try{
+  const [pr,orr,ir,privr]=await Promise.all([
+   db.from('products').select('id,name,stock,price,purchase_price,category'),
+   db.from('orders').select('id,total_amount,status,created_at').order('created_at',{ascending:false}),
+   db.from('order_items').select('order_id,product_id,quantity,price'),
+   db.from('product_private').select('product_id,purchase_price,profit')
+  ]);
+  const err=[pr,orr,ir,privr].find(x=>x.error);if(err)throw err.error;
+  const products=pr.data||[],orders=orr.data||[],items=ir.data||[],privates=privr.data||[];
+  const todayKey=new Date().toLocaleDateString('en-CA');
+  const todayOrders=orders.filter(o=>o.created_at&&new Date(o.created_at).toLocaleDateString('en-CA')===todayKey&&String(o.status||'').toLowerCase()!=='cancelled');
+  const completedOrders=orders.filter(o=>String(o.status||'').toLowerCase()!=='cancelled');
+  const sales=completedOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const todaySales=todayOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const privMap=new Map(privates.map(x=>[String(x.product_id),x]));
+  const productMap=new Map(products.map(x=>[String(x.id),x]));
+  const orderMap=new Map(orders.map(x=>[String(x.id),x]));
+  let estimatedProfit=0,todayProfit=0;
+  for(const it of items){
+   const ord=orderMap.get(String(it.order_id));if(!ord||String(ord.status||'').toLowerCase()==='cancelled')continue;
+   const cost=Number(privMap.get(String(it.product_id))?.purchase_price??productMap.get(String(it.product_id))?.purchase_price??0);
+   const profit=(Number(it.price||0)-cost)*Number(it.quantity||0);
+   estimatedProfit+=profit;
+   if(ord.created_at&&new Date(ord.created_at).toLocaleDateString('en-CA')===todayKey)todayProfit+=profit;
+  }
+  const low=products.filter(p=>Number(p.stock||0)<=5);
+  const stockValue=products.reduce((s,p)=>s+Number(p.stock||0)*Number(p.price||0),0);
+  const byStatus={};orders.forEach(o=>{const st=o.status||'Pending';byStatus[st]=(byStatus[st]||0)+1});
+  el.innerHTML=`<div class="stats"><div class="stat"><small>Today's Sales</small><strong>₹${todaySales.toFixed(0)}</strong></div><div class="stat"><small>Today's Est. Profit</small><strong>₹${todayProfit.toFixed(0)}</strong></div><div class="stat"><small>All-Time Sales</small><strong>₹${sales.toFixed(0)}</strong></div><div class="stat"><small>All-Time Est. Profit</small><strong>₹${estimatedProfit.toFixed(0)}</strong></div><div class="stat"><small>Total Orders</small><strong>${orders.length}</strong></div><div class="stat"><small>Products</small><strong>${products.length}</strong></div><div class="stat"><small>Low Stock</small><strong>${low.length}</strong></div></div><div class="item"><h3>Order Status</h3>${Object.entries(byStatus).map(([k,v])=>`<p>${esc(k)}: <b>${v}</b></p>`).join('')||'<p>No orders</p>'}</div><div class="item"><h3>Low Stock Products (≤ 5)</h3>${low.map(p=>`<p>${esc(p.name)} — ${Number(p.stock||0)} in stock</p>`).join('')||'<p>None</p>'}</div><p class="small">नफा अंदाजे आहे: प्रत्येक order item चा sale rate आणि उपलब्ध current purchase price वापरला आहे. जुना purchase price उपलब्ध नसल्यास नफा अचूक नसेल. Cancelled orders वगळले आहेत. Approximate stock retail value: ₹${stockValue.toFixed(2)}.</p>`;
+ }catch(e){el.innerHTML='<div class="msg">❌ Report load error: '+esc(e.message||e)+'</div>'}
 }
 async function exportReportsCSV(){
  try{
