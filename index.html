@@ -1036,7 +1036,7 @@ async function deleteAd(id){if(!confirm('हा advertisement delete करा�
  catch(e){console.warn('Session restore failed:',e.message||e);$('loginMsg').className='msg';$('loginMsg').textContent='Session restore failed. Please login again.';}
 })();
 db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){ $('dashboard').classList.add('hidden');$('loginBox').classList.remove('hidden');$('logoutBtn').classList.add('hidden');if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(false);}else if(session){if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);}});
-</script>
+<\/script>
 
 <script>
 // Final navigation fix: one workspace, no jumping to the bottom.
