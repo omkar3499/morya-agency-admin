@@ -867,6 +867,12 @@ renderW();
  }
  function finish(){overlay.style.opacity='0';if(audio){if(typeof audio.close==='function')audio.close().catch(()=>{});else if(typeof audio.pause==='function'){audio.pause();audio.currentTime=0;}audio=null;}setTimeout(()=>overlay.remove(),470);}
  playNatureLikeSound();
+ /* Fail-safe: remove the welcome layer promptly and never let it block taps in WebViews. */
+ overlay.style.setProperty('pointer-events','none','important');
+ const removeWelcome=()=>{if(overlay.isConnected)overlay.remove();if(audio){if(typeof audio.close==='function')audio.close().catch(()=>{});else if(typeof audio.pause==='function')audio.pause();audio=null;}};
+ overlay.addEventListener('touchstart',removeWelcome,{passive:true,once:true});
+ overlay.addEventListener('click',removeWelcome,{once:true});
+ setTimeout(removeWelcome,5300);
  setTimeout(finish,5200);
 })();
 </script>
