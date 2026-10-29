@@ -565,15 +565,15 @@ function buildReview(){
 }
 
 async function uploadProductImages(productId){
- if(!selectedImageFiles.length)return $('pImage').value.trim()||null;
- let mainUrl=null;
+ if(!selectedImageFiles.length)return {mainUrl:$('pImage').value.trim()||null,urls:null};
+ const urls=[];
  for(let i=0;i<selectedImageFiles.length;i++){
-   const file=selectedImageFiles[i];const ext='jpg';const path=`products/${productId}/${makeId()}.${ext}`;
+   const file=selectedImageFiles[i];const path=`products/${productId}/${makeId()}.jpg`;
    const up=await db.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type});
    if(up.error)throw new Error('Image upload failed: '+up.error.message);
-   const pub=db.storage.from('product-images').getPublicUrl(path);if(i===0)mainUrl=pub.data.publicUrl;
+   urls.push(db.storage.from('product-images').getPublicUrl(path).data.publicUrl);
  }
- return mainUrl;
+ return {mainUrl:urls[0]||null,urls};
 }
 
 function clearProductForm(){
@@ -594,7 +594,7 @@ async function saveProduct(){
  catch(err){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='❌ Save failed: '+(err.message||err);return}
  if(r.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='❌ '+r.error.message;return}
  const pid=id||r.data.id;
- try{const img=await uploadProductImages(pid);if(img){const u=await db.from('products').update({image_url:img}).eq('id',pid);if(u.error)throw new Error(u.error.message);}}
+ try{const imgs=await uploadProductImages(pid);const updates={};if(imgs.mainUrl)updates.image_url=imgs.mainUrl;if(imgs.urls)updates.image_gallery=imgs.urls;if(Object.keys(updates).length){const u=await db.from('products').update(updates).eq('id',pid);if(u.error)throw new Error(u.error.message);}}
  catch(e){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but '+e.message;return}
  const priv={product_id:pid,purchase_price:Number($('pPurchase').value||0),profit:Number($('pPrice').value||0)-Number($('pPurchase').value||0),imei_1:null,imei_2:null,serial_no:null,updated_at:new Date().toISOString()};
  const q=await db.from('product_private').upsert(priv,{onConflict:'product_id'});
