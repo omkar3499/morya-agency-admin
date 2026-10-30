@@ -544,7 +544,7 @@ sb.auth.getSession().then(({data})=>{
 });
 document.getElementById('cartBtn').onclick=()=>alert('Cart → Checkout → Login → Address → Delivery → Done');
 document.getElementById('ordersBtn').onclick=()=>alert('My Orders → Login → Your orders and status');
-document.getElementById('settingsBtn').onclick=()=>document.getElementById('settingsModal').style.display='flex';
+document.getElementById('settingsBtn').onclick=()=>{if(window.moryaShowSettings)window.moryaShowSettings();else document.getElementById('settingsModal').style.display='flex'};
 function callSupport(){window.location.href='tel:7262822323';}
 function openWhatsApp(){const text=encodeURIComponent('Hello Morya Agency, I need customer support.'); const url='https://api.whatsapp.com/send?phone=917262822323&text='+text; const w=window.open(url,'_blank'); if(!w){window.location.href=url;}}
 (function(){
