@@ -544,15 +544,13 @@ async function submitCustomerAuth(){
   if(customerAuthMode==='signup'){
    const {data,error}=await timeout(sb.auth.signUp({email,password,options:{data:{full_name:name,mobile}}}));
    if(error)throw error;
-   if(data.session){state.name=name;state.mobile=mobile;save();document.getElementById('loginModal').style.display='none';renderAccount();return;}
+   if(data.session){const key='morya_store_v2';let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){}saved.name=name;saved.mobile=mobile;localStorage.setItem(key,JSON.stringify(saved));msg.textContent='Account created successfully. Refreshing...';setTimeout(()=>location.reload(),500);return;}
    msg.textContent='Account created. Check your email to confirm the account, then log in.';
    return;
   }
   const {data,error}=await timeout(sb.auth.signInWithPassword({email,password}));
   if(error)throw error;
-  state.name=data.user?.user_metadata?.full_name||state.name||'Customer';
-  state.mobile=data.user?.user_metadata?.mobile||state.mobile||'';
-  save();document.getElementById('loginModal').style.display='none';sync();renderAccount();
+  const key='morya_store_v2';let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){}saved.name=data.user?.user_metadata?.full_name||saved.name||name||'Customer';saved.mobile=data.user?.user_metadata?.mobile||saved.mobile||mobile||'';localStorage.setItem(key,JSON.stringify(saved));msg.textContent='Login successful. Refreshing...';setTimeout(()=>location.reload(),500);return;
  }catch(err){
   msg.textContent=(err&&err.message&&err.message.includes('timed out'))?err.message:('Login failed: '+(err?.message||'Unable to connect. Check internet and try again.'));
  }finally{
