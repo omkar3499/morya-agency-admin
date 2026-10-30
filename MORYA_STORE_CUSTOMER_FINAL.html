@@ -171,6 +171,13 @@ button{cursor:pointer}
 body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){#morya-ambient-bg::before,#morya-ambient-bg::after{animation-duration:40s!important}#morya-ambient-bg .morya-burst{animation-duration:8s!important}}
 </style>
+<style id="morya-product-detail-mobile-fix">
+#detailModal{position:fixed!important;inset:0!important;z-index:2147483000!important;display:none;align-items:center!important;justify-content:center!important;padding:10px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important}
+#detailModal[style*="display: flex"],#detailModal[style*="display:flex"]{display:flex!important}
+#detailModal .box{position:relative!important;z-index:2147483001!important;width:min(460px,100%)!important;max-height:92vh!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+#detailModal .boxBody{display:block!important;visibility:visible!important;opacity:1!important;padding-bottom:24px!important}
+#detailModal .primary{display:block!important;visibility:visible!important;opacity:1!important;min-height:46px!important;position:relative!important;z-index:2!important;touch-action:manipulation!important}
+</style>
 </head>
 <body>
 <canvas id="morya-fireworks-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:0"></canvas>
