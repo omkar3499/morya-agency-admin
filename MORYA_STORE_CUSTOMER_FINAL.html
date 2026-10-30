@@ -529,23 +529,35 @@ async function submitCustomerAuth(){
  const mobile=(document.getElementById('authMobile').value||'').replace(/\D/g,'');
  const email=(document.getElementById('authEmail').value||'').trim().toLowerCase();
  const password=document.getElementById('authPassword').value||'';
- const msg=document.getElementById('loginMsg');msg.style.display='block';msg.textContent='Please wait...';
+ const msg=document.getElementById('loginMsg');
+ const btn=document.getElementById('authSubmit');
+ const oldLabel=btn?btn.textContent:'Login';
+ msg.style.display='block';
  if(!/^\S+@\S+\.\S+$/.test(email)){msg.textContent='Please enter a valid email address.';return;}
  if(password.length<6){msg.textContent='Password must be at least 6 characters.';return;}
- if(customerAuthMode==='signup'){
-  if(!name){msg.textContent='Please enter your full name.';return;}
-  if(mobile.length!==10){msg.textContent='Please enter a valid 10 digit mobile number.';return;}
-  const {data,error}=await sb.auth.signUp({email,password,options:{data:{full_name:name,mobile}}});
-  if(error){msg.textContent='Account creation failed: '+error.message;return;}
-  if(data.session){state.name=name;state.mobile=mobile;save();document.getElementById('loginModal').style.display='none';renderAccount();msg.textContent='Account created successfully.';return;}
-  msg.textContent='Account created. Check your email to confirm the account, then log in. If confirmation is disabled in Supabase, you can log in now.';
-  return;
+ if(customerAuthMode==='signup'&&!name){msg.textContent='Please enter your full name.';return;}
+ if(customerAuthMode==='signup'&&mobile.length!==10){msg.textContent='Please enter a valid 10 digit mobile number.';return;}
+ if(btn){btn.disabled=true;btn.textContent='Please wait...';}
+ msg.textContent='Connecting securely...';
+ const timeout=(promise)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Connection timed out. Check internet and try again.')),15000))]);
+ try{
+  if(customerAuthMode==='signup'){
+   const {data,error}=await timeout(sb.auth.signUp({email,password,options:{data:{full_name:name,mobile}}}));
+   if(error)throw error;
+   if(data.session){state.name=name;state.mobile=mobile;save();document.getElementById('loginModal').style.display='none';renderAccount();return;}
+   msg.textContent='Account created. Check your email to confirm the account, then log in.';
+   return;
+  }
+  const {data,error}=await timeout(sb.auth.signInWithPassword({email,password}));
+  if(error)throw error;
+  state.name=data.user?.user_metadata?.full_name||state.name||'Customer';
+  state.mobile=data.user?.user_metadata?.mobile||state.mobile||'';
+  save();document.getElementById('loginModal').style.display='none';sync();renderAccount();
+ }catch(err){
+  msg.textContent=(err&&err.message&&err.message.includes('timed out'))?err.message:('Login failed: '+(err?.message||'Unable to connect. Check internet and try again.'));
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent=oldLabel;}
  }
- const {data,error}=await sb.auth.signInWithPassword({email,password});
- if(error){msg.textContent='Login failed: '+error.message;return;}
- state.name=data.user?.user_metadata?.full_name||state.name||'Customer';
- state.mobile=data.user?.user_metadata?.mobile||state.mobile||'';
- save();document.getElementById('loginModal').style.display='none';sync();renderAccount();
 }
 async function resetCustomerPassword(){
  const email=(document.getElementById('authEmail').value||'').trim().toLowerCase();
