@@ -728,7 +728,7 @@ body{padding-bottom:92px}
      if(error) throw error; orderId=data.id;
      const itemRows=state.cart.filter(x=>x.product_id||x.id).map(x=>({order_id:orderId,product_id:x.product_id||x.id,quantity:x.qty,price:x.price}));
      if(itemRows.length){const ir=await sb.from('order_items').insert(itemRows);if(ir.error)console.warn('order_items insert failed',ir.error)}
-   }catch(e){ console.error('Order cloud insert failed',e); alert('ऑर्डर सर्व्हरवर सेव्ह झाली नाही. इंटरनेट तपासा आणि पुन्हा प्रयत्न करा. तुमची Cart रिकामी केलेली नाही.'); return; }
+   }catch(e){ console.error('Order cloud insert failed',e); const detail=String(e?.message||e?.details||e?.hint||'Unknown server error'); alert('ऑर्डर सेव्ह झाली नाही. कारण: '+detail+'\n\nCart रिकामी केलेली नाही. हा मेसेजचा स्क्रीनशॉट पाठवा.'); return; }
    state.orders.unshift({id:orderId,date:new Date().toLocaleString('en-IN'),total,status:'Order Received',payment:'Cash on Delivery',items});
    state.reward=Math.max(0,state.reward-rewardUsed)+earned; state.usedReward=0; state.cart=[]; save(); sync(); closeModal('msCheckoutModal'); renderOrders();
    const wa='https://api.whatsapp.com/send?phone=917262822323&text='+encodeURIComponent('🛒 NEW ORDER - MORYA AGENCY\nOrder: #'+String(orderId).slice(-8)+'\nCustomer: '+name+'\nMobile: '+mobile+'\nAmount: ₹'+total+'\nPayment: Cash on Delivery\nStatus: Order Received');
