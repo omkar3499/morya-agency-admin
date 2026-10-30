@@ -524,6 +524,7 @@ async function openCustomerLogin(){
   msg.textContent='Login is open, but account status could not be checked. You can still try Login. '+(err?.message||'');
  }
 }
+async function syncRegisteredCustomerProfile(user,fullName,mobile){try{if(!user||!user.email)return;const email=String(user.email).trim().toLowerCase();const payload={full_name:fullName||user.user_metadata?.full_name||'Customer',mobile:mobile||user.user_metadata?.mobile||'',email};const found=await sb.from('customer_profiles').select('email').eq('email',email).limit(1);if(found.error)throw found.error;if(found.data&&found.data.length){const upd=await sb.from('customer_profiles').update(payload).eq('email',email);if(upd.error)throw upd.error;}else{const ins=await sb.from('customer_profiles').insert(payload);if(ins.error)throw ins.error;}return true;}catch(e){console.warn('Customer profile sync failed:',e?.message||e);return false;}}
 async function submitCustomerAuth(){
  const name=(document.getElementById('authName').value||'').trim();
  const mobile=(document.getElementById('authMobile').value||'').replace(/\D/g,'');
@@ -544,13 +545,13 @@ async function submitCustomerAuth(){
   if(customerAuthMode==='signup'){
    const {data,error}=await timeout(sb.auth.signUp({email,password,options:{data:{full_name:name,mobile}}}));
    if(error)throw error;
-   if(data.session){const profileName=name||data.user?.user_metadata?.full_name||'Customer';const profileMobile=mobile||data.user?.user_metadata?.mobile||'';if(typeof window.msSetCustomerProfile==='function')window.msSetCustomerProfile(profileName,profileMobile);msg.textContent='Account created successfully.';document.getElementById('loginModal').style.display='none';return;}
+   if(data.session){const profileName=name||data.user?.user_metadata?.full_name||'Customer';const profileMobile=mobile||data.user?.user_metadata?.mobile||'';if(typeof window.msSetCustomerProfile==='function')window.msSetCustomerProfile(profileName,profileMobile);await syncRegisteredCustomerProfile(data.user,profileName,profileMobile);msg.textContent='Account created successfully.';document.getElementById('loginModal').style.display='none';return;}
    msg.textContent='Account created. Check your email to confirm the account, then log in.';
    return;
   }
   const {data,error}=await timeout(sb.auth.signInWithPassword({email,password}));
   if(error)throw error;
-  const profileName=data.user?.user_metadata?.full_name||name||'';const profileMobile=data.user?.user_metadata?.mobile||mobile||'';if(typeof window.msSetCustomerProfile==='function')window.msSetCustomerProfile(profileName,profileMobile);msg.textContent='Login successful. Profile updated.';document.getElementById('loginModal').style.display='none';return;
+  const profileName=data.user?.user_metadata?.full_name||name||'';const profileMobile=data.user?.user_metadata?.mobile||mobile||'';if(typeof window.msSetCustomerProfile==='function')window.msSetCustomerProfile(profileName,profileMobile);await syncRegisteredCustomerProfile(data.user,profileName,profileMobile);msg.textContent='Login successful. Profile updated.';document.getElementById('loginModal').style.display='none';return;
  }catch(err){
   msg.textContent=(err&&err.message&&err.message.includes('timed out'))?err.message:('Login failed: '+(err?.message||'Unable to connect. Check internet and try again.'));
  }finally{
