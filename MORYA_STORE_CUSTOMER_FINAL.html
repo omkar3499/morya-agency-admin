@@ -387,7 +387,8 @@ function openCategory(cat){
  document.getElementById('title').textContent={mobile:'Mobile Phones',custom:'Customize Products',parts:'Mobile Parts',accessories:'Mobile Accessories',skin:'Mobile Back Skin',cover:'Mobile Cover'}[cat];
  document.getElementById('back').style.display='block';render(cat);
 }
-document.getElementById('products').addEventListener('click',function(e){const card=e.target.closest('.productBrowseCard');if(!card)return;if(e.target.closest('button,a'))return;const p=(window.__moryaCurrentProductList||[])[Number(card.dataset.productIndex)];if(!p)return;if(activeCategoryForFilters==='parts')handlePartCardClick(p);else openProduct(p);});
+document.getElementById('products').addEventListener('click',function(e){const card=e.target.closest('.productBrowseCard');if(!card)return;if(e.target.closest('button,a'))return;const p=(window.__moryaCurrentProductList||[])[Number(card.dataset.productIndex)];if(!p)return;e.preventDefault();e.stopPropagation();if(activeCategoryForFilters==='parts')window.openProduct(p);else window.openProduct(p);},true);
+document.querySelector('.categories').addEventListener('click',function(e){const c=e.target.closest('.cat');if(!c)return;e.preventDefault();openCategory(c.dataset.cat);},true);
 document.querySelectorAll('.cat').forEach(c=>c.onclick=()=>openCategory(c.dataset.cat));
 document.getElementById('back').onclick=()=>{homeMode=true;activePartType='all';activeAccessoryType='all';document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));document.getElementById('title').textContent='';document.getElementById('back').style.display='none';render()};
 function add(p,color=''){cart++;document.getElementById('cartCount').textContent=cart;alert(p[0]+(color?' • '+color:'')+' added to Cart');}
