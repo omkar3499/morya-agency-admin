@@ -854,6 +854,9 @@ renderW();
 const drawer=document.getElementById('moryaSettingsDrawer'),full=document.getElementById('moryaSettingsFullPage'),body=document.getElementById('moryaFullBody'),title=document.getElementById('moryaFullTitle');
 /* Anchor overlays to viewport root so they cannot inherit page scroll/transform positioning. */
 document.documentElement.appendChild(drawer); document.documentElement.appendChild(full);
+/* Keep login/account and other modal dialogs fixed to the visible screen, not appended at the end of the page. */
+['loginModal','cartModal','ordersModal','wishlistModal','reviewModal','detailModal','checkoutModal'].forEach(function(id){var el=document.getElementById(id);if(el)document.documentElement.appendChild(el);});
+
 function closeDrawer(){drawer.classList.remove('open');drawer.style.display='none'}
 function closeFull(){full.classList.remove('open');full.style.display='none'}
 function openFull(t,content){title.textContent=t;body.innerHTML=content;closeDrawer();full.style.display='flex';full.classList.add('open')}
