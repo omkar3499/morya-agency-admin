@@ -723,7 +723,7 @@ body{padding-bottom:92px}
    const items=state.cart.map(x=>({name:x.name,qty:x.qty,price:x.price,color:x.color||'',product_id:x.product_id||x.id||null}));
    let orderId='LOCAL-'+Date.now();
    try{
-     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',payment_method:'Cash on Delivery',payment_status:'pending',instructions:'Delivery: '+delivery+(rewardUsed?' | Reward used: '+rewardUsed:'')+(couponUsed?' | Coupon discount: '+couponUsed:'')+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
+     const payload={customer_name:name,customer_mobile:mobile,customer_address:address,total_amount:total,status:'Order Received',instructions:'Delivery: '+delivery+(rewardUsed?' | Reward used: '+rewardUsed:'')+(couponUsed?' | Coupon discount: '+couponUsed:'')+(state.cart.some(x=>x.color)?' | Colors: '+state.cart.filter(x=>x.color).map(x=>x.name+'='+x.color).join(', '):'')};
      const {data,error}=await sb.from('orders').insert([payload]).select('id').single();
      if(error) throw error; orderId=data.id;
      const itemRows=state.cart.filter(x=>x.product_id||x.id).map(x=>({order_id:orderId,product_id:x.product_id||x.id,quantity:x.qty,price:x.price}));
