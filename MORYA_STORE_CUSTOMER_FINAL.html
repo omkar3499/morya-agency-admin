@@ -872,6 +872,7 @@ const drawer=document.getElementById('moryaSettingsDrawer'),full=document.getEle
 document.documentElement.appendChild(drawer); document.documentElement.appendChild(full);
 /* Keep login/account and other modal dialogs fixed to the visible screen, not appended at the end of the page. */
 ['loginModal','cartModal','ordersModal','wishlistModal','reviewModal','detailModal','checkoutModal','msCartModal','msCheckoutModal','msAccountModal','msOrdersModal','msWishlistModal'].forEach(function(id){var el=document.getElementById(id);if(el)document.documentElement.appendChild(el);});
+['msCartModal','msCheckoutModal','msAccountModal','msOrdersModal','msWishlistModal'].forEach(function(id){var el=document.getElementById(id);if(el){el.style.position='fixed';el.style.inset='0';el.style.zIndex='2147483647';el.style.alignItems='center';el.style.justifyContent='center';el.style.padding='12px';}});
 
 function closeDrawer(){drawer.classList.remove('open');drawer.style.display='none'}
 function closeFull(){full.classList.remove('open');full.style.display='none'}
