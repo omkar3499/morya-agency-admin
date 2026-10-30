@@ -208,7 +208,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 #settingsHomePage .msSettingsAction,#settingsSubPage .msSettingsAction{margin:0 0 12px;min-height:74px}
 #settingsHomePage .mspGroup{font-size:12px;font-weight:900;letter-spacing:1.2px;color:#d9bd7a;margin:4px 0 14px}
 #settingsSubPage .mspCard{background:#19191b;border:1px solid #39352d;border-radius:14px;padding:15px;margin-bottom:12px}
-</style></head>
+</style><style id="morya-settings-child-layer-fix">.modal{z-index:2147483000!important}#settingsHomePage,#settingsSubPage{z-index:2147482500!important}</style></head>
 <body>
 <canvas id="morya-fireworks-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:0"></canvas>
 <div id="morya-ambient-bg" aria-hidden="true"><span class="morya-burst"></span><span class="morya-burst"></span><span class="morya-burst"></span></div>
@@ -856,7 +856,7 @@ window.mspOpenSub=function(which){
  if(which==='support'){body.innerHTML='<div class="mspCard"><b>📞 Customer Support</b><p>7262822323</p><button class="primary" onclick="if(typeof callSupport===\'function\')callSupport();else location.href=\'tel:7262822323\'">📞 Call Support</button></div><div class="mspCard"><b>💬 WhatsApp Support</b><p>Contact Morya Agency on WhatsApp.</p><button class="primary" onclick="location.href=\'https://wa.me/917262822323\'">💬 WhatsApp</button></div>';return}
  body.innerHTML='<div class="mspCard"><h2>MORYA AGENCY</h2><p>Mobile Phones • Accessories • Mobile Repair • Customized Products</p><p>Customer support: 7262822323</p></div>';
 };
-window.mspOpenLegacy=function(id){const m=document.getElementById(id);if(!m){alert('हा पर्याय उपलब्ध नाही.');return}document.querySelectorAll('.modal').forEach(x=>x.style.display='none');m.style.display='flex';};
+window.mspOpenLegacy=function(id){const m=document.getElementById(id);if(!m){alert('हा पर्याय उपलब्ध नाही.');return}document.querySelectorAll('.modal').forEach(x=>x.style.display='none');m.style.display='flex';m.style.zIndex='2147483000';};
 const oldClose=window.closeModal;window.closeModal=function(id){if(id==='settingsModal'){window.mspCloseSettings();return}if(oldClose)oldClose(id);};
 const btn=document.getElementById('settingsBtn');if(btn){btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.mspOpenSettings()};}
 })();
