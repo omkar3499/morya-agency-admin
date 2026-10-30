@@ -126,6 +126,14 @@ button{cursor:pointer}
 .msSettingsAction small{font-size:11px;font-weight:400;color:#b8b0a3}
 .msSettingsAction strong{font-size:23px;color:#d9bd7a}
 #settingsModal .box{max-height:88vh;overflow:auto}
+/* Settings opens as a right-side drawer instead of a bottom/center modal. */
+#settingsModal{align-items:stretch!important;justify-content:flex-end!important;padding:0!important;overflow:hidden}
+#settingsModal .box{width:min(50vw,460px)!important;max-width:100%!important;height:100dvh!important;max-height:100dvh!important;margin:0 0 0 auto!important;border-radius:18px 0 0 18px!important;overflow:auto!important;overscroll-behavior:contain;animation:msSettingsDrawerIn .22s ease-out}
+#settingsModal .boxHead{position:sticky;top:0;z-index:2}
+@keyframes msSettingsDrawerIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@media(max-width:600px){#settingsModal .box{width:52vw!important;min-width:280px!important;max-width:88vw!important}}
+@media(prefers-reduced-motion:reduce){#settingsModal .box{animation:none!important}}
+
 @media(max-width:800px){.header{gap:8px}.nav{margin-left:auto}.nav button#settingsBtn{display:block!important}.msSettingsAction{padding:12px}}
 /* Live product name suggestions while typing */
 .searchSuggestions{position:absolute;top:calc(100% + 7px);left:0;right:0;z-index:60;max-height: min(60vh,420px);overflow:auto;background:#171718;border:1px solid #4a402e;border-radius:13px;box-shadow:0 16px 40px #000a;padding:5px}
