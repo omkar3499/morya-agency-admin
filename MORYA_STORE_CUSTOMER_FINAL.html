@@ -853,6 +853,10 @@ renderW();
 #customerPointsBadge:focus{outline:2px solid #f0dba7;outline-offset:2px}
 #customerPointsValue{display:block;min-width:18px;text-align:center;color:#ffd700!important;-webkit-text-fill-color:#ffd700!important;font-weight:950!important}
 #dColors .colorDot.active{outline:3px solid #d4a72c!important;outline-offset:2px!important;transform:scale(1.05)}
+
+/* Keep the live shopping cart and checkout centered in the viewport on mobile. */
+html body #msCartModal,html body #msCheckoutModal,html body #msAccountModal{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;display:none;align-items:center!important;justify-content:center!important;padding:12px!important;overflow:auto!important;z-index:2147483646!important;background:rgba(0,0,0,.72)!important}
+html body #msCartModal .box,html body #msCheckoutModal .box,html body #msAccountModal .box{width:min(600px,100%)!important;max-width:100%!important;max-height:82dvh!important;height:auto!important;overflow:auto!important;margin:auto!important;border-radius:16px!important}
 </style>
 
 
@@ -867,7 +871,7 @@ const drawer=document.getElementById('moryaSettingsDrawer'),full=document.getEle
 /* Anchor overlays to viewport root so they cannot inherit page scroll/transform positioning. */
 document.documentElement.appendChild(drawer); document.documentElement.appendChild(full);
 /* Keep login/account and other modal dialogs fixed to the visible screen, not appended at the end of the page. */
-['loginModal','cartModal','ordersModal','wishlistModal','reviewModal','detailModal','checkoutModal'].forEach(function(id){var el=document.getElementById(id);if(el)document.documentElement.appendChild(el);});
+['loginModal','cartModal','ordersModal','wishlistModal','reviewModal','detailModal','checkoutModal','msCartModal','msCheckoutModal','msAccountModal','msOrdersModal','msWishlistModal'].forEach(function(id){var el=document.getElementById(id);if(el)document.documentElement.appendChild(el);});
 
 function closeDrawer(){drawer.classList.remove('open');drawer.style.display='none'}
 function closeFull(){full.classList.remove('open');full.style.display='none'}
