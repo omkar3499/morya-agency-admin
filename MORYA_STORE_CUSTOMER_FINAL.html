@@ -840,7 +840,7 @@ function closeDrawer(){drawer.classList.remove('open');drawer.style.display='non
 function closeFull(){full.classList.remove('open');full.style.display='none'}
 function openFull(t,content){title.textContent=t;body.innerHTML=content;closeDrawer();full.style.display='flex';full.classList.add('open')}
 window.moryaShowSettings=function(){closeFull();drawer.style.display='block';drawer.classList.add('open')};
-document.getElementById('settingsBtn').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.moryaShowSettings()},true);
+document.getElementById('settingsBtn').onclick=null;document.getElementById('settingsBtn').addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();window.moryaShowSettings()},true);
 document.getElementById('moryaDrawerClose').onclick=closeDrawer;
 document.getElementById('moryaDrawerShade').onclick=closeDrawer;
 document.getElementById('moryaFullClose').onclick=closeFull;
