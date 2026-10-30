@@ -188,7 +188,25 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 #detailModal .detailImg{height:clamp(210px,38vh,360px)!important;min-height:210px!important}
 #detailModal .boxBody>button.primary{position:relative!important;display:block!important;width:100%!important;min-height:48px!important;margin-top:10px!important;z-index:6!important}
 </style>
-</head>
+<style id="morya-settings-drawer">
+#moryaSettingsDrawer{position:fixed;inset:0;z-index:2147482500;display:none;pointer-events:none}
+#moryaSettingsDrawer .moryaDrawerShade{position:absolute;inset:0;background:rgba(0,0,0,.55);pointer-events:auto}
+#moryaSettingsDrawer .moryaDrawerPanel{position:absolute;right:0;top:0;width:min(50vw,390px);min-width:280px;height:100%;height:100dvh;background:#101012;color:#f5f1e8;box-shadow:-10px 0 35px #0009;display:flex;flex-direction:column;transform:translateX(102%);transition:transform .22s ease;pointer-events:auto;border-left:1px solid #5a4a29}
+#moryaSettingsDrawer.open{display:block}
+#moryaSettingsDrawer.open .moryaDrawerPanel{transform:translateX(0)}
+#moryaSettingsDrawer .moryaDrawerHead{display:flex;align-items:center;justify-content:space-between;padding:18px 14px;padding-top:max(18px,env(safe-area-inset-top));background:#211e18;color:#ffdc54;font-weight:900;font-size:20px}
+#moryaSettingsDrawer .moryaDrawerHead button{border:0;border-radius:9px;padding:9px 12px;background:#ffd400;color:#111;font-size:20px}
+#moryaSettingsDrawer .moryaDrawerBody{padding:12px;overflow:auto;-webkit-overflow-scrolling:touch}
+#moryaSettingsDrawer .moryaDrawerItem{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:15px 12px;margin:0 0 10px;border:1px solid #37332b;border-radius:12px;background:#1b1b1e;color:#f7f4ec;font-size:16px;min-height:60px}
+#moryaSettingsDrawer .moryaDrawerItem small{display:block;color:#aaa;font-size:12px;margin-top:4px}
+#moryaSettingsFullPage{position:fixed;inset:0;z-index:2147483600;background:#0c0c0e;color:#f5f1e8;display:none;flex-direction:column;overflow:hidden}
+#moryaSettingsFullPage.open{display:flex}
+#moryaSettingsFullPage .moryaFullHead{display:flex;align-items:center;gap:12px;padding:16px;padding-top:max(16px,env(safe-area-inset-top));background:#211e18;border-bottom:1px solid #514326}
+#moryaSettingsFullPage .moryaFullHead button{padding:10px 13px;border:0;border-radius:9px;background:#ffd400;color:#111;font-weight:800}
+#moryaSettingsFullPage .moryaFullBody{padding:16px;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
+#moryaSettingsFullPage .moryaFullBody .primary{width:100%;min-height:48px;margin-top:10px}
+@media(max-width:420px){#moryaSettingsDrawer .moryaDrawerPanel{width:82vw;min-width:0}}
+</style></head>
 <body>
 <canvas id="morya-fireworks-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:0"></canvas>
 <div id="morya-ambient-bg" aria-hidden="true"><span class="morya-burst"></span><span class="morya-burst"></span><span class="morya-burst"></span></div>
@@ -253,6 +271,22 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 <button class="msSettingsAction" onclick="closeModal('settingsModal');document.getElementById('loginBtn').click()">👤 <span><b id="settingsLoginLabel">Login / Logout</b><small>Manage your customer account</small></span><strong>›</strong></button>
 </div>
 <div style="text-align:center;padding:8px 0 16px"><div style="font-size:42px">🛍️</div><h2 style="margin:6px 0">Morya Agency</h2><p style="color:#b8b0a3;margin:0">Customer Support & Marketing</p></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>📞 Customer Support</b><div style="font-size:18px;font-weight:800;margin-top:6px">7262822323</div><button class="primary" onclick="callSupport()">📞 Call Support</button></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>💬 WhatsApp</b><p style="margin:6px 0;color:#b8b0a3">Customer support साठी WhatsApp वर संपर्क करा.</p><button class="primary" style="background:#25D366;color:#111">💬 WhatsApp Support</button></div><div style="background:#292319;border-radius:12px;padding:14px;text-align:center;margin-top:12px"><div style="font-size:22px;font-weight:900">🛒 Buy Morya Agency</div><p style="margin:6px 0 0;color:#d2c5aa">Mobile • Accessories • Custom Products</p></div></div></div></div>
+
+<div id="moryaSettingsDrawer" aria-label="Settings menu">
+ <div class="moryaDrawerShade" id="moryaDrawerShade"></div>
+ <aside class="moryaDrawerPanel"><div class="moryaDrawerHead"><span>⚙️ Settings</span><button type="button" id="moryaDrawerClose">×</button></div>
+ <div class="moryaDrawerBody">
+ <button class="moryaDrawerItem" data-setting="account">👤 <span>Customer Account<small>Login and account</small></span></button>
+ <button class="moryaDrawerItem" data-setting="cart">🛒 <span>My Cart<small>Cart and checkout</small></span></button>
+ <button class="moryaDrawerItem" data-setting="orders">📦 <span>My Orders<small>Order details</small></span></button>
+ <button class="moryaDrawerItem" data-setting="wishlist">❤️ <span>Wishlist<small>Saved products</small></span></button>
+ <button class="moryaDrawerItem" data-setting="rating">⭐ <span>Rating & Review<small>Rate the app or products</small></span></button>
+ <button class="moryaDrawerItem" data-setting="support">💬 <span>Customer Support<small>Call or WhatsApp</small></span></button>
+ <button class="moryaDrawerItem" data-setting="about">ℹ️ <span>About Morya Agency<small>Store information</small></span></button>
+ </div></aside>
+</div>
+<div id="moryaSettingsFullPage"><div class="moryaFullHead"><button type="button" id="moryaFullBack">← Back</button><b id="moryaFullTitle">Settings</b><span style="flex:1"></span><button type="button" id="moryaFullClose">×</button></div><div class="moryaFullBody" id="moryaFullBody"></div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
@@ -798,7 +832,37 @@ renderW();
 
 
 
-</body>
+
+<script id="morya-settings-drawer-js">
+(function(){
+const drawer=document.getElementById('moryaSettingsDrawer'),full=document.getElementById('moryaSettingsFullPage'),body=document.getElementById('moryaFullBody'),title=document.getElementById('moryaFullTitle');
+function closeDrawer(){drawer.classList.remove('open');drawer.style.display='none'}
+function closeFull(){full.classList.remove('open');full.style.display='none'}
+function openFull(t,content){title.textContent=t;body.innerHTML=content;closeDrawer();full.style.display='flex';full.classList.add('open')}
+window.moryaShowSettings=function(){closeFull();drawer.style.display='block';drawer.classList.add('open')};
+document.getElementById('settingsBtn').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.moryaShowSettings()},true);
+document.getElementById('moryaDrawerClose').onclick=closeDrawer;
+document.getElementById('moryaDrawerShade').onclick=closeDrawer;
+document.getElementById('moryaFullClose').onclick=closeFull;
+document.getElementById('moryaFullBack').onclick=function(){closeFull();window.moryaShowSettings()};
+drawer.querySelectorAll('[data-setting]').forEach(function(b){b.onclick=function(){
+const k=b.dataset.setting;
+if(k==='account')openFull('Customer Account','<p>Login or create your customer account.</p><button class="primary" id="moryaGoLogin">👤 Open Login</button>');
+else if(k==='cart')openFull('My Cart','<p>Your shopping cart</p><button class="primary" id="moryaGoCart">🛒 Open Cart</button>');
+else if(k==='orders')openFull('My Orders','<p>Check your orders and delivery status.</p><button class="primary" id="moryaGoOrders">📦 Open Orders</button>');
+else if(k==='wishlist')openFull('Wishlist','<p>Your saved products are available from the Wishlist option.</p><button class="primary" id="moryaGoWish">❤️ Open Wishlist</button>');
+else if(k==='rating')openFull('Rating & Review','<p>तुमचे मत आमच्यासाठी महत्त्वाचे आहे.</p><div style="font-size:36px;display:flex;gap:10px"><button type="button" data-star="1">☆</button><button type="button" data-star="2">☆</button><button type="button" data-star="3">☆</button><button type="button" data-star="4">☆</button><button type="button" data-star="5">☆</button></div><textarea id="moryaAppReview" placeholder="Write your review (optional)" style="width:100%;min-height:110px;margin-top:15px;background:#19191b;color:white;padding:12px"></textarea><button class="primary" id="moryaSubmitRating">Submit Rating</button><p id="moryaRatingMsg"></p>');
+else if(k==='support')openFull('Customer Support','<p>Call: 7262822323</p><button class="primary" id="moryaCall">📞 Call Support</button><button class="primary" id="moryaWhats">💬 WhatsApp Support</button>');
+else openFull('About Morya Agency','<h2>MORYA AGENCY</h2><p>Mobile Phones • Accessories • Mobile Repair • Customized Products</p><p>Customer Support: 7262822323</p>');
+if(k==='account')document.getElementById('moryaGoLogin').onclick=function(){closeFull();const m=document.getElementById('loginModal');if(m){m.style.display='flex';m.style.zIndex='2147483647'}else alert('Login option is not available on this page.')};
+if(k==='cart')document.getElementById('moryaGoCart').onclick=function(){closeFull();const m=document.getElementById('cartModal')||document.getElementById('msCartModal');if(m){m.style.display='flex';m.style.zIndex='2147483647'}else if(typeof window.openCart==='function')window.openCart();else alert('Cart screen not found.')};
+if(k==='orders')document.getElementById('moryaGoOrders').onclick=function(){closeFull();const m=document.getElementById('ordersModal')||document.getElementById('msOrdersModal');if(m){m.style.display='flex';m.style.zIndex='2147483647'}else alert('Orders screen not found.')};
+if(k==='wishlist')document.getElementById('moryaGoWish').onclick=function(){closeFull();const m=document.getElementById('wishlistModal')||document.getElementById('msWishlistModal');if(m){m.style.display='flex';m.style.zIndex='2147483647'}else alert('Wishlist screen not found.')};
+if(k==='support'){document.getElementById('moryaCall').onclick=()=>location.href='tel:7262822323';document.getElementById('moryaWhats').onclick=()=>location.href='https://wa.me/917262822323'}
+if(k==='rating'){let stars=0;body.querySelectorAll('[data-star]').forEach(btn=>btn.onclick=function(){stars=Number(btn.dataset.star);body.querySelectorAll('[data-star]').forEach(x=>x.textContent=Number(x.dataset.star)<=stars?'★':'☆')});document.getElementById('moryaSubmitRating').onclick=()=>{document.getElementById('moryaRatingMsg').textContent=stars?'धन्यवाद! तुमचे '+stars+' स्टार रेटिंग निवडले आहे.':'कृपया आधी स्टार निवडा.'}}
+}});
+})();
+</script></body>
 </html>
 <style>
 /* Show full product images without cropping on every product card */
