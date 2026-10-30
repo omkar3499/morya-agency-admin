@@ -200,7 +200,15 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 #msReviewModal textarea{width:100%!important;min-height:120px!important}
 #msReviewModal .msCheckoutBtn{display:block!important;width:100%!important;min-height:48px!important;margin-top:14px!important}
 </style>
-</head>
+<style id="morya-settings-nested-pages">
+#settingsHomePage,#settingsSubPage{position:fixed;inset:0;width:100%;height:100%;height:100dvh;z-index:2147482500;background:#0b0b0c;color:#f4efe6;display:none;flex-direction:column;overflow:hidden}
+#settingsHomePage .mspHead,#settingsSubPage .mspHead{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:16px;padding-top:max(16px,env(safe-area-inset-top));background:#211e18;border-bottom:1px solid #493d27;color:#e5cb8b;font-size:20px;font-weight:900}
+#settingsHomePage .mspBody,#settingsSubPage .mspBody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
+#settingsHomePage .mspHead button,#settingsSubPage .mspHead button{border:0;border-radius:10px;background:#ffd400;color:#111;font-weight:900;padding:12px 15px}
+#settingsHomePage .msSettingsAction,#settingsSubPage .msSettingsAction{margin:0 0 12px;min-height:74px}
+#settingsHomePage .mspGroup{font-size:12px;font-weight:900;letter-spacing:1.2px;color:#d9bd7a;margin:4px 0 14px}
+#settingsSubPage .mspCard{background:#19191b;border:1px solid #39352d;border-radius:14px;padding:15px;margin-bottom:12px}
+</style></head>
 <body>
 <canvas id="morya-fireworks-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:0"></canvas>
 <div id="morya-ambient-bg" aria-hidden="true"><span class="morya-burst"></span><span class="morya-burst"></span><span class="morya-burst"></span></div>
@@ -265,6 +273,25 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 <button class="msSettingsAction" onclick="closeModal('settingsModal');document.getElementById('loginBtn').click()">👤 <span><b id="settingsLoginLabel">Login / Logout</b><small>Manage your customer account</small></span><strong>›</strong></button>
 </div>
 <div style="text-align:center;padding:8px 0 16px"><div style="font-size:42px">🛍️</div><h2 style="margin:6px 0">Morya Agency</h2><p style="color:#b8b0a3;margin:0">Customer Support & Marketing</p></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>📞 Customer Support</b><div style="font-size:18px;font-weight:800;margin-top:6px">7262822323</div><button class="primary" onclick="callSupport()">📞 Call Support</button></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>💬 WhatsApp</b><p style="margin:6px 0;color:#b8b0a3">Customer support साठी WhatsApp वर संपर्क करा.</p><button class="primary" style="background:#25D366;color:#111">💬 WhatsApp Support</button></div><div style="background:#292319;border-radius:12px;padding:14px;text-align:center;margin-top:12px"><div style="font-size:22px;font-weight:900">🛒 Buy Morya Agency</div><p style="margin:6px 0 0;color:#d2c5aa">Mobile • Accessories • Custom Products</p></div></div></div></div>
+
+<div id="settingsHomePage" aria-label="Settings">
+ <div class="mspHead"><span style="font-size:26px">⚙️</span><span style="flex:1">Settings</span><button type="button" onclick="window.mspCloseSettings()">×</button></div>
+ <div class="mspBody">
+  <div class="mspGroup">ACCOUNT & SHOPPING</div>
+  <button class="msSettingsAction" onclick="window.mspOpenSub('account')">👤 <span><b>Customer Account</b><small>Login, create account and password</small></span><strong>›</strong></button>
+  <button class="msSettingsAction" onclick="window.mspOpenSub('cart')">🛒 <span><b>My Cart</b><small>View cart and checkout</small></span><strong>›</strong></button>
+  <button class="msSettingsAction" onclick="window.mspOpenSub('orders')">📦 <span><b>My Orders</b><small>Track your orders</small></span><strong>›</strong></button>
+  <button class="msSettingsAction" onclick="window.mspOpenSub('health')">🩺 <span><b>Check App Status</b><small>Internet, products and services</small></span><strong>›</strong></button>
+  <div class="mspGroup" style="margin-top:24px">HELP & SUPPORT</div>
+  <button class="msSettingsAction" onclick="window.mspOpenSub('support')">💬 <span><b>Customer Support</b><small>Call or WhatsApp Morya Agency</small></span><strong>›</strong></button>
+  <button class="msSettingsAction" onclick="window.mspOpenSub('about')">ℹ️ <span><b>About Morya Agency</b><small>Store information</small></span><strong>›</strong></button>
+ </div>
+</div>
+<div id="settingsSubPage" aria-label="Settings details">
+ <div class="mspHead"><button type="button" onclick="window.mspBackSettings()">← Back</button><span id="mspSubTitle" style="flex:1">Settings</span><button type="button" onclick="window.mspCloseSettings()">×</button></div>
+ <div class="mspBody" id="mspSubBody"></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
@@ -810,7 +837,30 @@ renderW();
 
 
 
-</body>
+
+<script id="morya-settings-navigation">
+(function(){
+const home=document.getElementById('settingsHomePage'),sub=document.getElementById('settingsSubPage'),title=document.getElementById('mspSubTitle'),body=document.getElementById('mspSubBody');
+let lastPage='home';
+window.mspOpenSettings=function(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none');home.style.display='flex';sub.style.display='none';document.body.style.overflow='hidden'};
+window.mspCloseSettings=function(){home.style.display='none';sub.style.display='none';document.body.style.overflow='';};
+window.mspBackSettings=function(){sub.style.display='none';home.style.display='flex';};
+window.mspOpenSub=function(which){
+ home.style.display='none';sub.style.display='flex';body.innerHTML='';
+ const titles={account:'Customer Account',cart:'My Cart',orders:'My Orders',health:'App Status',support:'Customer Support',about:'About Morya Agency'};
+ title.textContent=titles[which]||'Settings';
+ if(which==='account'){body.innerHTML='<div class="mspCard"><p>Login / Create Account / Forgot Password</p><button class="primary" onclick="window.mspOpenLegacy(\'loginModal\')">👤 Open Customer Account</button></div>';return}
+ if(which==='cart'){body.innerHTML='<div class="mspCard">Your cart and checkout</div><button class="primary" onclick="window.mspOpenLegacy(\'msCartModal\')">🛒 Open My Cart</button>';setTimeout(()=>{if(typeof window.msOpenCart==='function')window.msOpenCart();},50);return}
+ if(which==='orders'){body.innerHTML='<div class="mspCard">Your orders and delivery status</div>';setTimeout(()=>{if(typeof window.msOpenOrders==='function')window.msOpenOrders();},50);return}
+ if(which==='health'){body.innerHTML='<div class="mspCard">Internet, products and login service check</div><button class="primary" onclick="window.mspOpenLegacy(\'msHealthModal\')">🩺 Run App Status Check</button>';return}
+ if(which==='support'){body.innerHTML='<div class="mspCard"><b>📞 Customer Support</b><p>7262822323</p><button class="primary" onclick="if(typeof callSupport===\'function\')callSupport();else location.href=\'tel:7262822323\'">📞 Call Support</button></div><div class="mspCard"><b>💬 WhatsApp Support</b><p>Contact Morya Agency on WhatsApp.</p><button class="primary" onclick="location.href=\'https://wa.me/917262822323\'">💬 WhatsApp</button></div>';return}
+ body.innerHTML='<div class="mspCard"><h2>MORYA AGENCY</h2><p>Mobile Phones • Accessories • Mobile Repair • Customized Products</p><p>Customer support: 7262822323</p></div>';
+};
+window.mspOpenLegacy=function(id){const m=document.getElementById(id);if(!m){alert('हा पर्याय उपलब्ध नाही.');return}document.querySelectorAll('.modal').forEach(x=>x.style.display='none');m.style.display='flex';};
+const oldClose=window.closeModal;window.closeModal=function(id){if(id==='settingsModal'){window.mspCloseSettings();return}if(oldClose)oldClose(id);};
+const btn=document.getElementById('settingsBtn');if(btn){btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.mspOpenSettings()};}
+})();
+</script></body>
 </html>
 <style>
 /* Show full product images without cropping on every product card */
