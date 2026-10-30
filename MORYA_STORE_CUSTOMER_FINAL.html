@@ -544,13 +544,13 @@ async function submitCustomerAuth(){
   if(customerAuthMode==='signup'){
    const {data,error}=await timeout(sb.auth.signUp({email,password,options:{data:{full_name:name,mobile}}}));
    if(error)throw error;
-   if(data.session){const key='morya_store_v2';let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){}saved.name=name;saved.mobile=mobile;localStorage.setItem(key,JSON.stringify(saved));msg.textContent='Account created successfully. Refreshing...';setTimeout(()=>location.reload(),500);return;}
+   if(data.session){const profileName=name||data.user?.user_metadata?.full_name||'Customer';const profileMobile=mobile||data.user?.user_metadata?.mobile||'';if(typeof window.msSetCustomerProfile==='function')window.msSetCustomerProfile(profileName,profileMobile);msg.textContent='Account created successfully.';document.getElementById('loginModal').style.display='none';return;}
    msg.textContent='Account created. Check your email to confirm the account, then log in.';
    return;
   }
   const {data,error}=await timeout(sb.auth.signInWithPassword({email,password}));
   if(error)throw error;
-  const key='morya_store_v2';let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){}saved.name=data.user?.user_metadata?.full_name||saved.name||name||'Customer';saved.mobile=data.user?.user_metadata?.mobile||saved.mobile||mobile||'';localStorage.setItem(key,JSON.stringify(saved));msg.textContent='Login successful. Refreshing...';setTimeout(()=>location.reload(),500);return;
+  const profileName=data.user?.user_metadata?.full_name||name||'';const profileMobile=data.user?.user_metadata?.mobile||mobile||'';if(typeof window.msSetCustomerProfile==='function')window.msSetCustomerProfile(profileName,profileMobile);msg.textContent='Login successful. Profile updated.';document.getElementById('loginModal').style.display='none';return;
  }catch(err){
   msg.textContent=(err&&err.message&&err.message.includes('timed out'))?err.message:('Login failed: '+(err?.message||'Unable to connect. Check internet and try again.'));
  }finally{
@@ -742,6 +742,7 @@ body{padding-bottom:92px}
  window.msOpenOrders=()=>{renderOrders();document.getElementById('msOrdersModal').style.display='flex'};
  function renderAccount(){document.getElementById('msAccountBody').innerHTML=`<div class="msReward"><div><small>My Reward Balance</small><br><b>${money(state.reward)}</b><br><small>1% reward on completed purchases</small></div><button class="msPill" onclick="msOpenCart()">Use at Checkout</button></div><div class="msRow"><b>👤 ${state.name||'Customer'}</b><div class="msMuted">${state.mobile||'Login/mobile number not saved yet'}</div></div><div class="msRow" onclick="msOpenOrders()" style="cursor:pointer"><b>📦 My Orders</b><div class="msMuted">View order history & status</div></div><div class="msRow" onclick="document.getElementById('settingsBtn').click();closeModal('msAccountModal')" style="cursor:pointer"><b>⚙️ Settings</b><div class="msMuted">Support, WhatsApp & app settings</div></div><div class="msRow" onclick="requestDeleteAccount()" style="cursor:pointer;border:1px solid #fecaca"><b style="color:#dc2626">🗑️ Delete Account</b><div class="msMuted">Delete your customer account</div></div><div class="msRow"><b>🛒 Buy Morya Agency</b><div class="msMuted">Mobile • Accessories • Custom Products</div></div>`}
  window.msGoAccount=()=>{closeModal('msCartModal');renderAccount();document.getElementById('msAccountModal').style.display='flex';msActive('msAccountBtn')};
+window.msSetCustomerProfile=(name,mobile)=>{state.name=name||state.name||'Customer';state.mobile=mobile||state.mobile||'';save();sync();renderAccount();document.getElementById('msAccountModal').style.display='flex';msActive('msAccountBtn');};
  window.msGoShop=()=>{msActive('msShopBtn');document.querySelector('.categories')?.scrollIntoView({behavior:'smooth',block:'start'});};
  function msActive(id){document.querySelectorAll('#msBottomNav button').forEach(b=>b.classList.remove('msActive'));document.getElementById(id)?.classList.add('msActive')}
  document.getElementById('msHomeBtn').onclick=()=>{msActive('msHomeBtn');window.scrollTo({top:0,behavior:'smooth'})};
