@@ -218,7 +218,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
   <div class="searchWrap"><span>⌕</span><input class="search" placeholder="Search products..." id="search" autocomplete="off" aria-label="Search products" aria-controls="searchSuggestions" aria-expanded="false"><div id="searchSuggestions" class="searchSuggestions" role="listbox" hidden></div></div>
   <div class="nav">
     <div id="customerPointsBadge" class="customerPointsBadge" role="status" aria-label="Customer earning points"><small>MY POINTS</small><b id="customerPointsValue">0</b></div>
-    <button id="settingsBtn">⚙️ Settings</button>
+    <button id="settingsBtn" type="button" onclick="if(window.mspOpenSettings){window.mspOpenSettings();}else{var x=document.getElementById('settingsModal');if(x)x.style.display='flex';}return false;">⚙️ Settings</button>
   </div>
 <span id="liveStatus" class="livePill">● Connecting...</span></header>
 <div id="legacyHeaderActions" hidden aria-hidden="true">
@@ -274,7 +274,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 </div>
 <div style="text-align:center;padding:8px 0 16px"><div style="font-size:42px">🛍️</div><h2 style="margin:6px 0">Morya Agency</h2><p style="color:#b8b0a3;margin:0">Customer Support & Marketing</p></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>📞 Customer Support</b><div style="font-size:18px;font-weight:800;margin-top:6px">7262822323</div><button class="primary" onclick="callSupport()">📞 Call Support</button></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>💬 WhatsApp</b><p style="margin:6px 0;color:#b8b0a3">Customer support साठी WhatsApp वर संपर्क करा.</p><button class="primary" style="background:#25D366;color:#111">💬 WhatsApp Support</button></div><div style="background:#292319;border-radius:12px;padding:14px;text-align:center;margin-top:12px"><div style="font-size:22px;font-weight:900">🛒 Buy Morya Agency</div><p style="margin:6px 0 0;color:#d2c5aa">Mobile • Accessories • Custom Products</p></div></div></div></div>
 
-<div id="settingsHomePage" aria-label="Settings">
+<div id="settingsHomePage" aria-label="Settings" style="display:none;position:fixed;inset:0;z-index:2147483646;background:#0b0b0c;flex-direction:column;">
  <div class="mspHead"><span style="font-size:26px">⚙️</span><span style="flex:1">Settings</span><button type="button" onclick="window.mspCloseSettings()">×</button></div>
  <div class="mspBody">
   <div class="mspGroup">ACCOUNT & SHOPPING</div>
@@ -287,7 +287,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
   <button class="msSettingsAction" onclick="window.mspOpenSub('about')">ℹ️ <span><b>About Morya Agency</b><small>Store information</small></span><strong>›</strong></button>
  </div>
 </div>
-<div id="settingsSubPage" aria-label="Settings details">
+<div id="settingsSubPage" aria-label="Settings details" style="display:none;position:fixed;inset:0;z-index:2147483647;background:#0b0b0c;flex-direction:column;">
  <div class="mspHead"><button type="button" onclick="window.mspBackSettings()">← Back</button><span id="mspSubTitle" style="flex:1">Settings</span><button type="button" onclick="window.mspCloseSettings()">×</button></div>
  <div class="mspBody" id="mspSubBody"></div>
 </div>
