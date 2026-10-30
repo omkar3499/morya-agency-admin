@@ -840,25 +840,25 @@ renderW();
 
 <script id="morya-settings-navigation">
 (function(){
-const home=document.getElementById('settingsHomePage'),sub=document.getElementById('settingsSubPage'),title=document.getElementById('mspSubTitle'),body=document.getElementById('mspSubBody');
-let lastPage='home';
-window.mspOpenSettings=function(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none');home.style.display='flex';sub.style.display='none';document.body.style.overflow='hidden'};
-window.mspCloseSettings=function(){home.style.display='none';sub.style.display='none';document.body.style.overflow='';};
-window.mspBackSettings=function(){sub.style.display='none';home.style.display='flex';};
+function byId(id){return document.getElementById(id)}
+function hideAll(){document.querySelectorAll('.modal').forEach(m=>{m.style.display='none'});if(byId('settingsHomePage'))byId('settingsHomePage').style.display='none';if(byId('settingsSubPage'))byId('settingsSubPage').style.display='none'}
+window.mspOpenSettings=function(){hideAll();byId('settingsHomePage').style.display='flex';document.body.style.overflow='hidden'};
+window.mspCloseSettings=function(){byId('settingsHomePage').style.display='none';byId('settingsSubPage').style.display='none';document.body.style.overflow=''};
+window.mspBackSettings=function(){byId('settingsSubPage').style.display='none';byId('settingsHomePage').style.display='flex'};
+window.mspOpenLegacy=function(id){const m=byId(id);if(!m){alert('हा पर्याय सापडला नाही: '+id);return}hideAll();m.style.display='flex';m.style.zIndex='2147483000';m.style.position='fixed';m.style.inset='0';m.style.width='100%';m.style.height='100%';m.style.height='100dvh';m.style.padding='0';m.style.alignItems='stretch';m.style.justifyContent='stretch'};
 window.mspOpenSub=function(which){
- home.style.display='none';sub.style.display='flex';body.innerHTML='';
- const titles={account:'Customer Account',cart:'My Cart',orders:'My Orders',health:'App Status',support:'Customer Support',about:'About Morya Agency'};
- title.textContent=titles[which]||'Settings';
- if(which==='account'){body.innerHTML='<div class="mspCard"><p>Login / Create Account / Forgot Password</p><button class="primary" onclick="window.mspOpenLegacy(\'loginModal\')">👤 Open Customer Account</button></div>';return}
- if(which==='cart'){body.innerHTML='<div class="mspCard">Your cart and checkout</div><button class="primary" onclick="window.mspOpenLegacy(\'msCartModal\')">🛒 Open My Cart</button>';setTimeout(()=>{if(typeof window.msOpenCart==='function')window.msOpenCart();},50);return}
- if(which==='orders'){body.innerHTML='<div class="mspCard">Your orders and delivery status</div>';setTimeout(()=>{if(typeof window.msOpenOrders==='function')window.msOpenOrders();},50);return}
- if(which==='health'){body.innerHTML='<div class="mspCard">Internet, products and login service check</div><button class="primary" onclick="window.mspOpenLegacy(\'msHealthModal\')">🩺 Run App Status Check</button>';return}
- if(which==='support'){body.innerHTML='<div class="mspCard"><b>📞 Customer Support</b><p>7262822323</p><button class="primary" onclick="if(typeof callSupport===\'function\')callSupport();else location.href=\'tel:7262822323\'">📞 Call Support</button></div><div class="mspCard"><b>💬 WhatsApp Support</b><p>Contact Morya Agency on WhatsApp.</p><button class="primary" onclick="location.href=\'https://wa.me/917262822323\'">💬 WhatsApp</button></div>';return}
- body.innerHTML='<div class="mspCard"><h2>MORYA AGENCY</h2><p>Mobile Phones • Accessories • Mobile Repair • Customized Products</p><p>Customer support: 7262822323</p></div>';
+const home=byId('settingsHomePage'),sub=byId('settingsSubPage'),body=byId('mspSubBody'),title=byId('mspSubTitle');
+home.style.display='none';sub.style.display='flex';body.innerHTML='';
+const titles={account:'Customer Account',cart:'My Cart',orders:'My Orders',health:'App Status',support:'Customer Support',about:'About Morya Agency'};title.textContent=titles[which]||'Settings';
+if(which==='account'){body.innerHTML='<div class="mspCard"><p>Login / Create Account / Forgot Password</p><button class="primary" id="mspAccountOpen">👤 Open Customer Account</button></div>';byId('mspAccountOpen').onclick=()=>window.mspOpenLegacy('loginModal');return}
+if(which==='cart'){body.innerHTML='<div class="mspCard"><b>My Cart</b><p>View your cart and checkout.</p><button class="primary" id="mspCartOpen">🛒 Open My Cart</button></div>';byId('mspCartOpen').onclick=()=>window.mspOpenLegacy('msCartModal');return}
+if(which==='orders'){body.innerHTML='<div class="mspCard"><b>My Orders</b><p>Track your orders and status.</p><button class="primary" id="mspOrdersOpen">📦 Open My Orders</button></div>';byId('mspOrdersOpen').onclick=()=>window.mspOpenLegacy('msOrdersModal');return}
+if(which==='health'){body.innerHTML='<div class="mspCard"><b>App Status</b><p>Internet, products and services</p><button class="primary" id="mspHealthOpen">🩺 Check App Status</button></div>';byId('mspHealthOpen').onclick=()=>window.mspOpenLegacy('msHealthModal');return}
+if(which==='support'){body.innerHTML='<div class="mspCard"><b>📞 Customer Support</b><p>7262822323</p><button class="primary" id="mspCall">Call Support</button></div><div class="mspCard"><b>💬 WhatsApp Support</b><button class="primary" id="mspWhats">Open WhatsApp</button></div>';byId('mspCall').onclick=()=>location.href='tel:7262822323';byId('mspWhats').onclick=()=>location.href='https://wa.me/917262822323';return}
+body.innerHTML='<div class="mspCard"><h2>MORYA AGENCY</h2><p>Mobile Phones • Accessories • Mobile Repair • Customized Products</p><p>Customer support: 7262822323</p></div>';
 };
-window.mspOpenLegacy=function(id){const m=document.getElementById(id);if(!m){alert('हा पर्याय उपलब्ध नाही.');return}document.querySelectorAll('.modal').forEach(x=>x.style.display='none');m.style.display='flex';m.style.zIndex='2147483000';};
-const oldClose=window.closeModal;window.closeModal=function(id){if(id==='settingsModal'){window.mspCloseSettings();return}if(oldClose)oldClose(id);};
-const btn=document.getElementById('settingsBtn');if(btn){btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.mspOpenSettings()};}
+document.addEventListener('click',function(e){const btn=e.target.closest('#settingsBtn');if(btn){e.preventDefault();e.stopImmediatePropagation();window.mspOpenSettings()}},true);
+const original=window.closeModal;window.closeModal=function(id){if(id==='settingsModal'){window.mspCloseSettings();return}if(original)original(id)};
 })();
 </script></body>
 </html>
