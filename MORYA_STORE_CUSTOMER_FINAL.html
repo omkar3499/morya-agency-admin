@@ -188,27 +188,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 #detailModal .detailImg{height:clamp(210px,38vh,360px)!important;min-height:210px!important}
 #detailModal .boxBody>button.primary{position:relative!important;display:block!important;width:100%!important;min-height:48px!important;margin-top:10px!important;z-index:6!important}
 </style>
-<style id="morya-all-options-fullscreen">
-/* Consistent full-screen pages for Settings, Cart, Orders, Login, Reviews and every other option */
-.modal{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;height:100dvh!important;padding:0!important;margin:0!important;z-index:2147482000!important;align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;background:#090909!important}
-.modal[style*="display: flex"],.modal[style*="display:flex"]{display:flex!important}
-.modal>.box{width:100%!important;max-width:none!important;height:100%!important;height:100dvh!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}
-.modal .boxHead{position:sticky!important;top:0!important;z-index:5!important;flex:0 0 auto!important;padding:16px!important;padding-top:max(16px,env(safe-area-inset-top))!important}
-.modal .boxBody{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding:14px 14px calc(24px + env(safe-area-inset-bottom))!important}
-#msReviewModal .msStars{display:flex!important;gap:12px!important;margin:18px 0!important}
-#msReviewModal .msStars button{font-size:36px!important;min-width:48px!important;min-height:48px!important;border:1px solid #d4a72c!important;border-radius:10px!important;background:#211e18!important;color:#ffd700!important;touch-action:manipulation!important}
-#msReviewModal textarea{width:100%!important;min-height:120px!important}
-#msReviewModal .msCheckoutBtn{display:block!important;width:100%!important;min-height:48px!important;margin-top:14px!important}
-</style>
-<style id="morya-settings-nested-pages">
-#settingsHomePage,#settingsSubPage{position:fixed;inset:0;width:100%;height:100%;height:100dvh;z-index:2147482500;background:#0b0b0c;color:#f4efe6;display:none;flex-direction:column;overflow:hidden}
-#settingsHomePage .mspHead,#settingsSubPage .mspHead{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:16px;padding-top:max(16px,env(safe-area-inset-top));background:#211e18;border-bottom:1px solid #493d27;color:#e5cb8b;font-size:20px;font-weight:900}
-#settingsHomePage .mspBody,#settingsSubPage .mspBody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
-#settingsHomePage .mspHead button,#settingsSubPage .mspHead button{border:0;border-radius:10px;background:#ffd400;color:#111;font-weight:900;padding:12px 15px}
-#settingsHomePage .msSettingsAction,#settingsSubPage .msSettingsAction{margin:0 0 12px;min-height:74px}
-#settingsHomePage .mspGroup{font-size:12px;font-weight:900;letter-spacing:1.2px;color:#d9bd7a;margin:4px 0 14px}
-#settingsSubPage .mspCard{background:#19191b;border:1px solid #39352d;border-radius:14px;padding:15px;margin-bottom:12px}
-</style><style id="morya-settings-child-layer-fix">.modal{z-index:2147483000!important}#settingsHomePage,#settingsSubPage{z-index:2147482500!important}</style></head>
+</head>
 <body>
 <canvas id="morya-fireworks-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;opacity:0"></canvas>
 <div id="morya-ambient-bg" aria-hidden="true"><span class="morya-burst"></span><span class="morya-burst"></span><span class="morya-burst"></span></div>
@@ -218,7 +198,7 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
   <div class="searchWrap"><span>⌕</span><input class="search" placeholder="Search products..." id="search" autocomplete="off" aria-label="Search products" aria-controls="searchSuggestions" aria-expanded="false"><div id="searchSuggestions" class="searchSuggestions" role="listbox" hidden></div></div>
   <div class="nav">
     <div id="customerPointsBadge" class="customerPointsBadge" role="status" aria-label="Customer earning points"><small>MY POINTS</small><b id="customerPointsValue">0</b></div>
-    <button id="settingsBtn" type="button" onclick="if(window.mspOpenSettings){window.mspOpenSettings();}else{var x=document.getElementById('settingsModal');if(x)x.style.display='flex';}return false;">⚙️ Settings</button>
+    <button id="settingsBtn">⚙️ Settings</button>
   </div>
 <span id="liveStatus" class="livePill">● Connecting...</span></header>
 <div id="legacyHeaderActions" hidden aria-hidden="true">
@@ -273,25 +253,6 @@ body>*:not(#morya-ambient-bg){position:relative;z-index:1}
 <button class="msSettingsAction" onclick="closeModal('settingsModal');document.getElementById('loginBtn').click()">👤 <span><b id="settingsLoginLabel">Login / Logout</b><small>Manage your customer account</small></span><strong>›</strong></button>
 </div>
 <div style="text-align:center;padding:8px 0 16px"><div style="font-size:42px">🛍️</div><h2 style="margin:6px 0">Morya Agency</h2><p style="color:#b8b0a3;margin:0">Customer Support & Marketing</p></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>📞 Customer Support</b><div style="font-size:18px;font-weight:800;margin-top:6px">7262822323</div><button class="primary" onclick="callSupport()">📞 Call Support</button></div><div style="border:1px solid #3b3429;border-radius:12px;padding:14px;margin-bottom:10px"><b>💬 WhatsApp</b><p style="margin:6px 0;color:#b8b0a3">Customer support साठी WhatsApp वर संपर्क करा.</p><button class="primary" style="background:#25D366;color:#111">💬 WhatsApp Support</button></div><div style="background:#292319;border-radius:12px;padding:14px;text-align:center;margin-top:12px"><div style="font-size:22px;font-weight:900">🛒 Buy Morya Agency</div><p style="margin:6px 0 0;color:#d2c5aa">Mobile • Accessories • Custom Products</p></div></div></div></div>
-
-<div id="settingsHomePage" aria-label="Settings" style="display:none;position:fixed;inset:0;z-index:2147483646;background:#0b0b0c;flex-direction:column;">
- <div class="mspHead"><span style="font-size:26px">⚙️</span><span style="flex:1">Settings</span><button type="button" onclick="window.mspCloseSettings()">×</button></div>
- <div class="mspBody">
-  <div class="mspGroup">ACCOUNT & SHOPPING</div>
-  <button class="msSettingsAction" onclick="window.mspOpenSub('account')">👤 <span><b>Customer Account</b><small>Login, create account and password</small></span><strong>›</strong></button>
-  <button class="msSettingsAction" onclick="window.mspOpenSub('cart')">🛒 <span><b>My Cart</b><small>View cart and checkout</small></span><strong>›</strong></button>
-  <button class="msSettingsAction" onclick="window.mspOpenSub('orders')">📦 <span><b>My Orders</b><small>Track your orders</small></span><strong>›</strong></button>
-  <button class="msSettingsAction" onclick="window.mspOpenSub('health')">🩺 <span><b>Check App Status</b><small>Internet, products and services</small></span><strong>›</strong></button>
-  <div class="mspGroup" style="margin-top:24px">HELP & SUPPORT</div>
-  <button class="msSettingsAction" onclick="window.mspOpenSub('support')">💬 <span><b>Customer Support</b><small>Call or WhatsApp Morya Agency</small></span><strong>›</strong></button>
-  <button class="msSettingsAction" onclick="window.mspOpenSub('about')">ℹ️ <span><b>About Morya Agency</b><small>Store information</small></span><strong>›</strong></button>
- </div>
-</div>
-<div id="settingsSubPage" aria-label="Settings details" style="display:none;position:fixed;inset:0;z-index:2147483647;background:#0b0b0c;flex-direction:column;">
- <div class="mspHead"><button type="button" onclick="window.mspBackSettings()">← Back</button><span id="mspSubTitle" style="flex:1">Settings</span><button type="button" onclick="window.mspCloseSettings()">×</button></div>
- <div class="mspBody" id="mspSubBody"></div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://glmdkfwxedxyhhmdetzh.supabase.co";
@@ -765,7 +726,7 @@ function couponDiscount(n){return appliedCoupon?Math.min(appliedCoupon.max,Math.
 window.moryaCouponDiscount=couponDiscount;
 const oldOpen=window.openProduct;window.openProduct=function(p,buy){oldOpen(p,buy);setTimeout(()=>{const box=document.querySelector('#detailModal .boxBody');if(!box)return;let e=document.getElementById('msDetailExtra');if(!e){e=document.createElement('div');e.id='msDetailExtra';box.appendChild(e)}const rs=reviews[String(p[4]||p[0])]||[];const avg=rs.length?(rs.reduce((a,x)=>a+x.stars,0)/rs.length).toFixed(1):'0.0';e.innerHTML='<div class="msStock '+(Number(p[5]||0)>0?'msInStock':'msOutStock')+'">'+(Number(p[5]||0)>0?'✓ '+p[5]+' in stock':'Out of stock')+'</div><button class="msUseBtn" onclick="msToggleWishCurrent()">'+(isW(p)?'♥ Saved to Wishlist':'♡ Add to Wishlist')+'</button><div class="msReview"><b>⭐ Rating '+avg+'</b><div class="msMuted">'+(rs.length?rs.length+' review(s)':'No reviews yet')+'</div><button class="msPill" onclick="msWriteReview()">Write a Review</button></div>';},40)};
 window.msToggleWishCurrent=()=>{if(current){msToggleWish(current);openProduct(current)}};
-window.msWriteReview=async()=>{if(!current){alert('आधी प्रॉडक्ट निवडा.');return}reviewStars=5;document.getElementById('msReviewBody').innerHTML='<b>'+String(current[0]).replace(/</g,'&lt;')+'</b><p style="color:#b8b0a3">तुमचे रेटिंग निवडा</p><div class="msStars">'+[1,2,3,4,5].map(n=>'<button type="button" aria-label="'+n+' stars" onclick="msSetStar('+n+')">'+(n<=reviewStars?'★':'☆')+'</button>').join('')+'</div><textarea id="msReviewText" class="loginInput" rows="4" placeholder="Write your review (optional)"></textarea><button type="button" class="msCheckoutBtn" onclick="msSaveReview()">⭐ Submit Rating & Review</button>';document.getElementById('msReviewModal').style.display='flex'};
+window.msWriteReview=async()=>{const sess=(await sb.auth.getSession()).data.session;if(!sess){document.getElementById('loginModal').style.display='flex';return}document.getElementById('msReviewBody').innerHTML='<b>'+current[0]+'</b><div class="msStars">'+[1,2,3,4,5].map(n=>'<button onclick="msSetStar('+n+')">☆</button>').join('')+'</div><textarea id="msReviewText" class="loginInput" rows="4" placeholder="Write your review"></textarea><button class="msCheckoutBtn" onclick="msSaveReview()">Submit Review</button>';document.getElementById('msReviewModal').style.display='flex'};
 window.msSetStar=n=>{reviewStars=n;document.querySelectorAll('.msStars button').forEach((b,i)=>b.textContent=i<n?'★':'☆')};window.msSaveReview=()=>{const id=String(current[4]||current[0]),t=(document.getElementById('msReviewText').value||'').trim();if(!t)return alert('Please write a review.');(reviews[id]||(reviews[id]=[])).push({stars:reviewStars,text:t,date:new Date().toLocaleDateString('en-IN')});saveR();closeModal('msReviewModal');openProduct(current)};
 const oldRender=window.render;window.render=function(cat='all'){oldRender(cat);setTimeout(()=>{const list=cat==='all'?Object.values(products).flat():((products[cat]||[]).filter(p=>productCategory(p)===cat));document.querySelectorAll('.productBrowseCard').forEach((card,i)=>{const p=list[i];if(!p)return;card.style.position='relative';if(!card.querySelector('.msHeart')){const btn=document.createElement('button');btn.className='msHeart';btn.textContent=isW(p)?'♥':'♡';btn.onclick=e=>{e.stopPropagation();msToggleWish(p)};card.appendChild(btn)}card.querySelector('.msStock')?.remove();const st=document.createElement('div');st.className='msStock '+(Number(p[5]||0)>0?'msInStock':'msOutStock');st.textContent=Number(p[5]||0)>0?'✓ '+Number(p[5])+' in stock':'Out of stock';card.querySelector('.info')?.appendChild(st)})},20)};
 const oldCheckout=window.renderCheckout;window.renderCheckout=function(){oldCheckout();const b=document.getElementById('msCheckoutBody');if(!b)return;const sub=cartTotal(),disc=couponDiscount(sub);if(disc){const row=document.createElement('div');row.className='msCheckoutLine msDiscount';row.innerHTML='<span>Coupon '+appliedCoupon.code+'</span><b>−'+money(disc)+'</b>';b.insertBefore(row,b.querySelector('.msCheckoutLine:last-of-type'))} };
@@ -837,30 +798,7 @@ renderW();
 
 
 
-
-<script id="morya-settings-navigation">
-(function(){
-function byId(id){return document.getElementById(id)}
-function hideAll(){document.querySelectorAll('.modal').forEach(m=>{m.style.display='none'});if(byId('settingsHomePage'))byId('settingsHomePage').style.display='none';if(byId('settingsSubPage'))byId('settingsSubPage').style.display='none'}
-window.mspOpenSettings=function(){hideAll();byId('settingsHomePage').style.display='flex';document.body.style.overflow='hidden'};
-window.mspCloseSettings=function(){byId('settingsHomePage').style.display='none';byId('settingsSubPage').style.display='none';document.body.style.overflow=''};
-window.mspBackSettings=function(){byId('settingsSubPage').style.display='none';byId('settingsHomePage').style.display='flex'};
-window.mspOpenLegacy=function(id){const m=byId(id);if(!m){alert('हा पर्याय सापडला नाही: '+id);return}hideAll();m.style.display='flex';m.style.zIndex='2147483000';m.style.position='fixed';m.style.inset='0';m.style.width='100%';m.style.height='100%';m.style.height='100dvh';m.style.padding='0';m.style.alignItems='stretch';m.style.justifyContent='stretch'};
-window.mspOpenSub=function(which){
-const home=byId('settingsHomePage'),sub=byId('settingsSubPage'),body=byId('mspSubBody'),title=byId('mspSubTitle');
-home.style.display='none';sub.style.display='flex';body.innerHTML='';
-const titles={account:'Customer Account',cart:'My Cart',orders:'My Orders',health:'App Status',support:'Customer Support',about:'About Morya Agency'};title.textContent=titles[which]||'Settings';
-if(which==='account'){body.innerHTML='<div class="mspCard"><p>Login / Create Account / Forgot Password</p><button class="primary" id="mspAccountOpen">👤 Open Customer Account</button></div>';byId('mspAccountOpen').onclick=()=>window.mspOpenLegacy('loginModal');return}
-if(which==='cart'){body.innerHTML='<div class="mspCard"><b>My Cart</b><p>View your cart and checkout.</p><button class="primary" id="mspCartOpen">🛒 Open My Cart</button></div>';byId('mspCartOpen').onclick=()=>window.mspOpenLegacy('msCartModal');return}
-if(which==='orders'){body.innerHTML='<div class="mspCard"><b>My Orders</b><p>Track your orders and status.</p><button class="primary" id="mspOrdersOpen">📦 Open My Orders</button></div>';byId('mspOrdersOpen').onclick=()=>window.mspOpenLegacy('msOrdersModal');return}
-if(which==='health'){body.innerHTML='<div class="mspCard"><b>App Status</b><p>Internet, products and services</p><button class="primary" id="mspHealthOpen">🩺 Check App Status</button></div>';byId('mspHealthOpen').onclick=()=>window.mspOpenLegacy('msHealthModal');return}
-if(which==='support'){body.innerHTML='<div class="mspCard"><b>📞 Customer Support</b><p>7262822323</p><button class="primary" id="mspCall">Call Support</button></div><div class="mspCard"><b>💬 WhatsApp Support</b><button class="primary" id="mspWhats">Open WhatsApp</button></div>';byId('mspCall').onclick=()=>location.href='tel:7262822323';byId('mspWhats').onclick=()=>location.href='https://wa.me/917262822323';return}
-body.innerHTML='<div class="mspCard"><h2>MORYA AGENCY</h2><p>Mobile Phones • Accessories • Mobile Repair • Customized Products</p><p>Customer support: 7262822323</p></div>';
-};
-document.addEventListener('click',function(e){const btn=e.target.closest('#settingsBtn');if(btn){e.preventDefault();e.stopImmediatePropagation();window.mspOpenSettings()}},true);
-const original=window.closeModal;window.closeModal=function(id){if(id==='settingsModal'){window.mspCloseSettings();return}if(original)original(id)};
-})();
-</script></body>
+</body>
 </html>
 <style>
 /* Show full product images without cropping on every product card */
