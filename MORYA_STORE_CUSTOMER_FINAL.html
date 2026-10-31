@@ -995,7 +995,12 @@ html body #moryaSignatureAutoIntro .msa-sky{position:absolute!important;inset:0!
 html body #moryaSignatureAutoIntro > .msa-card{position:absolute!important;left:50%!important;top:50%!important;margin:0!important;width:min(88vw,390px)!important;max-width:88vw!important;transform:translate(-50%,-50%)!important;animation:msaCenterEnter .9s ease both!important;box-sizing:border-box!important}
 @keyframes msaCenterEnter{from{opacity:0;transform:translate(-50%,-47%) scale(.97)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 </style>
-</body>
+<style id="moryaSignatureOpaqueFix">
+html body #moryaSignatureAutoIntro{background:#07111f!important;isolation:isolate!important}
+html body #moryaSignatureAutoIntro .msa-sky{background:linear-gradient(180deg,#07172c 0%,#142e48 48%,#080f19 100%)!important;opacity:1!important}
+html body #moryaSignatureAutoIntro .msa-card{background:linear-gradient(145deg,#101d2b 0%,#07111c 100%)!important;box-shadow:0 24px 80px #000b!important}
+html body #moryaSignatureAutoIntro .msa-hills{opacity:1!important}
+</style></body>
 </html>
 <style>
 /* Show full product images without cropping on every product card */
