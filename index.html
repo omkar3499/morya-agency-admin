@@ -891,14 +891,14 @@ async function loadOrders(){
    for(const item of it.data){
     const name=String(item.product_name||'').trim();
     const desired=colorMatches.find(x=>x.name.toLowerCase()===name.toLowerCase())?.color||'';
-    let q=db.from('product_handsets').select('id,handset_no,color,status').eq('product_id',item.product_id).eq('status','Available');
+    let q=db.from('product_handsets').select('id,handset_no,color,imei_1,imei_2,serial_no,status,selling_price').eq('product_id',item.product_id).eq('status','Available');
     if(desired)q=q.eq('color',desired);
     const hr=await q;
     if(!hr.error)handsetOptions.push(...(hr.data||[]).map(h=>({...h,product_id:item.product_id,product_name:name,color:h.color||''})));
    }
   }
   const oid=String(o.id).replace(/'/g,"\\'");
-  const options=handsetOptions.map(h=>'<option value="'+esc(h.id)+'">'+esc(h.product_name+' • '+(h.color||'No color')+' • Unit '+(h.handset_no||h.id))+'</option>').join('');
+  const options=handsetOptions.map(h=>'<option value="'+esc(h.id)+'">'+esc(h.product_name+' • Color: '+(h.color||'No color')+' • IMEI: '+(h.imei_1||'N/A')+' • IMEI2: '+(h.imei_2||'N/A')+' • Serial: '+(h.serial_no||'N/A'))+'</option>').join('');
   const allocate=handsetOptions.length?'<div style="margin:8px 0"><label>Available handset (Model / Color)</label><select id="handset_'+esc(o.id)+'"><option value="">-- Select handset --</option>'+options+'</select><button class="green" onclick="acceptOrderWithHandset(\''+oid+'\')">✓ Allocate & Accept</button></div>':'';
   return '<div class="order"><div class="ordertop"><div><b>Order #'+esc(o.id)+'</b><div class="small">'+new Date(o.created_at).toLocaleString()+'</div></div><span class="badge">'+esc(o.status||'Pending')+'</span></div><p><b>'+esc(o.customer_name||'Customer')+'</b> • '+esc(o.customer_mobile||'-')+'<br>📍 '+esc(o.address||o.customer_address||'-')+'</p><p>💰 <b>₹'+Number(o.total_amount||0).toFixed(2)+'</b><br>📝 '+esc(o.instructions||'-')+'</p>'+allocate+'<label>Status</label><select id="status_'+esc(o.id)+'">'+[...new Set([o.status||'Pending',...statuses])].map(st=>'<option value="'+esc(st)+'" '+(st===(o.status||'Pending')?'selected':'')+'>'+esc(st)+'</option>').join('')+'</select><div class="actions"><button class="green" onclick="saveStatus(\''+oid+'\')">Save Status</button><button class="light" onclick="printOrderInvoice(\''+oid+'\')">Invoice</button><button class="red" onclick="quickCancelOrder(\''+oid+'\')">Cancel / Reject</button>'+(o.photo_path?'<button class="light" onclick="downloadPhoto(\''+esc(o.photo_path)+'\')">⬇️ Download Photo</button>':'')+'</div></div>';
  }));
