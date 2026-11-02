@@ -779,75 +779,7 @@ function printSaleBill(){
  const b=latestSaleBill,txt=makeSaleBillText(b);
  const w=window.open('','_blank','width=420,height=700');
  if(!w){alert('Print साठी popup allow करा.');return;}
- w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Bill '+esc(b.id)+'</title><style>body{font:16px Arial,sans-serif;padding:20px;color:#111}h2{text-align:center;margin:0}pre{white-space:pre-wrap;font:14px monospace;line-height:1.5}button{padding:10px 18px}@media print{button{display:none}body{padding:0}}</style></head><body><h2>MORYA AGENCY</h2><p style="text-align:center">SALE BILL</p><pre>'+esc(txt)+'<\\/pre><button onclick="window.print()">🖨️ Print Bill</button>\n
-<script>
-/* Independent login safety handler: remains available if the main admin script fails. */
-(function(){
- const form=document.getElementById('loginForm');
- if(!form)return;
- let client=null;
- const msg=document.getElementById('loginMsg');
- const btn=document.getElementById('loginBtn');
- function showError(text){
-   if(msg){msg.className='msg';msg.textContent='❌ '+text;}
- }
- function loadLibrary(url){
-   return new Promise((resolve,reject)=>{
-     const tag=document.createElement('script');
-     tag.src=url;tag.onload=()=>window.supabase&&window.supabase.createClient?resolve():reject(new Error('Supabase library loaded incorrectly'));
-     tag.onerror=()=>reject(new Error('Could not load Supabase library'));
-     document.head.appendChild(tag);
-   });
- }
- async function getClient(){
-   if(client)return client;
-   if(!window.supabase||!window.supabase.createClient){
-     try{await loadLibrary('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');}
-     catch(first){await loadLibrary('https://unpkg.com/@supabase/supabase-js@2');}
-   }
-   if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase library unavailable. Check internet connection.');
-   client=window.supabase.createClient(
-     'https://glmdkfwxedxyhhmdetzh.supabase.co',
-     'sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',
-     {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:window.localStorage,storageKey:'morya-agency-admin-auth-v1'}}
-   );
-   return client;
- }
- form.addEventListener('submit',async function(e){
-   e.preventDefault();e.stopImmediatePropagation();
-   if(btn){btn.disabled=true;btn.textContent='Checking...';}
-   if(msg){msg.className='msg ok';msg.textContent='⏳ Supabase connection and login checking...';}
-   try{
-     const sb=await getClient();
-     const result=await sb.auth.signInWithPassword({
-       email:(document.getElementById('email')?.value||'').trim(),
-       password:document.getElementById('password')?.value||''
-     });
-     if(result.error)throw result.error;
-     if(msg){msg.className='msg ok';msg.textContent='✅ Login successful. Dashboard opening...';}
-     if(typeof window.showDashboard==='function')await window.showDashboard();
-     else{
-       document.getElementById('loginBox')?.classList.add('hidden');
-       document.getElementById('dashboard')?.classList.remove('hidden');
-       document.getElementById('logoutBtn')?.classList.remove('hidden');
-       const jobs=['loadProducts','loadOrders','loadAds'];
-       await Promise.allSettled(jobs.map(name=>typeof window[name]==='function'?window[name]():Promise.resolve()));
-     }
-   }catch(err){
-     showError('Login failed: '+(err&&err.message?err.message:'Please check connection and credentials.'));
-   }finally{
-     if(btn){btn.disabled=false;btn.textContent='Login';}
-   }
- },true);
- window.addEventListener('error',function(ev){
-   if(msg&&!document.getElementById('dashboard')?.classList.contains('hidden')){
-     msg.className='msg';msg.textContent='⚠️ Admin script error: '+(ev.message||'Unknown error');
-   }
- });
-})();
-</script>
-
-</body></html>'); w.document.close(); }
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Bill '+esc(b.id)+'</title><style>body{font:16px Arial,sans-serif;padding:20px;color:#111}h2{text-align:center;margin:0}pre{white-space:pre-wrap;font:14px monospace;line-height:1.5}button{padding:10px 18px}@media print{button{display:none}body{padding:0}}</style></head><body><h2>MORYA AGENCY</h2><p style="text-align:center">SALE BILL</p><pre>'+esc(txt)+'</pre><button onclick="window.print()">🖨️ Print Bill</button>\n</body></html>'); w.document.close(); }
 
 
 <!-- fixed: removed accidental nested script opening tag; code remains in main script -->
