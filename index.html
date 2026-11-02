@@ -889,10 +889,7 @@ async function loadOrders(){
   const colorMatches=[...instructions.matchAll(/([^=,|]+)=([^,|]+)/g)].map(m=>({name:m[1].trim(),color:m[2].trim()}));
   if(!it.error&&(it.data||[]).length){
    for(const item of it.data){
-    const model=String(item.model_or_size||'').trim();
     const name=String(item.product_name||'').trim();
-    const isPhone=/mobile|phone|handset|smartphone|iphone|android/i.test(name+' '+model);
-    if(!isPhone)continue;
     const desired=colorMatches.find(x=>x.name.toLowerCase()===name.toLowerCase())?.color||'';
     let q=db.from('product_handsets').select('id,handset_no,color,status').eq('product_id',item.product_id).eq('status','Available');
     if(desired)q=q.eq('color',desired);
@@ -915,9 +912,9 @@ async function acceptOrderWithHandset(id){
  if(r.error){alert('❌ Accept/Allocation failed: '+r.error.message);return}
  alert('Handset allocate झाला आणि Order Accepted.');loadOrders();
 }
-async function saveStatus(id){const status=$('status_'+id).value;if(status==='Accepted'){const it=await db.from('order_items').select('product_name,model_or_size').eq('order_id',id);if(it.error){alert('Order items तपासता आले नाही: '+it.error.message);return}const hasSmartphone=(it.data||[]).some(x=>/smartphone|android|iphone/i.test(String(x.product_name||'')+' '+String(x.model_or_size||'')));if(hasSmartphone){alert('Smartphone order साठी handset allocation आवश्यक आहे.');return}}if(['Cancelled','Rejected'].includes(status)){return quickCancelOrder(id,status)}const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
+async function saveStatus(id){const status=$('status_'+id).value;if(status==='Accepted'){const it=await db.from('order_items').select('product_name,model_or_size').eq('order_id',id);if(it.error){alert('Order items तपासता आले नाही: '+it.error.message);return}const pids=(it.data||[]).map(x=>x.product_id).filter(Boolean);const ph=pids.length?await db.from('product_handsets').select('product_id').in('product_id',pids).limit(1):{data:[]};const hasTrackedHandset=!!(ph.data||[]).length;if(hasTrackedHandset{alert('Smartphone order साठी handset allocation आवश्यक आहे.');return}}if(['Cancelled','Rejected'].includes(status)){return quickCancelOrder(id,status)}const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
 async function quickOrderStatus(id,status){
- if(status==='Accepted'){const it=await db.from('order_items').select('product_name,model_or_size').eq('order_id',id);if(it.error){alert('Order items तपासता आले नाही: '+it.error.message);return}const hasSmartphone=(it.data||[]).some(x=>/smartphone|android|iphone/i.test(String(x.product_name||'')+' '+String(x.model_or_size||'')));if(hasSmartphone){alert('Smartphone order साठी Available handset allocate करा.');return}}
+ if(status==='Accepted'){const it=await db.from('order_items').select('product_name,model_or_size').eq('order_id',id);if(it.error){alert('Order items तपासता आले नाही: '+it.error.message);return}const pids=(it.data||[]).map(x=>x.product_id).filter(Boolean);const ph=pids.length?await db.from('product_handsets').select('product_id').in('product_id',pids).limit(1):{data:[]};const hasTrackedHandset=!!(ph.data||[]).length;if(hasTrackedHandset{alert('Smartphone order साठी Available handset allocate करा.');return}}
  if(['Cancelled','Rejected'].includes(status))return quickCancelOrder(id,status);
  const r=await db.from('orders').update({status}).eq('id',id);
  if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()
