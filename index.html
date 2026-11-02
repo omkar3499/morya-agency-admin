@@ -609,12 +609,17 @@ async function saveProduct(){
  const q=await db.from('product_private').upsert(priv,{onConflict:'product_id'});
  if(q.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but private data error: '+q.error.message;return}
  if(isMobileProduct()){
-   const del=await db.from('product_handsets').delete().eq('product_id',pid);if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but old handset cleanup failed: '+del.error.message;return}
-   const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,selling_price:x.selling_price,purchase_price:x.purchase_price,box_price:x.box_price,status:'Available'}));
-   const ins=await db.from('product_handsets').insert(rows);if(ins.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but handset details error: '+ins.error.message;return}
- }else{
-   const del=await db.from('product_handsets').delete().eq('product_id',pid);
-   if(del.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but old handset cleanup failed: '+del.error.message;return}
+   if(id){
+     // Safety: never delete/recreate handset rows on product edit.
+     // This preserves Sold status, IMEI/serial and existing allocations.
+     $('productMsg').textContent='Product details saved. Existing handset inventory was preserved safely; manage handset rows separately.';
+   }else{
+     const rows=collectHandsets().map(x=>({product_id:pid,handset_no:x.handset_no,color:x.color,imei_1:x.imei_1,imei_2:x.imei_2,serial_no:x.serial_no,selling_price:x.selling_price,purchase_price:x.purchase_price,box_price:x.box_price,status:'Available'}));
+     if(rows.length){
+       const ins=await db.from('product_handsets').insert(rows);
+       if(ins.error){$('saveBtn').disabled=false;$('productMsg').className='msg';$('productMsg').textContent='Product saved, but handset details error: '+ins.error.message;return}
+     }
+   }
  }
  $('productMsg').className='msg ok';$('productMsg').textContent='✅ Product saved successfully.';$('saveBtn').disabled=false;clearProductForm();await loadProducts();
 }
