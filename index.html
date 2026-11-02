@@ -779,7 +779,42 @@ function printSaleBill(){
  const b=latestSaleBill,txt=makeSaleBillText(b);
  const w=window.open('','_blank','width=420,height=700');
  if(!w){alert('Print साठी popup allow करा.');return;}
- w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Bill '+esc(b.id)+'</title><style>body{font:16px Arial,sans-serif;padding:20px;color:#111}h2{text-align:center;margin:0}pre{white-space:pre-wrap;font:14px monospace;line-height:1.5}button{padding:10px 18px}@media print{button{display:none}body{padding:0}}</style></head><body><h2>MORYA AGENCY</h2><p style="text-align:center">SALE BILL</p><pre>'+esc(txt)+'</pre><button onclick="window.print()">🖨️ Print Bill</button>\n</body></html>'); w.document.close(); }
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Bill '+esc(b.id)+'</title><style>body{font:16px Arial,sans-serif;padding:20px;color:#111}h2{text-align:center;margin:0}pre{white-space:pre-wrap;font:14px monospace;line-height:1.5}button{padding:10px 18px}@media print{button{display:none}body{padding:0}}</style></head><body><h2>MORYA AGENCY</h2><p style="text-align:center">SALE BILL</p><pre>'+esc(txt)+'</pre><button onclick="window.print()">🖨️ Print Bill</button>\n
+<script id="morya-login-recovery-fix">
+(function(){
+ const form=document.getElementById('loginForm');
+ if(!form||form.dataset.recoveryFix==='1')return;
+ form.dataset.recoveryFix='1';
+ form.addEventListener('submit',async function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   const email=document.getElementById('email'),password=document.getElementById('password');
+   const btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
+   btn.disabled=true;btn.textContent='Checking login…';
+   msg.className='msg ok';msg.textContent='⏳ Supabase authentication तपासत आहे…';
+   try{
+     if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase library load झाली नाही. Internet तपासा आणि page refresh करा.');
+     const client=window.supabase.createClient(
+       'https://glmdkfwxedxyhhmdetzh.supabase.co',
+       'sb_publishable_WshhGGIOP4YmlluUgd1lag_O-eW2kMz',
+       {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storage:window.localStorage,storageKey:'morya-agency-admin-auth-v1'}}
+     );
+     const {data,error}=await client.auth.signInWithPassword({email:email.value.trim(),password:password.value});
+     if(error)throw error;
+     msg.textContent='✅ Login successful. Dashboard उघडत आहे…';
+     document.getElementById('loginBox').classList.add('hidden');
+     document.getElementById('dashboard').classList.remove('hidden');
+     document.getElementById('logoutBtn').classList.remove('hidden');
+     document.getElementById('dashboardHome').classList.remove('hidden');
+     if(typeof window.showDashboard==='function')await window.showDashboard();
+     else msg.textContent='Login successful, पण Dashboard script मध्ये error आहे. '+(data.user?.email||'');
+   }catch(err){
+     msg.className='msg';msg.textContent='❌ Login error: '+(err?.message||String(err))+'\nEmail/Password तपासा; page refresh करून पुन्हा प्रयत्न करा.';
+   }finally{btn.disabled=false;btn.textContent='Login to Dashboard';}
+ },true);
+})();
+</script>
+
+</body></html>'); w.document.close(); }
 
 
 <!-- fixed: removed accidental nested script opening tag; code remains in main script -->
