@@ -915,9 +915,9 @@ async function acceptOrderWithHandset(id){
  if(r.error){alert('❌ Accept/Allocation failed: '+r.error.message);return}
  alert('Handset allocate झाला आणि Order Accepted.');loadOrders();
 }
-async function saveStatus(id){const status=$('status_'+id).value;if(status==='Accepted'){alert('Mobile/handset order सुरक्षितपणे Accept करण्यासाठी आधी Available handset allocate करणे आवश्यक आहे. सध्या direct Accept बंद आहे.');return}if(['Cancelled','Rejected'].includes(status)){return quickCancelOrder(id,status)}const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
+async function saveStatus(id){const status=$('status_'+id).value;if(status==='Accepted'){const it=await db.from('order_items').select('product_name,model_or_size').eq('order_id',id);if(it.error){alert('Order items तपासता आले नाही: '+it.error.message);return}const hasSmartphone=(it.data||[]).some(x=>/smartphone|android|iphone/i.test(String(x.product_name||'')+' '+String(x.model_or_size||'')));if(hasSmartphone){alert('Smartphone order साठी handset allocation आवश्यक आहे.');return}}if(['Cancelled','Rejected'].includes(status)){return quickCancelOrder(id,status)}const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
 async function quickOrderStatus(id,status){
- if(status==='Accepted'){alert('सुरक्षित Accept साठी Available handset निवडणे आवश्यक आहे. Direct Accept बंद आहे.');return}
+ if(status==='Accepted'){const it=await db.from('order_items').select('product_name,model_or_size').eq('order_id',id);if(it.error){alert('Order items तपासता आले नाही: '+it.error.message);return}const hasSmartphone=(it.data||[]).some(x=>/smartphone|android|iphone/i.test(String(x.product_name||'')+' '+String(x.model_or_size||'')));if(hasSmartphone){alert('Smartphone order साठी Available handset allocate करा.');return}}
  if(['Cancelled','Rejected'].includes(status))return quickCancelOrder(id,status);
  const r=await db.from('orders').update({status}).eq('id',id);
  if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()
