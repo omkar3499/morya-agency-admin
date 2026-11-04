@@ -630,29 +630,53 @@ function getAdminDeviceAssignment(instructions){
  const m=String(instructions||'').match(/\[\[MORYA_DEVICE_ASSIGNMENT:(.*?)\]\]/);
  if(!m)return null;try{return JSON.parse(decodeURIComponent(m[1]))}catch(e){return null}
 }
-function openAcceptAssign(orderId){
- const card=document.getElementById('status_'+orderId)?.closest('.order');
- const orderText=card?.innerText||'';
- const colorLine=orderText.match(/Colors?:\\s*([^\\n]+)/i);
- const colors=colorLine?colorLine[1].split(/[,;|]/).map(x=>x.trim()).filter(Boolean):[];
-
+async function openAcceptAssign(orderId){
  const overlay=document.createElement('div');overlay.id='imeiAssignModal';overlay.style.cssText='position:fixed;inset:0;background:#0009;z-index:9999;display:flex;align-items:center;justify-content:center;padding:14px;';
- overlay.innerHTML='<div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:20px;color:#111"><h2 style="margin-top:0">Accept Order & Assign Handset</h2><p class="small">Customer selected color खाली स्पष्ट दाखवला आहे. त्याच रंगाचा handset assign करा. IMEI ग्राहकाला दिसणार नाही; invoice मध्ये print होईल.</p><form id="imeiAssignForm"><div id="imeiAssignFields"></div><label>Warranty (optional)</label><input id="assignWarranty" placeholder="e.g. 1 Year Manufacturer Warranty"><div class="actions"><button class="green" type="submit">Confirm & Accept Order</button><button class="light" type="button" onclick="document.getElementById(\'imeiAssignModal\').remove()">Cancel</button></div><div id="imeiAssignMsg"></div></form></div>';
+ overlay.innerHTML='<div style="background:#fff;border-radius:16px;max-width:650px;width:100%;max-height:90vh;overflow:auto;padding:20px;color:#111"><h2>Accept Order & Assign Handset</h2><p class="small">Customer ने निवडलेल्या रंगातील stock मधून handset निवडा. यादीत IMEI चे फक्त शेवटचे 6 अंक दिसतील. पूर्ण IMEI Customer App मध्ये दिसणार नाही.</p><div id="imeiAssignFields">Loading...</div><label>Warranty (optional)</label><input id="assignWarranty" placeholder="e.g. 1 Year Manufacturer Warranty"><div class="actions"><button id="assignConfirm" class="green">Confirm & Accept</button><button class="light" onclick="document.getElementById(\'imeiAssignModal\').remove()">Cancel</button></div><div id="imeiAssignMsg"></div></div>';
  document.body.appendChild(overlay);
  const field=document.getElementById('imeiAssignFields');
- (colors.length?colors:['⚠️ Customer color not detected — order details check करा']).forEach((color,i)=>field.insertAdjacentHTML('beforeend','<div style="border:1px solid #e5e7eb;padding:12px;border-radius:10px;margin:10px 0"><b>Handset '+(i+1)+' — Color: '+esc(color)+'</b><label>IMEI 1 (15 digits) *</label><input class="assign-imei1" data-color="'+esc(color)+'" inputmode="numeric" maxlength="15" required><label>IMEI 2 (15 digits) *</label><input class="assign-imei2" inputmode="numeric" maxlength="15" required><label>Serial Number *</label><input class="assign-serial" required></div>'));
- document.getElementById('imeiAssignForm').onsubmit=async e=>{
-  e.preventDefault();const btn=e.target.querySelector('button[type=submit]');btn.disabled=true;
-  const devices=[...field.querySelectorAll('div')].filter(x=>x.querySelector('.assign-imei1')).map(x=>({color:x.querySelector('.assign-imei1').dataset.color,imei1:x.querySelector('.assign-imei1').value.trim(),imei2:x.querySelector('.assign-imei2').value.trim(),serial:x.querySelector('.assign-serial').value.trim()}));
-  const all=devices.flatMap(d=>[d.imei1,d.imei2]);
-  if(devices.some(d=>!/^\d{15}$/.test(d.imei1)||! /^\d{15}$/.test(d.imei2)||!d.serial)||new Set(all).size!==all.length){document.getElementById('imeiAssignMsg').innerHTML='<div class="msg">IMEI exactly 15 digits pahije, duplicate nako, Serial Number required.</div>';btn.disabled=false;return}
-  try{const order=await db.from('orders').select('instructions').eq('id',orderId).maybeSingle();if(order.error||!order.data)throw order.error||new Error('Order not found');
-   const old=String(order.data.instructions||'').replace(/\[\[MORYA_DEVICE_ASSIGNMENT:.*?\]\]/g,'').trim();
-   const assignment={devices,warranty:document.getElementById('assignWarranty').value.trim(),assigned_at:new Date().toISOString()};
-   const upd=await db.from('orders').update({status:'Accepted',instructions:(old+'\n[[MORYA_DEVICE_ASSIGNMENT:'+encodeURIComponent(JSON.stringify(assignment))+']]').trim()}).eq('id',orderId);
-   if(upd.error)throw upd.error;document.getElementById('imeiAssignModal').remove();alert('Order accepted. IMEI/Serial invoice sathi save zale.');loadOrders();
-  }catch(err){document.getElementById('imeiAssignMsg').innerHTML='<div class="msg">Save failed: '+esc(err.message||err)+'</div>';btn.disabled=false}
- };
+ try{
+  const oi=await db.from('order_items').select('product_id,quantity,product_color').eq('order_id',orderId);
+  if(oi.error)throw oi.error;
+  if(!(oi.data||[]).length)throw new Error('Order items सापडले नाहीत.');
+  let groups=[];
+  for(const it of oi.data){
+   const color=String(it.product_color||'').trim();if(!color)throw new Error('Order item मध्ये color missing आहे.');
+   const h=await db.from('product_handsets').select('id,handset_no,color,imei_1,imei_2,serial_no,status,product_id').eq('product_id',it.product_id).eq('status','Available');
+   if(h.error)throw h.error;
+   const matches=(h.data||[]).filter(x=>String(x.color||'').trim().toLowerCase()===color.toLowerCase());
+   groups.push({color,qty:Number(it.quantity||1),items:matches});
+  }
+  let html='';
+  groups.forEach(g=>{
+   html+='<section style="border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0"><b>'+esc(g.color)+' — Qty '+g.qty+'</b>';
+   for(let n=0;n<g.qty;n++){
+    html+='<label>Handset '+(n+1)+'</label><select class="assign-device" data-color="'+esc(g.color)+'" required><option value="">Select handset</option>'+g.items.map(x=>'<option value="'+esc(x.id)+'">'+esc(String(x.imei_1||'').slice(-6))+' | #'+esc(x.handset_no||'')+'</option>').join('')+'</select>';
+   }
+   if(g.items.length<g.qty)html+='<p class="msg">⚠️ Available matching stock: '+g.items.length+' / required '+g.qty+'</p>';
+   html+='</section>';
+  });
+  field.innerHTML=html;
+  document.getElementById('assignConfirm').onclick=async()=>{
+   const selects=[...field.querySelectorAll('.assign-device')],ids=selects.map(s=>s.value);
+   if(ids.some(x=>!x)||new Set(ids).size!==ids.length){alert('प्रत्येक handset वेगळा निवडा.');return}
+   const btn=document.getElementById('assignConfirm');btn.disabled=true;
+   try{
+    const sr=await db.from('product_handsets').select('id,handset_no,color,imei_1,imei_2,serial_no,status').in('id',ids);
+    if(sr.error)throw sr.error;
+    const rows=sr.data||[];if(rows.length!==ids.length||rows.some(x=>x.status!=='Available'))throw new Error('Stock बदलला आहे; पुन्हा load करा.');
+    const devices=selects.map(s=>{const x=rows.find(z=>z.id===s.value);return {color:s.dataset.color,imei1:x.imei_1,imei2:x.imei_2,serial:x.serial_no,handset_id:x.id}});
+    const imeis=devices.flatMap(d=>[d.imei1,d.imei2]);
+    if(devices.some(d=>!/^[0-9]{15}$/.test(String(d.imei1||''))||!/^[0-9]{15}$/.test(String(d.imei2||''))||!d.serial)||new Set(imeis).size!==imeis.length)throw new Error('IMEI/Serial invalid किंवा duplicate आहे.');
+    const old=await db.from('orders').select('instructions').eq('id',orderId).maybeSingle();if(old.error||!old.data)throw old.error||new Error('Order not found');
+    const assignment={devices,warranty:document.getElementById('assignWarranty').value.trim(),assigned_at:new Date().toISOString()};
+    const upd=await db.from('orders').update({status:'Accepted',instructions:(String(old.data.instructions||'').replace(/\[\[MORYA_DEVICE_ASSIGNMENT:.*?\]\]/g,'').trim()+'\n[[MORYA_DEVICE_ASSIGNMENT:'+encodeURIComponent(JSON.stringify(assignment))+']]').trim()}).eq('id',orderId);
+    if(upd.error)throw upd.error;
+    const stock=await db.from('product_handsets').update({status:'Assigned'}).in('id',ids);if(stock.error)throw stock.error;
+    overlay.remove();alert('Accepted! Handset stock Assigned झाले. Invoice मध्ये full IMEI व Serial Number दिसतील.');loadOrders();
+   }catch(e){document.getElementById('imeiAssignMsg').innerHTML='<div class="msg">❌ '+esc(e.message||e)+'</div>';btn.disabled=false}
+  };
+ }catch(e){field.innerHTML='<div class="msg">❌ '+esc(e.message||e)+'<br>Order color किंवा handset stock तपासा.</div>'}
 }
 async function saveStatus(id){const status=$('status_'+id).value;if(['Cancelled','Rejected'].includes(status)){return quickCancelOrder(id,status)}const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
 async function quickOrderStatus(id,status){const r=await db.from('orders').update({status}).eq('id',id);if(r.error)alert('❌ Status update failed: '+r.error.message);else loadOrders()}
