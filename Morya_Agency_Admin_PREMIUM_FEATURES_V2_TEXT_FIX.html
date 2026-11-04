@@ -636,12 +636,12 @@ async function openAcceptAssign(orderId){
  document.body.appendChild(overlay);
  const field=document.getElementById('imeiAssignFields');
  try{
-  const oi=await db.from('order_items').select('product_id,quantity,product_color').eq('order_id',orderId);
+  const oi=await db.from('order_items').select('product_id,quantity,customization_data').eq('order_id',orderId);
   if(oi.error)throw oi.error;
   if(!(oi.data||[]).length)throw new Error('Order items सापडले नाहीत.');
   let groups=[];
   for(const it of oi.data){
-   const color=String(it.product_color||'').trim();if(!color)throw new Error('Order item मध्ये color missing आहे.');
+   const cd=it.customization_data||{};const color=String(cd.color||cd.product_color||cd.selected_color||'').trim();if(!color)throw new Error('Order item मध्ये color missing आहे.');
    const h=await db.from('product_handsets').select('id,handset_no,color,imei_1,imei_2,serial_no,status,product_id').eq('product_id',it.product_id).eq('status','Available');
    if(h.error)throw h.error;
    const matches=(h.data||[]).filter(x=>String(x.color||'').trim().toLowerCase()===color.toLowerCase());
