@@ -236,6 +236,11 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}.workspace-top{display:fle
 </div>
 
 <div class="products-head"><h3>Product List</h3><button class="light" onclick="loadProducts()">↻ Refresh</button></div>
+<div class="actions" style="gap:10px;flex-wrap:wrap;margin:12px 0">
+<input id="productSearch" placeholder="🔍 Search product name / brand / model..." oninput="filterAdminProducts()" style="flex:1;min-width:220px">
+<select id="productCategoryFilter" onchange="filterAdminProducts()" style="min-width:190px"><option value="">📂 All Categories</option></select>
+<select id="productAvailabilityFilter" onchange="filterAdminProducts()" style="min-width:150px"><option value="all">All Products</option><option value="available">Available</option><option value="hidden">Hidden</option></select>
+</div>
 <div id="products">Loading...</div>
 </section>
 
@@ -529,6 +534,21 @@ async function saveProduct(){
  $('productMsg').className='msg ok';$('productMsg').textContent='✅ Product saved successfully.';$('saveBtn').disabled=false;clearProductForm();await loadProducts();
 }
 
+let adminProductsCache=[];
+function filterAdminProducts(){
+ const q=String($('productSearch')?.value||'').trim().toLowerCase();
+ const cat=$('productCategoryFilter')?.value||'';
+ const avail=$('productAvailabilityFilter')?.value||'all';
+ const filtered=adminProductsCache.filter(p=>{
+  const hay=[p.name,p.brand,p.model,p.description,p.category,p.compatible_model].join(' ').toLowerCase();
+  return (!q||hay.includes(q))&&(!cat||String(p.category||'')===cat)&&(avail==='all'||(avail==='available'?p.available!==false:p.available===false));
+ });
+ renderAdminProductCards(filtered);
+}
+function renderAdminProductCards(products){
+ const privMap=window.adminProductPrivateMap||new Map();
+ $('products').innerHTML=products.length?'<div class="grid">'+products.map(p=>{const x=privMap.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name)}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">No products match your search.</p>';
+}
 async function loadProducts(){
  const [pr,priv]=await Promise.all([
    db.from('products').select('id,name,description,price,stock,image_url,available,category,brand,model,ram_storage,compatible_model,warranty,is_customizable').order('created_at',{ascending:false}),
@@ -537,7 +557,9 @@ async function loadProducts(){
  if(pr.error){$('products').innerHTML='<div class="msg">❌ '+esc(pr.error.message)+'</div>';return}
  const pm=new Map((priv.data||[]).map(x=>[x.product_id,x]));
  $('productCount').textContent=pr.data.length;const lowCounter=$('lowStock');if(lowCounter)lowCounter.textContent=pr.data.filter(x=>Number(x.stock)<=5).length;
- $('products').innerHTML=pr.data.length?'<div class="grid">'+pr.data.map(p=>{const x=pm.get(p.id)||{};return `<div class="item product-card">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:`<div class="product-placeholder">📦</div>`}<div><h3 style="margin:0 0 5px">${esc(p.name)}</h3><span class="badge">${esc(p.category||'')}</span><p class="small">${esc(p.brand||'')} ${esc(p.model||'')}</p><p>Sale: <b>₹${Number(p.price||0).toFixed(0)}</b> • Stock: <b>${Number(p.stock||0)}</b></p><p class="small">Purchase: ₹${Number(x.purchase_price||0).toFixed(0)} • Profit: ₹${Number(x.profit||0).toFixed(0)}</p><div class="actions"><button class="primary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#039;")})'>Edit</button><button class="light" onclick="toggleProduct('${p.id}',${!p.available})">${p.available?'Hide':'Show'}</button><button class="red" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`}).join('')+'</div>':'<p class="muted">No products found.</p>';
+ adminProductsCache=pr.data||[];window.adminProductPrivateMap=pm;
+ const catEl=$('productCategoryFilter');if(catEl){const current=catEl.value;const cats=[...new Set(adminProductsCache.map(p=>p.category).filter(Boolean))].sort();catEl.innerHTML='<option value="">📂 All Categories</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');catEl.value=cats.includes(current)?current:'';}
+ filterAdminProducts();
 }
 async function editProduct(p){
  try{
