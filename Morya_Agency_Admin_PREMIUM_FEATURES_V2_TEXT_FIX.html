@@ -337,9 +337,16 @@ $('loginForm').addEventListener('submit',async e=>{
 $('logoutBtn').onclick=async()=>{const b=$('logoutBtn');b.disabled=true;try{const r=await db.auth.signOut();if(r.error)throw r.error;location.reload()}catch(e){alert('Logout failed: '+e.message);b.disabled=false}};
 
 async function showDashboard(){
- $('loginBox').classList.add('hidden');$('dashboard').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('workspace').classList.add('hidden');$('dashboardHome').classList.remove('hidden');if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);
- const results=await Promise.allSettled([loadProducts(),loadOrders(),loadAds()]);
- results.forEach((r,i)=>{if(r.status==='rejected')console.error('Dashboard load failed',i,r.reason)});
+ // Render the dashboard immediately after successful authentication.
+ const loginBox=$('loginBox'), dashboard=$('dashboard'), logoutBtn=$('logoutBtn');
+ if(loginBox){loginBox.classList.add('hidden');loginBox.style.display='none';}
+ if(dashboard){dashboard.classList.remove('hidden');dashboard.style.display='block';}
+ if(logoutBtn){logoutBtn.classList.remove('hidden');logoutBtn.style.display='inline-block';}
+ $('workspace').classList.add('hidden');$('dashboardHome').classList.remove('hidden');
+ try{if(typeof updateSettingsAuthUI==='function')updateSettingsAuthUI(true);}catch(e){console.warn('Settings UI init skipped:',e);}
+ // Load each section independently; data-loading errors must never blank the dashboard.
+ const jobs=[['products',()=>loadProducts()],['orders',()=>loadOrders()],['ads',()=>loadAds()]];
+ for(const [name,job] of jobs){try{await job();}catch(err){console.error('Dashboard '+name+' load failed:',err);}}
 }
 
 function calculateProfit(){
